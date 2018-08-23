@@ -1,0 +1,4 @@
+node_modules
+out
+src/renderer/images
+.DS_Store

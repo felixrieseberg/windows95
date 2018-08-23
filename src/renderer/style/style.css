@@ -1,0 +1,43 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  /* cursor: none; */
+}
+
+#emulator {
+  display: flex
+}
+
+#emulator canvas {
+  margin: auto;
+}
+
+body.paused > #emulator {
+  display: none;
+}
+
+#start-buttons {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  /* flex-direction: column; */
+  justify-content: center;
+  font-family: Courier;
+}
+
+#start-buttons > .btn {
+  cursor: pointer;
+  background: #ffd2fd;
+  margin: 10px;
+  padding: 5px;
+}
+
+#start-buttons > .btn:hover {
+  cursor: pointer;
+  background: #ff95fa;
+  margin: 10px;
+  padding: 5px;
+}
