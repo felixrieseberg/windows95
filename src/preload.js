@@ -1,10 +1,12 @@
 const { remote } = require('electron')
 const fs = require('fs-extra')
 
-const { STATE_PATH, getState } = require('./state')
+const { STATE_PATH, getState, resetState } = require('./state')
 
 window.windows95 = {
   STATE_PATH,
+
+  resetState,
 
   async saveState () {
     return new Promise((resolve) => {
