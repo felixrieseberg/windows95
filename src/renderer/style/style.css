@@ -17,25 +17,35 @@ body.paused > #emulator {
   display: none;
 }
 
+#other-buttons {
+  position: absolute;
+  width: 100vw;
+  height: 100px;
+  display: flex;
+  align-items: flex-end;
+  bottom: 0;
+  justify-content: center;
+}
+
 #start-buttons {
   position: absolute;
   width: 100vw;
   height: 100vh;
   display: flex;
   align-items: center;
-  /* flex-direction: column; */
   justify-content: center;
-  font-family: Courier;
 }
 
-#start-buttons > .btn {
+.btn {
+  font-family: Courier;
   cursor: pointer;
   background: #ffd2fd;
   margin: 10px;
   padding: 5px;
+  text-align: center;
 }
 
-#start-buttons > .btn:hover {
+.btn:hover {
   cursor: pointer;
   background: #ff95fa;
   margin: 10px;

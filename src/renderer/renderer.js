@@ -1,19 +1,8 @@
-const START_BUTTONS = document.querySelector('#start-buttons')
+const BUTTONS = document.querySelector('#buttons')
+
+let cursorCaptured = false;
 
 const OPTIONS = {
-  win1: {
-    fda: {
-        url: './images/windows101.img',
-        size: 1474560,
-    }
-  },
-  win98: {
-    hda: {
-      url: './images/windows98.img',
-      async: true,
-      size: 300 * 1024 * 1024,
-    }
-  },
   win95: {
     hda: {
       url: './images/windows95.img',
@@ -23,7 +12,7 @@ const OPTIONS = {
   }
 }
 
-function main(id) {
+async function main(id) {
   const opts = Object.assign({
     memory_size: 64 * 1024 * 1024,
     screen_container: document.getElementById('emulator'),
@@ -32,24 +21,76 @@ function main(id) {
     },
     vga_bios: {
         url: './bios/vgabios.bin',
-    },
-    autostart: true
+    }
   }, OPTIONS[id])
 
-  console.log(opts, OPTIONS[id])
-
+  // New v86 instance
   window.emulator = new V86Starter(opts)
-  window.emulator.lock_mouse()
+
+  // Restore state. We can't do this right away.
+  setTimeout(async () => {
+    await windows95.restoreState()
+
+    cursorCaptured = true
+    window.emulator.lock_mouse()
+    window.emulator.run()
+  }, 500)
 }
 
 function setupButtons() {
   document.querySelectorAll('.btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      START_BUTTONS.remove()
+      BUTTONS.remove()
       document.body.className = '';
       main(btn.id)
     })
   })
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    if (window.emulator) {
+      window.emulator.stop()
+    }
+
+    windows95.resetState()
+    if (window.emulator) {
+      window.emulator.run()
+    }
+  })
 }
 
+function setupEscListener() {
+  document.onkeydown = function(evt) {
+    evt = evt || window.event;
+    if (evt.keyCode == 27) {
+      if (cursorCaptured) {
+        cursorCaptured = false
+        document.exitPointerLock()
+      } else {
+        cursorCaptured = true
+        window.emulator.lock_mouse()
+      }
+    }
+  }
+}
+
+function setupCloseListener() {
+  let isQuitting = false
+
+  const handleClose = async () => {
+    await windows95.saveState()
+    isQuitting = true
+    windows95.quit()
+  }
+
+  window.onbeforeunload = (event) => {
+    if (isQuitting) return
+
+    handleClose()
+    event.preventDefault()
+    event.returnValue = false
+  }
+}
+
+setupEscListener()
+setupCloseListener()
 setupButtons()

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,16 +9,30 @@
   <script src="./lib/libv86.js"></script>
   <link rel="stylesheet" href="style/style.css">
 </head>
+
 <body class="paused">
-  <div id="start-buttons">
-    <div class="btn" id="win98">Windows 98</div>
-    <div class="btn" id="win95">Windows 95</div>
-    <div class="btn" id="win1">Windows 1</div>
+  <div id="buttons">
+    <div id="start-buttons">
+      <!-- <div class="btn" id="win98">Windows 98</div> -->
+      <div class="btn" id="win95">
+        Start Windows 95
+        <br />
+
+        <small>Hit ESC to lock or unlock your mouse</small>
+      </div>
+      <!-- <div class="btn" id="win1">Windows 1</div> -->
+    </div>
+    <div id="other-buttons">
+      <div class="btn" id="reset">Reset Machine & Delete State</div>
+    </div>
   </div>
   <div id="emulator" style="height: 100vh; width: 100vw">
     <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
     <canvas style="display: none"></canvas>
   </div>
-  <script>require('./renderer.js')</script>
+  <script>
+    require('./renderer.js')
+  </script>
 </body>
+
 </html>
