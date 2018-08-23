@@ -10,6 +10,9 @@ Yes! Quite well, actually.
 ## Should this have been a native app?
 Absolutely.
 
+## How's the code?
+This only works well by accident and was mostly a joke. The code quality is accordingly.
+
 ## Credits
 
 99.999% of the work was done over at [v86](https://github.com/copy/v86/) by Copy.
