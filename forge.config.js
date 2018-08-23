@@ -2,13 +2,10 @@ const path = require('path');
 const package = require('./package.json');
 
 module.exports = {
-  hooks: {
-    generateAssets: require('./tools/generateAssets')
-  },
   packagerConfig: {
     asar: true,
     icon: path.resolve(__dirname, 'assets', 'icon'),
-    appBundleId: 'com.felixrieseberg.windows98',
+    appBundleId: 'com.felixrieseberg.windows95',
     appCategoryType: 'public.app-category.developer-tools',
     win32metadata: {
       CompanyName: 'Felix Rieseberg',
@@ -30,6 +27,8 @@ module.exports = {
         remoteReleases: '',
         setupExe: `windows98-${package.version}-setup-${process.arch}.exe`,
         setupIcon: path.resolve(__dirname, 'assets', 'icon.ico'),
+        certificateFile: process.env.WINDOWS_CERTIFICATE_FILE,
+        certificatePassword: process.env.WINDOWS_CERTIFICATE_PASSWORD
       }
     },
     {
@@ -43,18 +42,6 @@ module.exports = {
     {
       name: '@electron-forge/maker-rpm',
       platforms: ['linux']
-    }
-  ],
-  publishers: [
-    {
-      name: '@electron-forge/publisher-github',
-      config: {
-        repository: {
-          owner: 'electron',
-          name: 'fiddle'
-        },
-        prerelease: true
-      }
     }
   ]
 };
