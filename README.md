@@ -17,6 +17,20 @@ This only works well by accident and was mostly a joke. The code quality is acco
 
 99.999% of the work was done over at [v86](https://github.com/copy/v86/) by Copy.
 
+## Contributing
+
+Before you can this, you'll need the disk and state images. They're not part of the repo,
+but [you can download them here](https://mega.nz/#!euxygQBT!i03vtE4kYTgrZ1rjZa1gT2F8hvhcwIAgGBsY4ECjs0w).
+
+Unpack the `images` folder into the `src/renderer` folder, creating this layout:
+
+```
+./src/renderer/images/default-state.bin
+./src/renderer/images/windows95.img
+```
+
+Once you've done so, run `npm install` and `npm start` to run your local build.
+
 ## License
 
 This project is provided for educational purposes only. It is not affiliated with and has
