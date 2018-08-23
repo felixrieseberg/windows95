@@ -9,7 +9,7 @@ module.exports = {
     appCategoryType: 'public.app-category.developer-tools',
     win32metadata: {
       CompanyName: 'Felix Rieseberg',
-      OriginalFilename: 'windows98',
+      OriginalFilename: 'windows95',
     },
     osxSign: {
       identity: 'Developer ID Application: Felix Rieseberg (LT94ZKYDCJ)'
@@ -22,10 +22,10 @@ module.exports = {
       config: {
         name: 'windows98',
         authors: 'Felix Rieseberg',
-        exe: 'windows98.exe',
+        exe: 'windows95.exe',
         noMsi: true,
         remoteReleases: '',
-        setupExe: `windows98-${package.version}-setup-${process.arch}.exe`,
+        setupExe: `windows95-${package.version}-setup-${process.arch}.exe`,
         setupIcon: path.resolve(__dirname, 'assets', 'icon.ico'),
         certificateFile: process.env.WINDOWS_CERTIFICATE_FILE,
         certificatePassword: process.env.WINDOWS_CERTIFICATE_PASSWORD
