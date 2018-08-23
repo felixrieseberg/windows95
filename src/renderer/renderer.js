@@ -43,6 +43,7 @@ function setupButtons () {
       BUTTONS.remove()
       document.body.className = ''
       main(btn.id)
+      setupClickListener()
     })
   })
 
@@ -92,6 +93,15 @@ function setupCloseListener () {
     event.preventDefault()
     event.returnValue = false
   }
+}
+
+function setupClickListener () {
+  document.addEventListener('click', () => {
+    if (!cursorCaptured) {
+      cursorCaptured = true
+      window.emulator.lock_mouse()
+    }
+  })
 }
 
 setupEscListener()
