@@ -38,7 +38,7 @@ async function main(id) {
 }
 
 function setupButtons() {
-  document.querySelectorAll('.btn').forEach((btn) => {
+  document.querySelectorAll('.btn-start').forEach((btn) => {
     btn.addEventListener('click', () => {
       BUTTONS.remove()
       document.body.className = '';
@@ -47,12 +47,13 @@ function setupButtons() {
   })
 
   document.querySelector('#reset').addEventListener('click', () => {
-    if (window.emulator) {
+    if (window.emulator.stop) {
       window.emulator.stop()
     }
 
     windows95.resetState()
-    if (window.emulator) {
+
+    if (window.emulator.run) {
       window.emulator.run()
     }
   })
