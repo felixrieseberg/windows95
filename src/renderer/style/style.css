@@ -1,8 +1,32 @@
 html, body {
   margin: 0;
   padding: 0;
+}
+
+body {
   background: #000;
-  /* cursor: none; */
+}
+
+body.paused > #emulator {
+  display: none;
+}
+
+body.paused {
+  background: #008080;
+  font-family: Courier;
+}
+
+#floppy-path {
+  background: beige;
+  padding: 5px;
+}
+
+#information {
+  text-align: center;
+  position: absolute;
+  width: 100vw;
+  bottom: 50px;
+  font-size: 18px;
 }
 
 #emulator {
@@ -13,7 +37,7 @@ html, body {
   margin: auto;
 }
 
-body.paused > #emulator {
+#file-input {
   display: none;
 }
 

@@ -24,6 +24,17 @@
     </div>
     <div id="other-buttons">
       <div class="btn" id="reset">Reset Machine & Delete State</div>
+      <div class="btn" id="floppy">Insert Floppy Disk</div>
+      <div class="btn" id="discard-state">Discard State & Boot From Scratch</div>
+      <input id="file-input" type='file'>
+    </div>
+    <div id="information">
+      <p id="floppy-path"></p>
+      <p>You can insert a floppy disk image with the ".img" format.</p>
+      <p>
+        Boot the machine from scratch if you've inserted a new floppy disk to
+        make sure that Windows can load it.
+      </p>
     </div>
   </div>
   <div id="emulator" style="height: 100vh; width: 100vw">
