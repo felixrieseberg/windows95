@@ -1,4 +1,4 @@
-const { app, BrowserWindow, session } = require('electron')
+const { app, BrowserWindow } = require('electron')
 const path = require('path')
 
 const { clearCaches } = require('./cache')
@@ -8,7 +8,7 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
   app.quit()
 }
 
-let mainWindow;
+let mainWindow
 
 const createWindow = () => {
   // Create the browser window.
@@ -20,12 +20,12 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
-  });
+  })
 
-  mainWindow.loadURL(`file://${__dirname}/renderer/index.html?system=win98`);
+  mainWindow.loadURL(`file://${__dirname}/renderer/index.html?system=win98`)
 
   mainWindow.on('closed', () => {
-    mainWindow = null;
+    mainWindow = null
   })
 }
 

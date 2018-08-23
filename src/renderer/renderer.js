@@ -1,26 +1,26 @@
 const BUTTONS = document.querySelector('#buttons')
 
-let cursorCaptured = false;
+let cursorCaptured = false
 
 const OPTIONS = {
   win95: {
     hda: {
       url: './images/windows95.img',
       async: true,
-      size: 242049024,
+      size: 242049024
     }
   }
 }
 
-async function main(id) {
+async function main (id) {
   const opts = Object.assign({
     memory_size: 64 * 1024 * 1024,
     screen_container: document.getElementById('emulator'),
     bios: {
-      url: './bios/seabios.bin',
+      url: './bios/seabios.bin'
     },
     vga_bios: {
-        url: './bios/vgabios.bin',
+      url: './bios/vgabios.bin'
     }
   }, OPTIONS[id])
 
@@ -37,11 +37,11 @@ async function main(id) {
   }, 500)
 }
 
-function setupButtons() {
+function setupButtons () {
   document.querySelectorAll('.btn-start').forEach((btn) => {
     btn.addEventListener('click', () => {
       BUTTONS.remove()
-      document.body.className = '';
+      document.body.className = ''
       main(btn.id)
     })
   })
@@ -56,13 +56,15 @@ function setupButtons() {
     if (window.emulator.run) {
       window.emulator.run()
     }
+
+    document.querySelector('#reset').disabled = true
   })
 }
 
-function setupEscListener() {
-  document.onkeydown = function(evt) {
-    evt = evt || window.event;
-    if (evt.keyCode == 27) {
+function setupEscListener () {
+  document.onkeydown = function (evt) {
+    evt = evt || window.event
+    if (evt.keyCode === 27) {
       if (cursorCaptured) {
         cursorCaptured = false
         document.exitPointerLock()
@@ -74,7 +76,7 @@ function setupEscListener() {
   }
 }
 
-function setupCloseListener() {
+function setupCloseListener () {
   let isQuitting = false
 
   const handleClose = async () => {

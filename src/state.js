@@ -5,7 +5,7 @@ const { remote } = require('electron')
 const DEFAULT_PATH = path.join(__dirname, 'renderer/images/default-state.bin')
 const STATE_PATH = path.join(remote.app.getPath('userData'), 'state.bin')
 
-function getState() {
+function getState () {
   const statePath = fs.existsSync(STATE_PATH)
     ? STATE_PATH
     : DEFAULT_PATH
@@ -13,7 +13,7 @@ function getState() {
   return fs.readFileSync(statePath).buffer
 }
 
-function resetState() {
+function resetState () {
   fs.removeSync(STATE_PATH)
 }
 

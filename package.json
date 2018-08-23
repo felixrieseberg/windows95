@@ -9,13 +9,19 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "lint": "standard \"src/**/*.js\""
   },
   "keywords": [],
   "author": "Felix Rieseberg, felix@felixrieseberg.com",
   "license": "MIT",
   "config": {
     "forge": "./forge.config.js"
+  },
+  "standard": {
+    "globals": [ "V86Starter", "windows95" ],
+    "ignore": [
+      "/src/renderer/lib/*.js"
+    ]
   },
   "dependencies": {
     "electron-default-menu": "^1.0.1",
@@ -28,6 +34,7 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.22",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.22",
     "@electron-forge/maker-zip": "^6.0.0-beta.22",
-    "electron": "3.0.0-beta.6"
+    "electron": "3.0.0-beta.6",
+    "standard": "^11.0.1"
   }
 }
