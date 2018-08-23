@@ -1,7 +1,7 @@
 {
   "name": "windows95",
   "productName": "windows95",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Windows 95, in an app. I'm sorry.",
   "main": "src/index.js",
   "scripts": {
@@ -18,7 +18,10 @@
     "forge": "./forge.config.js"
   },
   "standard": {
-    "globals": [ "V86Starter", "windows95" ],
+    "globals": [
+      "V86Starter",
+      "windows95"
+    ],
     "ignore": [
       "/src/renderer/lib/*.js"
     ]

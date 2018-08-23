@@ -1,6 +1,11 @@
-const BUTTONS = document.querySelector('#buttons')
+const $ = document.querySelector.bind(document)
+const $$ = document.querySelectorAll.bind(document)
+
+const BUTTONS = $('#buttons')
 
 let cursorCaptured = false
+let floppyFile = null
+let bootFresh = false
 
 const OPTIONS = {
   win95: {
@@ -21,15 +26,25 @@ async function main (id) {
     },
     vga_bios: {
       url: './bios/vgabios.bin'
-    }
+    },
+    fda: {
+      buffer: floppyFile || undefined
+    },
+    boot_order: 0x132
   }, OPTIONS[id])
 
   // New v86 instance
   window.emulator = new V86Starter(opts)
+  
+  //high-dpi support  
+  var scale = window.devicePixelRatio;
+  window.emulator.screen_adapter.set_scale(scale,scale);
 
   // Restore state. We can't do this right away.
   setTimeout(async () => {
-    await windows95.restoreState()
+    if (!bootFresh) {
+      await windows95.restoreState()
+    }
 
     cursorCaptured = true
     window.emulator.lock_mouse()
@@ -37,17 +52,21 @@ async function main (id) {
   }, 500)
 }
 
+function start (id) {
+  BUTTONS.remove()
+  document.body.className = ''
+  setupClickListener()
+  main(id)
+}
+
 function setupButtons () {
-  document.querySelectorAll('.btn-start').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      BUTTONS.remove()
-      document.body.className = ''
-      main(btn.id)
-      setupClickListener()
-    })
+  // Start
+  $$('.btn-start').forEach((btn) => {
+    btn.addEventListener('click', () => start(btn.id))
   })
 
-  document.querySelector('#reset').addEventListener('click', () => {
+  // Reset
+  $('#reset').addEventListener('click', () => {
     if (window.emulator.stop) {
       window.emulator.stop()
     }
@@ -58,7 +77,29 @@ function setupButtons () {
       window.emulator.run()
     }
 
-    document.querySelector('#reset').disabled = true
+    $('#reset').disabled = true
+  })
+
+  $('#discard-state').addEventListener('click', () => {
+    bootFresh = true
+
+    start('win95')
+  })
+
+  // Floppy
+  $('#floppy').addEventListener('click', () => {
+    $('#file-input').click()
+  })
+
+  // Floppy (Hidden Input)
+  $('#file-input').addEventListener('change', (event) => {
+    floppyFile = event.target.files && event.target.files.length > 0
+      ? event.target.files[0]
+      : null
+
+    if (floppyFile) {
+      $('#floppy-path').innerHTML = `Inserted Floppy Disk: ${floppyFile.path}`
+    }
   })
 }
 
