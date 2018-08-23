@@ -26,6 +26,10 @@ async function main (id) {
 
   // New v86 instance
   window.emulator = new V86Starter(opts)
+  
+  //high-dpi support  
+  var scale = window.devicePixelRatio;
+  window.emulator.screen_adapter.set_scale(scale,scale);
 
   // Restore state. We can't do this right away.
   setTimeout(async () => {
