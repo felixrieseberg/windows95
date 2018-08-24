@@ -10,6 +10,13 @@ Yes! Quite well, actually.
 ## Should this have been a native app?
 Absolutely.
 
+## Does it run Doom (or my other favorite game)?
+You'll likely be better off with an actual virtualization app, but the short answer is yes. [Thanks to
+@DisplacedGamers](https://youtu.be/xDXqmdFxofM) I can recommend that you switch to a resolution of 
+640x480 @ 256 colors before starting DOS games - just like in the good ol' days.
+
+https://youtu.be/xDXqmdFxofM
+
 ## How's the code?
 This only works well by accident and was mostly a joke. The code quality is accordingly.
 
