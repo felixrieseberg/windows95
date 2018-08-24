@@ -1,6 +1,8 @@
 # windows95
 
-This is Windows 95, running in an Electron app. Yes, it's the full thing. I'm sorry. [Download it here](https://github.com/felixrieseberg/windows95/releases).
+This is Windows 95, running in an Electron app. Yes, it's the full thing. I'm sorry. 
+
+## 💿⏬ [Download it here](https://github.com/felixrieseberg/windows95/releases).
 
 ![Screenshot](https://user-images.githubusercontent.com/1426799/44532591-4ceb3680-a6a8-11e8-8c2c-bc29f3bfdef7.png)
 
