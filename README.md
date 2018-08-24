@@ -17,6 +17,11 @@ You'll likely be better off with an actual virtualization app, but the short ans
 @DisplacedGamers](https://youtu.be/xDXqmdFxofM) I can recommend that you switch to a resolution of 
 640x480 @ 256 colors before starting DOS games - just like in the good ol' days.
 
+## Can it run in a container?
+Of course!  Currently this is only supported on Linux, simply install [Docker](http://docker.io) on your distro of choice and run the following:
+
+    docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name windows95 toolboc/windows95
+
 ## How's the code?
 This only works well by accident and was mostly a joke. The code quality is accordingly.
 
