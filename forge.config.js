@@ -3,7 +3,9 @@ const package = require('./package.json');
 
 module.exports = {
   packagerConfig: {
-    asar: true,
+    asar: {
+      unpack: '**/images/*.img'
+    },
     icon: path.resolve(__dirname, 'assets', 'icon'),
     appBundleId: 'com.felixrieseberg.windows95',
     appCategoryType: 'public.app-category.developer-tools',
@@ -20,7 +22,7 @@ module.exports = {
       name: '@electron-forge/maker-squirrel',
       platforms: ['win32'],
       config: {
-        name: 'windows98',
+        name: 'windows95',
         authors: 'Felix Rieseberg',
         exe: 'windows95.exe',
         noMsi: true,
