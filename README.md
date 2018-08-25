@@ -1,6 +1,6 @@
 # windows95
 
-This is Windows 95, running in an Electron app. Yes, it's the full thing. I'm sorry. 
+This is Windows 95, running in an Electron app. Yes, it's the full thing. I'm sorry.
 
 ## 💿⏬ [Download it here](https://github.com/felixrieseberg/windows95/releases).
 
@@ -14,7 +14,7 @@ Absolutely.
 
 ## Does it run Doom (or my other favorite game)?
 You'll likely be better off with an actual virtualization app, but the short answer is yes. [Thanks to
-@DisplacedGamers](https://youtu.be/xDXqmdFxofM) I can recommend that you switch to a resolution of 
+@DisplacedGamers](https://youtu.be/xDXqmdFxofM) I can recommend that you switch to a resolution of
 640x480 @ 256 colors before starting DOS games - just like in the good ol' days.
 
 ## How's the code?
@@ -32,8 +32,8 @@ but [you can download them here](https://mega.nz/#!euxygQBT!i03vtE4kYTgrZ1rjZa1g
 Unpack the `images` folder into the `src/renderer` folder, creating this layout:
 
 ```
-./src/renderer/images/default-state.bin
-./src/renderer/images/windows95.img
+./src/images/default-state.bin
+./src/images/windows95.img
 ```
 
 Once you've done so, run `npm install` and `npm start` to run your local build.
