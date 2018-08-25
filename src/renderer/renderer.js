@@ -1,24 +1,15 @@
-const $ = document.querySelector.bind(document)
-const $$ = document.querySelectorAll.bind(document)
+import { setupState } from 'es6://app-state.js'
+import { setupClickListener, setupEscListener, setupCloseListener } from 'es6://listeners.js'
+import { toggleButtons, setupButtons } from 'es6://buttons.js'
 
-const BUTTONS = $('#buttons')
+setupState()
 
-let cursorCaptured = false
-let floppyFile = null
-let bootFresh = false
-
-const OPTIONS = {
-  win95: {
-    hda: {
-      url: './images/windows95.img',
-      async: true,
-      size: 242049024
-    }
-  }
-}
-
-async function main (id) {
-  const opts = Object.assign({
+/**
+ * The main method executing the VM.
+ */
+async function main () {
+  // New v86 instance
+  window.emulator = new V86Starter({
     memory_size: 64 * 1024 * 1024,
     screen_container: document.getElementById('emulator'),
     bios: {
@@ -27,126 +18,51 @@ async function main (id) {
     vga_bios: {
       url: './bios/vgabios.bin'
     },
+    hda: {
+      url: '../images/windows96.img',
+      async: true,
+      size: 242049024
+    },
+    hdb: {
+      url: '../images/windows95.img',
+      async: true,
+      size: 242049024
+    },
     fda: {
-      buffer: floppyFile || undefined
+      buffer: window.appState.floppyFile || undefined
     },
     boot_order: 0x132
-  }, OPTIONS[id])
-
-  // New v86 instance
-  window.emulator = new V86Starter(opts)
+  })
 
   // High DPI support
   if (navigator.userAgent.includes('Windows')) {
-    var scale = window.devicePixelRatio;
-    window.emulator.screen_adapter.set_scale(scale,scale);
+    const scale = window.devicePixelRatio
+
+    window.emulator.screen_adapter.set_scale(scale, scale)
   }
 
-  // Restore state. We can't do this right away.
+  // Restore state. We can't do this right away
+  // and randomly chose 500ms as the appropriate
+  // wait time (lol)
   setTimeout(async () => {
-    if (!bootFresh) {
-      await windows95.restoreState()
+    if (!window.appState.bootFresh) {
+      windows95.restoreState()
     }
 
-    cursorCaptured = true
+    window.appState.cursorCaptured = true
     window.emulator.lock_mouse()
     window.emulator.run()
   }, 500)
 }
 
-function start (id) {
-  BUTTONS.remove()
+function start () {
   document.body.className = ''
+
+  toggleButtons(false)
   setupClickListener()
-  main(id)
-}
-
-function setupButtons () {
-  // Start
-  $$('.btn-start').forEach((btn) => {
-    btn.addEventListener('click', () => start(btn.id))
-  })
-
-  // Reset
-  $('#reset').addEventListener('click', () => {
-    if (window.emulator.stop) {
-      window.emulator.stop()
-    }
-
-    windows95.resetState()
-
-    if (window.emulator.run) {
-      window.emulator.run()
-    }
-
-    $('#reset').disabled = true
-  })
-
-  $('#discard-state').addEventListener('click', () => {
-    bootFresh = true
-
-    start('win95')
-  })
-
-  // Floppy
-  $('#floppy').addEventListener('click', () => {
-    $('#file-input').click()
-  })
-
-  // Floppy (Hidden Input)
-  $('#file-input').addEventListener('change', (event) => {
-    floppyFile = event.target.files && event.target.files.length > 0
-      ? event.target.files[0]
-      : null
-
-    if (floppyFile) {
-      $('#floppy-path').innerHTML = `Inserted Floppy Disk: ${floppyFile.path}`
-    }
-  })
-}
-
-function setupEscListener () {
-  document.onkeydown = function (evt) {
-    evt = evt || window.event
-    if (evt.keyCode === 27) {
-      if (cursorCaptured) {
-        cursorCaptured = false
-        document.exitPointerLock()
-      } else {
-        cursorCaptured = true
-        window.emulator.lock_mouse()
-      }
-    }
-  }
-}
-
-function setupCloseListener () {
-  let isQuitting = false
-
-  const handleClose = async () => {
-    await windows95.saveState()
-    isQuitting = true
-    windows95.quit()
-  }
-
-  window.onbeforeunload = (event) => {
-    if (isQuitting) return
-
-    handleClose()
-    event.preventDefault()
-    event.returnValue = false
-  }
-}
-
-function setupClickListener () {
-  document.addEventListener('click', () => {
-    if (!cursorCaptured) {
-      cursorCaptured = true
-      window.emulator.lock_mouse()
-    }
-  })
+  main()
 }
 
 setupEscListener()
 setupCloseListener()
-setupButtons()
+setupButtons(start)

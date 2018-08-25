@@ -9,7 +9,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "standard \"src/**/*.js\""
+    "lint": "standard \"src/**/*.mjs\""
   },
   "keywords": [],
   "author": "Felix Rieseberg, felix@felixrieseberg.com",
@@ -19,6 +19,7 @@
   },
   "standard": {
     "globals": [
+      "appState",
       "V86Starter",
       "windows95"
     ],
@@ -29,7 +30,8 @@
   "dependencies": {
     "electron-default-menu": "^1.0.1",
     "electron-squirrel-startup": "^1.0.0",
-    "fs-extra": "^7.0.0"
+    "fs-extra": "^7.0.0",
+    "update-electron-app": "^1.3.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.22",

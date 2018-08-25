@@ -11,6 +11,7 @@
 </head>
 
 <body class="paused">
+  <div id="computer-info"></div>
   <div id="buttons">
     <div id="start-buttons">
       <!-- <div class="btn" id="win98">Windows 98</div> -->
@@ -41,8 +42,8 @@
     <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
     <canvas style="display: none"></canvas>
   </div>
-  <script>
-    require('./renderer.js')
+  <script type="module">
+    import("es6://renderer.js")
   </script>
 </body>
 

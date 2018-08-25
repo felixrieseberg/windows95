@@ -1,4 +1,4 @@
 node_modules
 out
-src/renderer/images
+src/images
 .DS_Store

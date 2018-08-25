@@ -3,6 +3,7 @@ const path = require('path')
 
 const { clearCaches } = require('./cache')
 const { createMenu } = require('./menu')
+const { setupProtocol } = require('./es6')
 
 if (require('electron-squirrel-startup')) { // eslint-disable-line global-require
   app.quit()
@@ -16,13 +17,13 @@ const createWindow = () => {
     width: 1280,
     height: 800,
     useContentSize: true,
-    nodeIntegration: false,
     webPreferences: {
+      nodeIntegration: false,
       preload: path.join(__dirname, 'preload.js')
     }
   })
 
-  mainWindow.loadURL(`file://${__dirname}/renderer/index.html?system=win98`)
+  mainWindow.loadURL(`file://${__dirname}/renderer/index.html`)
 
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -30,8 +31,10 @@ const createWindow = () => {
 }
 
 app.on('ready', async () => {
+  await setupProtocol()
   await createMenu()
   await clearCaches()
+
   createWindow()
 })
 
