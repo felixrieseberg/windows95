@@ -11,10 +11,10 @@ async function setupProtocol () {
     console.log(req)
 
     try {
-      const filePath = path.join(ES6_PATH, req.url.replace('es6://', '' ))
+      const filePath = path.join(ES6_PATH, req.url.replace('es6://', ''))
       const fileContent = await fs.readFile(filePath.replace('.js/', '.js'))
 
-      cb({ mimeType: 'text/javascript', data: fileContent })
+      cb({ mimeType: 'text/javascript', data: fileContent }) // eslint-disable-line
     } catch (error) {
       console.warn(error)
     }

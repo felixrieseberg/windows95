@@ -16,6 +16,28 @@ body.paused {
   font-family: Courier;
 }
 
+#buttons {
+  user-select: none;
+}
+
+#status {
+  user-select: none;
+  position: absolute;
+  z-index: 100;
+  left: calc(50vw - 110px);
+  background: white;
+  text-align: center;
+  font-family: Courier;
+  font-size: 10px;
+  padding-bottom: 3px;
+  border-bottom-left-radius: 15px;
+  border-bottom-right-radius: 15px;
+  overflow: hidden;
+  padding-left: 10px;
+  padding-right: 10px;
+  max-height: 18px;
+}
+
 #floppy-path {
   background: beige;
   padding: 5px;

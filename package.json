@@ -9,7 +9,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "standard \"src/**/*.mjs\""
+    "lint": "standard \"src/**/*.js\""
   },
   "keywords": [],
   "author": "Felix Rieseberg, felix@felixrieseberg.com",

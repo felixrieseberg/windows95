@@ -1,6 +1,7 @@
 import { setupState } from 'es6://app-state.js'
 import { setupClickListener, setupEscListener, setupCloseListener } from 'es6://listeners.js'
 import { toggleButtons, setupButtons } from 'es6://buttons.js'
+import { setupInfo } from 'es6://info.js'
 
 setupState()
 
@@ -43,6 +44,8 @@ async function main () {
     if (!window.appState.bootFresh) {
       windows95.restoreState()
     }
+
+    setupInfo()
 
     window.appState.cursorCaptured = true
     window.emulator.lock_mouse()
