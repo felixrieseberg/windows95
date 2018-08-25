@@ -26,13 +26,13 @@ This only works well by accident and was mostly a joke. The code quality is acco
 
 ## Contributing
 
-Before you can run this from source, you'll need the disk and state images. They're not part of the repo,
-but [you can download them here](https://mega.nz/#!euxygQBT!i03vtE4kYTgrZ1rjZa1gT2F8hvhcwIAgGBsY4ECjs0w).
+Before you can run this from source, you'll need the disk image. It's not part of the
+repository, but you can grab it using the `Show Disk Image` button from the packaged
+release, which does include the disk image.
 
-Unpack the `images` folder into the `src/renderer` folder, creating this layout:
+Unpack the `images` folder into the `src` folder, creating this layout:
 
 ```
-./src/images/default-state.bin
 ./src/images/windows95.img
 ```
 
