@@ -19,11 +19,6 @@ async function main () {
       url: './bios/vgabios.bin'
     },
     hda: {
-      url: '../images/windows96.img',
-      async: true,
-      size: 242049024
-    },
-    hdb: {
       url: '../images/windows95.img',
       async: true,
       size: 242049024

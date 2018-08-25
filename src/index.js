@@ -9,6 +9,13 @@ if (require('electron-squirrel-startup')) { // eslint-disable-line global-requir
   app.quit()
 }
 
+if (app.isPackaged) {
+  require('update-electron-app')({
+    repo: 'felixrieseberg/windows95',
+    updateInterval: '1 hour'
+  })
+}
+
 let mainWindow
 
 const createWindow = () => {

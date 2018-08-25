@@ -4,6 +4,9 @@ export function setupButtons (start) {
   // Start
   $('.btn-start').addEventListener('click', () => start())
 
+  // Disk Image
+  $('#show-disk-image').addEventListener('click', () => windows95.showDiskImage())
+
   // Reset
   $('#reset').addEventListener('click', () => windows95.resetState())
 
