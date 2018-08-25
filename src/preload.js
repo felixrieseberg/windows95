@@ -11,6 +11,8 @@ window.windows95 = {
 
   showDiskImage() {
     const imagePath = path.join(__dirname, 'images/windows95.img')
+      .replace('app.asar', 'app.asar.unpacked')
+
     shell.showItemInFolder(imagePath)
   },
 
