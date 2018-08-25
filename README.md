@@ -22,6 +22,8 @@ Of course!  Currently this is only supported on Linux, simply install [Docker](h
 
     docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name windows95 toolboc/windows95
 
+Note: You may need to run `xhost +` on your system to allow connections to the X server running on the host.
+
 ## How's the code?
 This only works well by accident and was mostly a joke. The code quality is accordingly.
 
