@@ -27,6 +27,7 @@ LABEL maintainer "Paul DeCarlo <toolboc@gmail.com>"
 
 RUN apt update && apt install -y \
     libgtk-3-0 \
+    libcanberra-gtk3-module \
     libx11-xcb-dev \
     libgconf2-dev \
     libnss3 \
