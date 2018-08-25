@@ -25,7 +25,7 @@ FROM node:10.9-stretch
 
 LABEL maintainer "Paul DeCarlo <toolboc@gmail.com>"
 
-RUN apt-get update && apt-get install -y \
+RUN apt update && apt install -y \
     libgtk-3-0 \
     libx11-xcb-dev \
     libgconf2-dev \
