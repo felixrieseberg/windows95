@@ -44,6 +44,10 @@ module.exports = {
     {
       name: '@electron-forge/maker-rpm',
       platforms: ['linux']
+    },
+    {
+      name: '@electron-forge/maker-flatpak',
+      platforms: ['linux']
     }
   ]
 };
