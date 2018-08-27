@@ -1,4 +1,4 @@
-# Running Windows 95 in Docker
+# Running windows95 in Docker
 
 ## Display using a volume mount of the host X11 Unix Socket (Linux Only):
 
