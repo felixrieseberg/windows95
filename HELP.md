@@ -1,5 +1,11 @@
 # Help & Commonly Asked Questions
 
+## MS-DOS seems to brick the screen
+Hit `Alt + Enter` to make the command screen "full screen" (as far as Windows 95 is
+concerned). This should restore the display from the garbled mess you see and allow
+you to access the command prompt. Press Alt-Enter again to leave full screen and go
+back to a window mode. (Thanks to @DisplacedGamer for that wisdom)
+
 ## Windows 95 is stuck in a bad state
 
 Restart the application and click on the "Reset machine & delete state" button.
