@@ -17,9 +17,6 @@ You'll likely be better off with an actual virtualization app, but the short ans
 @DisplacedGamers](https://youtu.be/xDXqmdFxofM) I can recommend that you switch to a resolution of
 640x480 @ 256 colors before starting DOS games - just like in the good ol' days.
 
-## Can it run in a container?
-[Of course!](./docs/docker-instructions.md)  
-
 ## How's the code?
 This only works well by accident and was mostly a joke. The code quality is accordingly.
 
@@ -40,6 +37,10 @@ Unpack the `images` folder into the `src` folder, creating this layout:
 ```
 
 Once you've done so, run `npm install` and `npm start` to run your local build.
+
+## Other Questions
+
+ * [Running in Docker](./docs/docker-instructions.md)
 
 ## License
 
