@@ -1,6 +1,13 @@
 const { app, shell, Menu, BrowserWindow } = require('electron')
 const defaultMenu = require('electron-default-menu')
 
+const LINKS = {
+  homepage: 'https://www.felixrieseberg.com',
+  repo: 'https://github.com/felixrieseberg/windows95',
+  credits: 'https://github.com/felixrieseberg/windows95/blob/master/CREDITS.md',
+  help: 'https://github.com/felixrieseberg/windows95/blob/master/HELP.md'
+}
+
 function send (cmd) {
   const windows = BrowserWindow.getAllWindows()
 
@@ -16,6 +23,38 @@ async function createMenu () {
         item.submenu = item.submenu.filter((subItem) => {
           return subItem.label !== 'Reload'
         })
+      }
+
+      if (item.label === 'Help') {
+        item.submenu = [
+          {
+            label: 'Author',
+            click() {
+              shell.openExternal(LINKS.homepage)
+            },
+          },
+          {
+            label: 'Learn More',
+            click() {
+              shell.openExternal(LINKS.repo)
+            },
+          },
+          {
+            type: 'separator'
+          },
+          {
+            label: 'Help',
+            click() {
+              shell.openExternal(LINKS.help)
+            }
+          },
+          {
+            label: 'Credits',
+            click() {
+              shell.openExternal(LINKS.credits)
+            }
+          }
+        ]
       }
 
       return item
