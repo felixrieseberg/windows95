@@ -18,11 +18,9 @@ Note: You may need to run `xhost +` on your system to allow connections to the X
 * [Docker](http://docker.io) 
 
 1. Start the Xming X11 Server
-2. Obtain the ip of the host machine running the Xming server
-3. Edit X0.hosts (Located in the install directory of Xming) by adding the ip of the host machine obtained in step 2
-4. Run the command below and replace the `<XmingServerHostIp>` placeholder with the ip from step 2
+2. Run the command below:
 
-        docker run -it -e DISPLAY=<XmingServerHostIp> --name windows95 toolboc/windows95
+        docker run -e DISPLAY=host.docker.internal:0 --name windows95 toolboc/windows95
 
 ## Display using the host XQuartz Server (MacOS Only):
 **Requirements:**
