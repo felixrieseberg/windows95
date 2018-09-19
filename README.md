@@ -1,6 +1,6 @@
 # windows95
 
-This is Windows 95, running in an Electron app. Yes, it's the full thing. I'm sorry.
+This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, it's the full thing. I'm sorry.
 
 ## Downloads for macOS
 📦[Standalone](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-macos-1.3.0.zip)
@@ -18,7 +18,7 @@ This is Windows 95, running in an Electron app. Yes, it's the full thing. I'm so
 ![Screenshot](https://user-images.githubusercontent.com/1426799/44532591-4ceb3680-a6a8-11e8-8c2c-bc29f3bfdef7.png)
 
 ## Does it work?
-Yes! Quite well, actually.
+Yes! Quite well, actually, on [platforms supported by Electron](https://electronjs.org/docs/tutorial/support#supported-platforms).
 
 ## Should this have been a native app?
 Absolutely.
@@ -29,7 +29,7 @@ You'll likely be better off with an actual virtualization app, but the short ans
 640x480 @ 256 colors before starting DOS games - just like in the good ol' days.
 
 ## How's the code?
-This only works well by accident and was mostly a joke. The code quality is accordingly.
+This only works well by accident and was mostly a joke. The code quality is accordingly. Thus it should not be used for anything other than personal amusement.
 
 ## Credits
 
