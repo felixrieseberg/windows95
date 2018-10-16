@@ -2,18 +2,11 @@
 
 This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, it's the full thing. I'm sorry.
 
-## Downloads for macOS
-📦[Standalone](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-macos-1.3.0.zip)
-
-## Downloads for Windows
-💽[Setup, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-win32-1.3.0-setup-x64.exe)
-💽[Setup, 32-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-win32-1.3.0-setup-ia32.exe)
-📦[Standalone, 32-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-win32-1.3.0-standalone-ia32.zip)
-📦[Standalone, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-win32-1.3.0-standalone-x64.zip)
-
-## Downloads for Linux
-💽[deb, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-linux_1.3.0_amd64.deb)
-💽[rpm, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-linux-1.3.0.x86_64.rpm)
+## Downloads
+|  | Windows | macOS | Linux |
+|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Standalone Download | 📦[Standalone, 32-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-win32-1.3.0-standalone-ia32.zip) <br /> 📦[Standalone, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-win32-1.3.0-standalone-x64.zip)  | 📦[Standalone](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-macos-1.3.0.zip) |  |
+| Installer | 💽[Setup, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-win32-1.3.0-setup-x64.exe) <br /> 💽[Setup, 32-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-win32-1.3.0-setup-ia32.exe)  |  |  💽[deb, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-linux_1.3.0_amd64.deb) <br /> 💽[rpm, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v1.3.0/windows95-linux-1.3.0.x86_64.rpm) |
 
 ![Screenshot](https://user-images.githubusercontent.com/1426799/44532591-4ceb3680-a6a8-11e8-8c2c-bc29f3bfdef7.png)
 
