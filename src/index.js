@@ -1,3 +1,4 @@
+prompt("are u want to visit on this site");
 const { app, BrowserWindow } = require('electron')
 const path = require('path')
 
