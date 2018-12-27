@@ -21,7 +21,7 @@ module.exports = {
     {
       name: '@electron-forge/maker-squirrel',
       platforms: ['win32'],
-      config: arch => {
+      config: (arch) => {
         return {
           name: 'windows95',
           authors: 'Felix Rieseberg',
