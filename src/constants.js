@@ -7,7 +7,7 @@ const CONSTANTS = {
   IMAGE_PATH: path.join(__dirname, 'images/windows95.img'),
   IMAGE_DEFAULT_SIZE: 1073741824, // 1GB
   DEFAULT_STATE_PATH: path.join(__dirname, 'images/default-state.bin'),
-  STATE_PATH: path.join(_app.getPath('userData'), 'state.bin')
+  STATE_PATH: path.join(_app.getPath('userData'), 'state-v2.bin')
 }
 
 const IPC_COMMANDS = {
