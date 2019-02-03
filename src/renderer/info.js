@@ -1,28 +1,56 @@
 const $ = document.querySelector.bind(document)
+const status = $('#status')
+const diskStatus = $('#disk-status')
+const cpuStatus = $('#cpu-status')
+const toggleStatus = $('#toggle-status')
 
-export function setupInfo () {
-  const diskStatus = $('#disk-status')
-  const cpuStatus = $('#cpu-status')
-  let lastCounter = 0
-  let lastTick = 0
+let lastCounter = 0
+let lastTick = 0
+let infoInterval = null
 
-  window.emulator.add_listener('ide-read-start', () => {
-    diskStatus.innerHTML = 'Read'
-  })
+const onIDEReadStart = () => {
+  diskStatus.innerHTML = 'Read'
+}
 
-  window.emulator.add_listener('ide-read-end', () => {
-    diskStatus.innerHTML = 'Idle'
-  })
+const onIDEReadWriteEnd = () => {
+  diskStatus.innerHTML = 'Idle'
+}
 
-  window.emulator.add_listener('ide-write-end', () => {
-    diskStatus.innerHTML = 'Idle'
-  })
+toggleStatus.onclick = function toggleInfo () {
+  if (infoInterval) {
+    enableInfo()
+  } else {
+    disableInfo()
+  }
+}
 
-  window.emulator.add_listener('screen-set-size-graphical', (...args) => {
-    console.log(...args)
-  })
+/**
+ * Start information gathering, but only if the panel is visible
+ */
+export function startInfoMaybe () {
+  if (status.style.display !== 'none') {
+    enableInfo()
+  }
+}
 
-  setInterval(() => {
+/**
+ * Enable the gathering of information (and hide the little information tab)
+ */
+export function enableInfo () {
+  // Show the info thingy
+  status.style.display = 'block'
+
+  // We can only do the rest with an emulator
+  if (!window.emulator) return
+
+  // Set listeners
+  window.emulator.add_listener('ide-read-start', onIDEReadStart)
+  window.emulator.add_listener('ide-read-end', onIDEReadWriteEnd)
+  window.emulator.add_listener('ide-write-end', onIDEReadWriteEnd)
+  window.emulator.add_listener('screen-set-size-graphical', console.log)
+
+  // Set an interval
+  infoInterval = setInterval(() => {
     const now = Date.now()
     const instructionCounter = window.emulator.get_instruction_counter()
     const ips = instructionCounter - lastCounter
@@ -33,4 +61,25 @@ export function setupInfo () {
 
     cpuStatus.innerHTML = Math.round(ips / deltaTime)
   }, 500)
+}
+
+/**
+ * Disable the gathering of information (and hide the little information tab)
+ */
+export function disableInfo () {
+  // Hide the info thingy
+  status.style.display = 'none'
+
+  // Clear the interval
+  clearInterval(infoInterval)
+  infoInterval = null
+
+  // We can only do the rest with an emulator
+  if (!window.emulator) return
+
+  // Unset the listeners
+  window.emulator.remove_listener('ide-read-start', onIDEReadStart)
+  window.emulator.remove_listener('ide-read-end', onIDEReadWriteEnd)
+  window.emulator.remove_listener('ide-write-end', onIDEReadWriteEnd)
+  window.emulator.remove_listener('screen-set-size-graphical', console.log)
 }

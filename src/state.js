@@ -1,9 +1,6 @@
 const fs = require('fs-extra')
-const path = require('path')
-const { remote } = require('electron')
 
-const DEFAULT_PATH = path.join(__dirname, 'images/default-state.bin')
-const STATE_PATH = path.join(remote.app.getPath('userData'), 'state.bin')
+const { CONSTANTS } = require('./constants')
 
 /**
  * Returns the current machine's state - either what
@@ -12,11 +9,9 @@ const STATE_PATH = path.join(remote.app.getPath('userData'), 'state.bin')
  * @returns {ArrayBuffer}
  */
 function getState () {
-  const statePath = fs.existsSync(STATE_PATH)
-    ? STATE_PATH
-    : DEFAULT_PATH
-
-  return fs.readFileSync(statePath).buffer
+  if (fs.existsSync(CONSTANTS.STATE_PATH)) {
+    return fs.readFileSync(CONSTANTS.STATE_PATH).buffer
+  }
 }
 
 /**
@@ -25,8 +20,8 @@ function getState () {
  * @returns {Promise<void>}
  */
 async function resetState () {
-  if (fs.existsSync(STATE_PATH)) {
-    return fs.remove(STATE_PATH)
+  if (fs.existsSync(CONSTANTS.STATE_PATH)) {
+    return fs.remove(CONSTANTS.STATE_PATH)
   }
 }
 
@@ -43,13 +38,13 @@ async function saveState () {
 
     window.emulator.save_state(async (error, newState) => {
       if (error) {
-        console.log(error)
+        console.warn(`State: Could not save state`, error)
         return
       }
 
-      await fs.outputFile(STATE_PATH, Buffer.from(newState))
+      await fs.outputFile(CONSTANTS.STATE_PATH, Buffer.from(newState))
 
-      console.log(`Saved state to ${STATE_PATH}`)
+      console.log(`State: Saved state to ${CONSTANTS.STATE_PATH}`)
 
       resolve()
     })
@@ -60,15 +55,21 @@ async function saveState () {
  * Restores the VM's state.
  */
 function restoreState () {
+  const state = getState()
+
+  // Nothing to do with if we don't have a state
+  if (!state) {
+    console.log(`State: No state present, not restoring.`)
+  }
+
   try {
-    window.emulator.restore_state(getState())
+    window.emulator.restore_state(state)
   } catch (error) {
-    console.log(`Could not read state file. Maybe none exists?`, error)
+    console.log(`State: Could not read state file. Maybe none exists?`, error)
   }
 }
 
 module.exports = {
-  STATE_PATH,
   saveState,
   restoreState,
   resetState,

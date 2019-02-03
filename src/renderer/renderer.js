@@ -1,7 +1,8 @@
+/* We're using modern esm imports here */
 import { setupState } from 'es6://app-state.js'
 import { setupClickListener, setupEscListener, setupCloseListener } from 'es6://listeners.js'
 import { toggleButtons, setupButtons } from 'es6://buttons.js'
-import { setupInfo } from 'es6://info.js'
+import { startInfoMaybe } from 'es6://info.js'
 
 setupState()
 
@@ -9,9 +10,10 @@ setupState()
  * The main method executing the VM.
  */
 async function main () {
-  // New v86 instance
-  window.emulator = new V86Starter({
-    memory_size: 64 * 1024 * 1024,
+  const imageSize = await window.windows95.getDiskImageSize()
+  const options = {
+    memory_size: 128 * 1024 * 1024,
+    video_memory_size: 32 * 1024 * 1024,
     screen_container: document.getElementById('emulator'),
     bios: {
       url: './bios/seabios.bin'
@@ -22,20 +24,18 @@ async function main () {
     hda: {
       url: '../images/windows95.img',
       async: true,
-      size: 242049024
+      size: imageSize
     },
     fda: {
       buffer: window.appState.floppyFile || undefined
     },
     boot_order: 0x132
-  })
-
-  // High DPI support
-  if (navigator.userAgent.includes('Windows')) {
-    const scale = window.devicePixelRatio
-
-    window.emulator.screen_adapter.set_scale(scale, scale)
   }
+
+  console.log(`Starting emulator with options`, options)
+
+  // New v86 instance
+  window.emulator = new V86Starter(options)
 
   // Restore state. We can't do this right away
   // and randomly chose 500ms as the appropriate
@@ -45,7 +45,7 @@ async function main () {
       windows95.restoreState()
     }
 
-    setupInfo()
+    startInfoMaybe()
 
     window.appState.cursorCaptured = true
     window.emulator.lock_mouse()
