@@ -78,6 +78,10 @@ async function createMenu () {
           click: () => send(IPC_COMMANDS.MACHINE_RESTART)
         },
         {
+          label: 'Reset',
+          click: () => send(IPC_COMMANDS.MACHINE_RESET)
+        },
+        {
           type: 'separator'
         },
         {

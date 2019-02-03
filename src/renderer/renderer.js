@@ -62,7 +62,11 @@ function start () {
   main()
 }
 
-setupIpcListeners()
+setupIpcListeners(start)
 setupEscListener()
 setupCloseListener()
 setupButtons(start)
+
+if (document.location.hash.includes('AUTO_START')) {
+  start()
+}

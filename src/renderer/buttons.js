@@ -13,7 +13,7 @@ export function setupButtons (start) {
   $('#discard-state').addEventListener('click', () => {
     window.appState.bootFresh = true
 
-    start('win95')
+    start()
   })
 
   // Floppy

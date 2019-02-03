@@ -1,6 +1,6 @@
 import { toggleInfo } from 'es6://info.js'
 
-export function setupIpcListeners () {
+export function setupIpcListeners (start) {
   const { windows95 } = window
 
   windows95.addListener(windows95.IPC_COMMANDS.TOGGLE_INFO, () => {
@@ -8,9 +8,19 @@ export function setupIpcListeners () {
   })
 
   windows95.addListener(windows95.IPC_COMMANDS.MACHINE_RESTART, () => {
+    console.log(`Restarting machine`)
+
     if (!window.emulator || !window.emulator.is_running) return
 
     window.emulator.restart()
+  })
+
+  windows95.addListener(windows95.IPC_COMMANDS.MACHINE_RESET, () => {
+    console.log(`Resetting machine`)
+
+    window.appState.isResetting = true
+    document.location.hash = `#AUTO_START`
+    document.location.reload()
   })
 
   windows95.addListener(windows95.IPC_COMMANDS.MACHINE_CTRL_ALT_DEL, () => {

@@ -9,6 +9,7 @@ export function setupCloseListener () {
 
   window.onbeforeunload = (event) => {
     if (window.appState.isQuitting) return
+    if (window.appState.isResetting) return
 
     handleClose()
     event.preventDefault()
@@ -32,12 +33,15 @@ export function setupEscListener () {
   }
 }
 
+function onDocumentClick () {
+  if (!window.appState.cursorCaptured) {
+    window.appState.cursorCaptured = true
+    window.emulator.mouse_set_status(true)
+    window.emulator.lock_mouse()
+  }
+}
+
 export function setupClickListener () {
-  document.addEventListener('click', () => {
-    if (!window.appState.cursorCaptured) {
-      window.appState.cursorCaptured = true
-      window.emulator.mouse_set_status(true)
-      window.emulator.lock_mouse()
-    }
-  })
+  document.removeEventListener('click', onDocumentClick)
+  document.addEventListener('click', onDocumentClick)
 }
