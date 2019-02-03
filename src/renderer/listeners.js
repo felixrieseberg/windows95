@@ -22,6 +22,7 @@ export function setupEscListener () {
     if (evt.keyCode === 27) {
       if (window.appState.cursorCaptured) {
         window.appState.cursorCaptured = false
+        window.emulator.mouse_set_status(false)
         document.exitPointerLock()
       } else {
         window.appState.cursorCaptured = true
@@ -35,6 +36,7 @@ export function setupClickListener () {
   document.addEventListener('click', () => {
     if (!window.appState.cursorCaptured) {
       window.appState.cursorCaptured = true
+      window.emulator.mouse_set_status(true)
       window.emulator.lock_mouse()
     }
   })
