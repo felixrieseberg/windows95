@@ -13,7 +13,9 @@ function getState () {
     ? CONSTANTS.STATE_PATH
     : CONSTANTS.DEFAULT_STATE_PATH
 
-  return fs.readFileSync(statePath).buffer
+  if (fs.existsSync(statePath)) {
+    return fs.readFileSync(statePath).buffer
+  }
 }
 
 /**
