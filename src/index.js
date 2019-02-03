@@ -1,7 +1,6 @@
 const { app, BrowserWindow } = require('electron')
 const path = require('path')
 
-const { clearCaches } = require('./cache')
 const { createMenu } = require('./menu')
 const { setupProtocol } = require('./es6')
 
@@ -21,8 +20,8 @@ let mainWindow
 const createWindow = () => {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 1024,
+    height: 768,
     useContentSize: true,
     webPreferences: {
       nodeIntegration: false,
@@ -40,7 +39,6 @@ const createWindow = () => {
 app.on('ready', async () => {
   await setupProtocol()
   await createMenu()
-  await clearCaches()
 
   createWindow()
 })
