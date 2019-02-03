@@ -12,6 +12,7 @@ class Windows95 extends EventEmitter {
 
     // Constants
     this.CONSTANTS = CONSTANTS
+    this.IPC_COMMANDS = IPC_COMMANDS
 
     // Methods
     this.getDiskImageSize = getDiskImageSize
@@ -39,4 +40,3 @@ class Windows95 extends EventEmitter {
 }
 
 window.windows95 = new Windows95()
-

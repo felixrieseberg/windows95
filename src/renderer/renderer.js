@@ -3,6 +3,7 @@ import { setupState } from 'es6://app-state.js'
 import { setupClickListener, setupEscListener, setupCloseListener } from 'es6://listeners.js'
 import { toggleButtons, setupButtons } from 'es6://buttons.js'
 import { startInfoMaybe } from 'es6://info.js'
+import { setupIpcListeners } from 'es6://ipc.js'
 
 setupState()
 
@@ -61,6 +62,7 @@ function start () {
   main()
 }
 
+setupIpcListeners()
 setupEscListener()
 setupCloseListener()
 setupButtons(start)

@@ -71,7 +71,7 @@ async function createMenu () {
       submenu: [
         {
           label: 'Send Ctrl+Alt+Del',
-          click: () => send('ctrlaltdel')
+          click: () => send(IPC_COMMANDS.MACHINE_CTRL_ALT_DEL)
         },
         {
           label: 'Restart',
@@ -82,7 +82,7 @@ async function createMenu () {
         },
         {
           label: 'Go to Disk Image',
-          click: () => send('disk-image')
+          click: () => send(IPC_COMMANDS.SHOW_DISK_IMAGE)
         }
       ]
     },

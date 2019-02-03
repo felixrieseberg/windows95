@@ -16,11 +16,16 @@ const onIDEReadWriteEnd = () => {
   diskStatus.innerHTML = 'Idle'
 }
 
-toggleStatus.onclick = function toggleInfo () {
-  if (infoInterval) {
-    enableInfo()
-  } else {
+toggleStatus.onclick = toggleInfo
+
+/**
+ * Toggle the information display
+ */
+export function toggleInfo () {
+  if (status.style.display !== 'none') {
     disableInfo()
+  } else {
+    enableInfo()
   }
 }
 
@@ -41,7 +46,9 @@ export function enableInfo () {
   status.style.display = 'block'
 
   // We can only do the rest with an emulator
-  if (!window.emulator) return
+  if (!window.emulator.add_listener) {
+    return
+  }
 
   // Set listeners
   window.emulator.add_listener('ide-read-start', onIDEReadStart)
@@ -75,7 +82,9 @@ export function disableInfo () {
   infoInterval = null
 
   // We can only do the rest with an emulator
-  if (!window.emulator) return
+  if (!window.emulator.remove_listener) {
+    return
+  }
 
   // Unset the listeners
   window.emulator.remove_listener('ide-read-start', onIDEReadStart)

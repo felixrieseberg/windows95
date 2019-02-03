@@ -9,9 +9,11 @@ const { CONSTANTS } = require('./constants')
  * @returns {ArrayBuffer}
  */
 function getState () {
-  if (fs.existsSync(CONSTANTS.STATE_PATH)) {
-    return fs.readFileSync(CONSTANTS.STATE_PATH).buffer
-  }
+  const statePath = fs.existsSync(CONSTANTS.STATE_PATH)
+    ? CONSTANTS.STATE_PATH
+    : CONSTANTS.DEFAULT_STATE_PATH
+
+  return fs.readFileSync(statePath).buffer
 }
 
 /**
