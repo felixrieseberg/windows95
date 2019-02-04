@@ -29,3 +29,7 @@ image on your distribution. It's likely that you'll be able to run `mount`
 with the image as input.
 
 [osfmount]: https://www.osforensics.com/tools/mount-disk-images.html
+
+## What's the FrontPage Username and Password?
+Username: windows95
+Password: password
