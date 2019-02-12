@@ -27,7 +27,13 @@ Note: You may need to run `xhost +` on your system to allow connections to the X
 * [XQuartz](https://www.xquartz.org/)
 * [Docker](http://docker.io) 
 
-1. Start XQuartz ,go to "Preferences -> Security " ,and check the box "allow connections from network clients"
-2. restart XQuartz
-3. In the terminal ,run "xhost +"
-4. run "docker run -it -e DISPLAY=host.docker.internal:1 toolboc/windows95"
+1. Start XQuartz, go to `Preferences` -> `Security`, and check the box `Allow connections from network clients`
+2. Restart XQuartz
+3. In the terminal, run 
+```
+xhost +
+```
+4. run 
+```
+docker run -it -e DISPLAY=host.docker.internal:1 toolboc/windows95
+```
