@@ -16,11 +16,6 @@ Yes! Quite well, actually - on macOS, Windows, and Linux. Bear in mind that this
 ## Should this have been a native app?
 Absolutely.
 
-## Can it run in the cloud too?
-Sure, you can also run Windows 95 in Electron, in a virtual X server, in a JavaScript VNC client, in a Kubernetes workspace. What could go wrong?
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/felixrieseberg/windows95)
-
 ## Does it run Doom (or my other favorite game)?
 You'll likely be better off with an actual virtualization app, but the short answer is yes. [Thanks to
 @DisplacedGamers](https://youtu.be/xDXqmdFxofM) I can recommend that you switch to a resolution of
@@ -50,6 +45,7 @@ Once you've done so, run `npm install` and `npm start` to run your local build.
  * [Windows 95 is stuck in a bad state](./HELP.md#windows-95-is-stuck-in-a-bad-state)
  * [I want to install additional apps or games](./HELP.md#i-want-to-install-additional-apps-or-games)
  * [Running in Docker](./docs/docker-instructions.md)
+ * [Running in an online VM with Kubernets and Gitpod](./docs/docker-kubernetes-gitpod.md)
 
 ## License
 
