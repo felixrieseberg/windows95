@@ -45,7 +45,7 @@ Once you've done so, run `npm install` and `npm start` to run your local build.
  * [Windows 95 is stuck in a bad state](./HELP.md#windows-95-is-stuck-in-a-bad-state)
  * [I want to install additional apps or games](./HELP.md#i-want-to-install-additional-apps-or-games)
  * [Running in Docker](./docs/docker-instructions.md)
- * [Running in an online VM with Kubernets and Gitpod](./docs/docker-kubernetes-gitpod.md)
+ * [Running in an online VM with Kubernetes and Gitpod](./docs/docker-kubernetes-gitpod.md)
 
 ## License
 
