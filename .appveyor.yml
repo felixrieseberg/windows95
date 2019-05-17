@@ -20,7 +20,7 @@ install:
   - ps: cd ./src/
   - ps: mkdir images
   - ps: cd images
-  - ps: Start-FileDownload 'https://1drv.ws/u/s!AkfaAw_EaahOkulh8rA41x2phgfYXQ' -Timeout 600000
+  - ps: Start-FileDownload 'https://1drv.ws/u/s!AkfaAw_EaahOkulh8rA41x2phgfYXQ' -FileName images.zip -Timeout 600000
   - ps: 7z x images.zip -y -aoa
   - ps: Remove-Item images.zip
   - ps: cd ../..
