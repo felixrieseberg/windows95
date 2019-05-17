@@ -17,7 +17,9 @@ install:
   - ps: Install-Product node $env:nodejs_version
   - node --version
   - npm ci
-  - ps: cd ./src/images
+  - ps: cd ./src/
+  - ps: mkdir images
+  - ps: cd images
   - ps: Start-FileDownload 'https://1drv.ws/u/s!AkfaAw_EaahOkulh8rA41x2phgfYXQ' -Timeout 600000
   - ps: 7z x images.zip -y -aoa
   - ps: Remove-Item images.zip
