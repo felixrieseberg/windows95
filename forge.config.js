@@ -3,9 +3,7 @@ const package = require('./package.json');
 
 module.exports = {
   packagerConfig: {
-    asar: {
-      unpack: '**/images/*.img'
-    },
+    asar: false,
     icon: path.resolve(__dirname, 'assets', 'icon'),
     appBundleId: 'com.felixrieseberg.windows95',
     appCategoryType: 'public.app-category.developer-tools',
