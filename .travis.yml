@@ -50,8 +50,6 @@ install:
   fi
 script:
 - npm run lint
-- npm run test:ci
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then npm run test:coverage; fi
 - if test -z "$TRAVIS_TAG"; then npm run make; fi
 
 after_success: if test -n "$TRAVIS_TAG"; then npm run publish; fi
