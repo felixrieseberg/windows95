@@ -1,0 +1,42 @@
+environment:
+  matrix:
+    - nodejs_version: "10"
+
+init:
+- git config --global core.symlinks true
+
+install:
+  # Setup the code signing certificate
+  - ps: >-
+      if (Test-Path Env:\WINDOWS_CERTIFICATE_P12) {
+        $workingDirectory = Convert-Path (Resolve-Path -path ".")
+        $filename = "$workingDirectory\cert.p12"
+        $bytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_P12)
+        [IO.File]::WriteAllBytes($filename, $bytes)
+      }
+  - ps: Install-Product node $env:nodejs_version
+  - node --version
+  - npm ci
+  - ps: cd ./src/images
+  - ps: Start-FileDownload 'https://1drv.ws/u/s!AkfaAw_EaahOkulh8rA41x2phgfYXQ' -Timeout 600000
+  - ps: 7z x images.zip -y -aoa
+  - ps: Remove-Item images.zip
+  - ps: cd ../..
+  - ps: Tree ./src /F
+
+cache:
+  - '%APPDATA%\npm-cache -> appveyor.yml'
+
+test_script:
+  - node --version
+  - npm --version
+  - npm run lint
+
+artifacts:
+  - path: 'out\make\squirrel.windows\**\*.exe'
+
+build_script:
+  - if %APPVEYOR_REPO_TAG% EQU false npm run make
+  - if %APPVEYOR_REPO_TAG% EQU true npm run publish
+  - if %APPVEYOR_REPO_TAG% EQU true npm run publish -- --arch=ia32
+  - ps: Tree ./out/make /F
