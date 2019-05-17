@@ -4,7 +4,14 @@ const path = require('path')
 
 const ES6_PATH = path.join(__dirname, 'renderer')
 
-protocol.registerStandardSchemes(['es6'])
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'es6',
+    privileges: {
+      standard: true
+    }
+  }
+])
 
 async function setupProtocol () {
   protocol.registerBufferProtocol('es6', async (req, cb) => {

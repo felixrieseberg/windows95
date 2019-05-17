@@ -51,5 +51,18 @@ module.exports = {
       name: '@electron-forge/maker-flatpak',
       platforms: ['linux']
     }
+  ],
+  publishers: [
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        repository: {
+          owner: 'felixrieseberg',
+          name: 'windows95'
+        },
+        draft: true,
+        prerelease: true
+      }
+    }
   ]
 };
