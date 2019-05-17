@@ -23,8 +23,10 @@ install:
   - ps: Start-FileDownload 'https://1drv.ws/u/s!AkfaAw_EaahOkulh8rA41x2phgfYXQ' -FileName images.zip -Timeout 600000
   - ps: 7z x images.zip -y -aoa
   - ps: Remove-Item images.zip
+  - ps: Remove-Item __MACOSX -Recurse -ErrorAction Ignore
   - ps: cd ../..
   - ps: Tree ./src /F
+  - ps: $env:DEBUG="*"
 
 cache:
   - '%APPDATA%\npm-cache -> appveyor.yml'
