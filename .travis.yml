@@ -33,7 +33,8 @@ install:
 - rm images.zip
 - rm -r __MACOSX
 - cd ../..
-- tree src
+- ls src
+- ls src/images
 - |
   if [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_SECURE_ENV_VARS" == "true" ]]; then
     export CERTIFICATE_P12=cert.p12;
