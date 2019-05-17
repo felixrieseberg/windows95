@@ -17,6 +17,7 @@ addons:
     packages:
     - fakeroot
     - rpm
+    - tree
 
 branches:
   only:
