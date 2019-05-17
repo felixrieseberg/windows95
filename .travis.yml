@@ -25,6 +25,14 @@ branches:
 
 install:
 - npm install
+- mkdir -p ./src/images
+- cd ./src/images
+- wget -O images.zip https://1drv.ws/u/s!AkfaAw_EaahOkulh8rA41x2phgfYXQ
+- unzip -o images.zip
+- rm images.zip
+- rm -r __MACOSX
+- cd ../..
+- tree src
 - |
   if [[ "$TRAVIS_OS_NAME" == "osx" && "$TRAVIS_SECURE_ENV_VARS" == "true" ]]; then
     export CERTIFICATE_P12=cert.p12;
