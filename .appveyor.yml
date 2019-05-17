@@ -26,7 +26,6 @@ install:
   - ps: Remove-Item __MACOSX -Recurse -ErrorAction Ignore
   - ps: cd ../..
   - ps: Tree ./src /F
-  - ps: $env:DEBUG="*"
 
 cache:
   - '%APPDATA%\npm-cache -> appveyor.yml'
