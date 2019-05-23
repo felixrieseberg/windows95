@@ -1,7 +1,7 @@
 {
   "name": "windows95",
   "productName": "windows95",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Windows 95, in an app. I'm sorry.",
   "main": "src/index.js",
   "scripts": {
