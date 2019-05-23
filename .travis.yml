@@ -47,9 +47,9 @@ install:
     security unlock-keychain -p travis $KEYCHAIN;
     # Add certificates to keychain and allow codesign to access them
     # Apple Worldwide Developer Relations Certification Authority
-    security import ./tools/certs/apple.cer -k ~/Library/Keychains/$KEYCHAIN -T /usr/bin/codesign
+    security import ./assets/certs/apple.cer -k ~/Library/Keychains/$KEYCHAIN -T /usr/bin/codesign
     # Developer Authentication Certification Authority
-    security import ./tools/certs/dac.cer -k ~/Library/Keychains/$KEYCHAIN -T /usr/bin/codesign
+    security import ./assets/certs/dac.cer -k ~/Library/Keychains/$KEYCHAIN -T /usr/bin/codesign
     # Developer ID Felix
     security import $CERTIFICATE_P12 -k $KEYCHAIN -P $MACOS_CERT_PASSWORD -T /usr/bin/codesign 2>&1 >/dev/null;
     rm $CERTIFICATE_P12;
