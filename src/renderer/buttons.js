@@ -1,25 +1,32 @@
 const $ = document.querySelector.bind(document)
+const $$ = document.querySelectorAll.bind(document)
 
 export function setupButtons (start) {
-  // Start
-  $('.btn-start').addEventListener('click', () => start())
+  // Sections
+  $('a#start').addEventListener('click', () => setVisibleSection('start'))
+  $('a#floppy').addEventListener('click', () => setVisibleSection('floppy'))
+  $('a#state').addEventListener('click', () => setVisibleSection('state'))
+  $('a#disk-image').addEventListener('click', () => setVisibleSection('disk-image'))
 
-  // Disk Image
-  $('#show-disk-image').addEventListener('click', () => windows95.showDiskImage())
+  // // Start
+  // $('.btn-start').addEventListener('click', () => start())
 
-  // Reset
-  $('#reset').addEventListener('click', () => windows95.resetState())
+  // // Disk Image
+  // $('#show-disk-image').addEventListener('click', () => windows95.showDiskImage())
 
-  $('#discard-state').addEventListener('click', () => {
-    window.appState.bootFresh = true
+  // // Reset
+  // $('#reset').addEventListener('click', () => windows95.resetState())
 
-    start()
-  })
+  // $('#discard-state').addEventListener('click', () => {
+  //   window.appState.bootFresh = true
 
-  // Floppy
-  $('#floppy').addEventListener('click', () => {
-    $('#file-input').click()
-  })
+  //   start()
+  // })
+
+  // // Floppy
+  // $('#floppy').addEventListener('click', () => {
+  //   $('#file-input').click()
+  // })
 
   // Floppy (Hidden Input)
   $('#file-input').addEventListener('change', (event) => {
@@ -41,4 +48,9 @@ export function toggleButtons (forceTo) {
   } else {
     buttonElements.style.display = undefined
   }
+}
+
+function setVisibleSection(id = '') {
+  $$(`section`).forEach((s) => s.classList.remove('visible'))
+  $(`section#section-${id}`).classList.add('visible')
 }

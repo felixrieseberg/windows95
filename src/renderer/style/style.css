@@ -26,8 +26,6 @@ body.paused {
   z-index: 100;
   left: calc(50vw - 110px);
   background: white;
-  text-align: center;
-  font-family: Courier;
   font-size: 10px;
   padding-bottom: 3px;
   border-bottom-left-radius: 15px;
@@ -36,6 +34,7 @@ body.paused {
   padding-left: 10px;
   padding-right: 10px;
   max-height: 18px;
+  top: 0;
 }
 
 #floppy-path {
@@ -63,37 +62,25 @@ body.paused {
   display: none;
 }
 
-#other-buttons {
-  position: absolute;
-  width: 100vw;
-  height: 100px;
-  display: flex;
-  align-items: flex-end;
-  bottom: 0;
-  justify-content: center;
+.windows95 nav .nav-link,
+.windows95 nav .nav-logo {
+  height: 30px;
+  line-height: 1.5;
 }
 
-#start-buttons {
+.windows95 nav .nav-logo img {
+  max-height: 20px;
+}
+
+section {
+  display: none;
+}
+
+section.visible {
+  display: flex;
   position: absolute;
   width: 100vw;
   height: 100vh;
-  display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.btn {
-  font-family: Courier;
-  cursor: pointer;
-  background: #ffd2fd;
-  margin: 10px;
-  padding: 5px;
-  text-align: center;
-}
-
-.btn:hover {
-  cursor: pointer;
-  background: #ff95fa;
-  margin: 10px;
-  padding: 5px;
 }

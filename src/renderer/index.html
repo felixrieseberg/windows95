@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="windows95">
 
 <head>
   <meta charset="UTF-8">
@@ -7,6 +7,7 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Windows</title>
   <script src="./lib/libv86.js"></script>
+  <link rel="stylesheet" href="style/vendor/95css.css">
   <link rel="stylesheet" href="style/style.css">
 </head>
 
@@ -16,24 +17,16 @@
     | CPU Speed: <span id="cpu-status">0</span>
     | <a href="#" id="toggle-status">Hide</a>
   </div>
-  <div id="buttons">
-    <div id="start-buttons">
-      <!-- <div class="btn" id="win98">Windows 98</div> -->
-      <div class="btn btn-start" id="win95">
+  <section id="section-start" class="visible">
+    <div class="btn btn-start" id="win95">
         Start Windows 95
         <br />
 
         <small>Hit ESC to lock or unlock your mouse</small>
       </div>
-      <!-- <div class="btn" id="win1">Windows 1</div> -->
-    </div>
-    <div id="other-buttons">
-      <div class="btn" id="reset">Reset Machine & Delete State</div>
-      <div class="btn" id="floppy">Insert Floppy Disk</div>
-      <div class="btn" id="discard-state">Discard State & Boot From Scratch</div>
-      <div class="btn" id="show-disk-image">Show Disk Image</div>
-      <input id="file-input" type='file'>
-    </div>
+  </section>
+  <section id="section-floppy">
+    <input id="file-input" type='file'>
     <div id="information">
       <p id="floppy-path"></p>
       <p>You can insert a floppy disk image with the ".img" format.</p>
@@ -42,7 +35,25 @@
         or if you've changed the disk image.
       </p>
     </div>
-  </div>
+  </section>
+  <section id="section-state">
+
+  </section>
+  <section id="section-disk">
+
+  </section>
+
+  <nav class="nav nav-bottom">
+    <a href="#" id="start" class="nav-logo">
+      <img src="style/start.png" alt=""><span>Start</span>
+    </a>
+    <button type="button" name="button" class="nav-menu-btn">Menu</button>
+    <div class="nav-menu">
+      <a href="#" id="floppy" class="nav-link">Floppy Disk</a>
+      <a href="#" id="state" class="nav-link">Reset Machine</a>
+      <a href="#" id="disk" class="nav-link">Modify C: Drive</a>
+    </div>
+  </nav>
   <div id="emulator" style="height: 100vh; width: 100vw">
     <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
     <canvas style="display: none"></canvas>
