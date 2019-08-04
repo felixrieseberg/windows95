@@ -6,30 +6,30 @@ export function setupButtons (start) {
   $('a#start').addEventListener('click', () => setVisibleSection('start'))
   $('a#floppy').addEventListener('click', () => setVisibleSection('floppy'))
   $('a#state').addEventListener('click', () => setVisibleSection('state'))
-  $('a#disk-image').addEventListener('click', () => setVisibleSection('disk-image'))
+  $('a#disk').addEventListener('click', () => setVisibleSection('disk'))
 
-  // // Start
-  // $('.btn-start').addEventListener('click', () => start())
+  // Start
+  $('.btn-start').addEventListener('click', start)
 
-  // // Disk Image
-  // $('#show-disk-image').addEventListener('click', () => windows95.showDiskImage())
+  // Disk Image
+  $('#disk-image-show').addEventListener('click', () => windows95.showDiskImage())
 
-  // // Reset
-  // $('#reset').addEventListener('click', () => windows95.resetState())
+  // Reset
+  $('#reset').addEventListener('click', () => windows95.resetState())
 
-  // $('#discard-state').addEventListener('click', () => {
-  //   window.appState.bootFresh = true
+  $('#discard-state').addEventListener('click', () => {
+    window.appState.bootFresh = true
 
-  //   start()
-  // })
+    start()
+  })
 
-  // // Floppy
-  // $('#floppy').addEventListener('click', () => {
-  //   $('#file-input').click()
-  // })
+  // Floppy
+  $('#floppy-select').addEventListener('click', () => {
+    $('#floppy-input').click()
+  })
 
   // Floppy (Hidden Input)
-  $('#file-input').addEventListener('change', (event) => {
+  $('#floppy-input').addEventListener('change', (event) => {
     window.appState.floppyFile = event.target.files && event.target.files.length > 0
       ? event.target.files[0]
       : null
@@ -40,8 +40,8 @@ export function setupButtons (start) {
   })
 }
 
-export function toggleButtons (forceTo) {
-  const buttonElements = $('#buttons')
+export function toggleSetup (forceTo) {
+  const buttonElements = $('#setup')
 
   if (buttonElements.style.display !== 'none' || forceTo === false) {
     buttonElements.style.display = 'none'
