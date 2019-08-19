@@ -1,3 +1,6 @@
+@import "./resets.css";
+@import "./status.css";
+
 html, body {
   margin: 0;
   padding: 0;
@@ -18,23 +21,6 @@ body.paused {
 
 #buttons {
   user-select: none;
-}
-
-#status {
-  user-select: none;
-  position: absolute;
-  z-index: 100;
-  left: calc(50vw - 110px);
-  background: white;
-  font-size: 10px;
-  padding-bottom: 3px;
-  border-bottom-left-radius: 15px;
-  border-bottom-right-radius: 15px;
-  overflow: hidden;
-  padding-left: 10px;
-  padding-right: 10px;
-  max-height: 18px;
-  top: 0;
 }
 
 #floppy-path {
@@ -67,24 +53,6 @@ body.paused {
 
 #file-input {
   display: none;
-}
-
-.windows95 nav .nav-link,
-.windows95 nav .nav-logo {
-  height: 30px;
-  line-height: 1.5;
-}
-
-.windows95 nav .nav-logo img {
-  margin-left: 2px;
-  max-height: 20px;
-}
-
-.windows95 nav .nav-logo > span {
-  position: absolute;
-  top: 9px;
-  left: 37px;
-  font-weight: bold;
 }
 
 section {
