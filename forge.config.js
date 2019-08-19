@@ -2,6 +2,9 @@ const path = require('path');
 const package = require('./package.json');
 
 module.exports = {
+  hooks: {
+    generateAssets: require('./tools/generateAssets')
+  },
   packagerConfig: {
     asar: false,
     icon: path.resolve(__dirname, 'assets', 'icon'),
