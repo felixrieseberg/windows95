@@ -2,3 +2,5 @@ node_modules
 out
 src/images
 .DS_Store
+images
+dist
