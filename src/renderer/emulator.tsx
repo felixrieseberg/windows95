@@ -53,35 +53,25 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   public setupInputListeners() {
     // ESC
     document.onkeydown = evt => {
-      const { emulator, isCursorCaptured } = this.state;
+      const { isCursorCaptured } = this.state;
 
       evt = evt || window.event;
 
       if (evt.keyCode === 27) {
         if (isCursorCaptured) {
-          this.setState({ isCursorCaptured: false });
-
-          if (emulator) {
-            emulator.mouse_set_status(false);
-          }
-
-          document.exitPointerLock();
+          this.unlockMouse();
         } else {
-          this.setState({ isCursorCaptured: true });
-
-          if (emulator) {
-            emulator.lock_mouse();
-          }
+          this.lockMouse();
         }
       }
     };
 
     // Click
     document.addEventListener("click", () => {
-      if (!this.state.isCursorCaptured) {
-        this.setState({ isCursorCaptured: true });
-        this.state.emulator.mouse_set_status(true);
-        this.state.emulator.lock_mouse();
+      const { isRunning } = this.state;
+
+      if (isRunning) {
+        this.lockMouse();
       }
     });
   }
@@ -124,6 +114,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
           0x53 | 0x80
         ]);
       }
+    });
+
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_STOP, () => {
+      this.stopEmulator();
     });
 
     ipcRenderer.on(IPC_COMMANDS.MACHINE_RESTART, () => {
@@ -221,7 +215,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   /**
    * Start the actual emulator
    */
-  public async startEmulator() {
+  private async startEmulator() {
     document.body.classList.remove("paused");
 
     const imageSize = await getDiskImageSize();
@@ -248,9 +242,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     console.log(`Starting emulator with options`, options);
 
+    window["emulator"] = new V86Starter(options);
+
     // New v86 instance
     this.setState({
-      emulator: new V86Starter(options),
+      emulator: window["emulator"],
       isRunning: true
     });
 
@@ -262,15 +258,33 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         this.restoreState();
       }
 
-      this.state.emulator.lock_mouse();
+      this.lockMouse();
       this.state.emulator.run();
     }, 500);
   }
 
   /**
+   * Stop the emulator
+   */
+  private async stopEmulator() {
+    const { emulator } = this.state;
+
+    if (!emulator) {
+      return;
+    }
+
+    await this.saveState();
+    this.unlockMouse();
+    emulator.stop();
+    this.setState({ isRunning: false });
+
+    document.body.classList.add("paused");
+  }
+
+  /**
    * Reset the emulator by reloading the whole page (lol)
    */
-  public async resetEmulator() {
+  private async resetEmulator() {
     this.isResetting = true;
     document.location.hash = `#AUTO_START`;
     document.location.reload();
@@ -280,7 +294,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    * Take the emulators state and write it to disk. This is possibly
    * a fairly big file.
    */
-  public async saveState(): Promise<void> {
+  private async saveState(): Promise<void> {
     const { emulator } = this.state;
 
     if (!emulator || !emulator.save_state) {
@@ -307,7 +321,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   /**
    * Restores state to the emulator.
    */
-  public restoreState() {
+  private restoreState() {
     const { emulator } = this.state;
     const state = this.getState();
 
@@ -336,7 +350,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    *
    * @returns {ArrayBuffer}
    */
-  public getState(): ArrayBuffer | null {
+  private getState(): ArrayBuffer | null {
     const statePath = fs.existsSync(CONSTANTS.STATE_PATH)
       ? CONSTANTS.STATE_PATH
       : CONSTANTS.DEFAULT_STATE_PATH;
@@ -346,5 +360,31 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     }
 
     return null;
+  }
+
+  private unlockMouse() {
+    const { emulator } = this.state;
+
+    this.setState({ isCursorCaptured: false });
+
+    if (emulator) {
+      emulator.mouse_set_status(false);
+    }
+
+    document.exitPointerLock();
+  }
+
+  private lockMouse() {
+    const { emulator } = this.state;
+
+    if (emulator) {
+      this.setState({ isCursorCaptured: true });
+      emulator.mouse_set_status(true);
+      emulator.lock_mouse();
+    } else {
+      console.warn(
+        `Emulator: Tried to lock mouse, but no emulator or not running`
+      );
+    }
   }
 }

@@ -97,6 +97,13 @@ export async function setupMenu() {
           click: () => send(IPC_COMMANDS.MACHINE_CTRL_ALT_DEL)
         },
         {
+          type: "separator"
+        },
+        {
+          label: "Stop",
+          click: () => send(IPC_COMMANDS.MACHINE_STOP)
+        },
+        {
           label: "Restart",
           click: () => send(IPC_COMMANDS.MACHINE_RESTART)
         },
