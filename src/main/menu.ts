@@ -1,4 +1,4 @@
-import { app, shell, Menu, BrowserWindow } from "electron";
+import { app, shell, Menu, BrowserWindow, ipcMain } from "electron";
 
 import { clearCaches } from "../cache";
 import { IPC_COMMANDS } from "../constants";
@@ -11,15 +11,29 @@ const LINKS = {
   help: "https://github.com/felixrieseberg/windows95/blob/master/HELP.md"
 };
 
+export async function setupMenu() {
+  await createMenu();
+
+  ipcMain.on(IPC_COMMANDS.MACHINE_STARTED, () =>
+    createMenu({ isRunning: true })
+  );
+  ipcMain.on(IPC_COMMANDS.MACHINE_STOPPED, () =>
+    createMenu({ isRunning: false })
+  );
+}
+
 function send(cmd: string) {
   const windows = BrowserWindow.getAllWindows();
 
   if (windows[0]) {
+    console.log(`Sending "${cmd}"`);
     windows[0].webContents.send(cmd);
+  } else {
+    console.log(`Tried to send "${cmd}", but could not find window`);
   }
 }
 
-export async function setupMenu() {
+async function createMenu({ isRunning } = { isRunning: false }) {
   const template: Array<Electron.MenuItemConstructorOptions> = [
     {
       label: "View",
@@ -94,22 +108,30 @@ export async function setupMenu() {
       submenu: [
         {
           label: "Send Ctrl+Alt+Del",
-          click: () => send(IPC_COMMANDS.MACHINE_CTRL_ALT_DEL)
+          click: () => send(IPC_COMMANDS.MACHINE_CTRL_ALT_DEL),
+          enabled: isRunning
         },
         {
           type: "separator"
         },
-        {
-          label: "Stop",
-          click: () => send(IPC_COMMANDS.MACHINE_STOP)
-        },
+        isRunning
+          ? {
+              label: "Stop",
+              click: () => send(IPC_COMMANDS.MACHINE_STOP)
+            }
+          : {
+              label: "Start",
+              click: () => send(IPC_COMMANDS.MACHINE_START)
+            },
         {
           label: "Restart",
-          click: () => send(IPC_COMMANDS.MACHINE_RESTART)
+          click: () => send(IPC_COMMANDS.MACHINE_RESTART),
+          enabled: isRunning
         },
         {
           label: "Reset",
-          click: () => send(IPC_COMMANDS.MACHINE_RESET)
+          click: () => send(IPC_COMMANDS.MACHINE_RESET),
+          enabled: isRunning
         },
         {
           type: "separator"

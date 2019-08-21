@@ -29,6 +29,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     super(props);
 
     this.startEmulator = this.startEmulator.bind(this);
+    this.stopEmulator = this.stopEmulator.bind(this);
+    this.restartEmulator = this.restartEmulator.bind(this);
+    this.resetEmulator = this.resetEmulator.bind(this);
 
     this.state = {
       isBootingFresh: false,
@@ -116,15 +119,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       }
     });
 
-    ipcRenderer.on(IPC_COMMANDS.MACHINE_STOP, () => {
-      this.stopEmulator();
-    });
-
-    ipcRenderer.on(IPC_COMMANDS.MACHINE_RESTART, () => {
-      if (this.state.emulator && this.state.isRunning) {
-        this.state.emulator.restart();
-      }
-    });
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_STOP, this.stopEmulator);
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_RESET, this.resetEmulator);
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_START, this.startEmulator);
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_RESTART, this.restartEmulator);
 
     ipcRenderer.on(IPC_COMMANDS.TOGGLE_INFO, () => {
       this.setState({ isInfoDisplayed: !this.state.isInfoDisplayed });
@@ -240,7 +238,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       boot_order: 0x132
     };
 
-    console.log(`Starting emulator with options`, options);
+    console.log(`🚜 Starting emulator with options`, options);
 
     window["emulator"] = new V86Starter(options);
 
@@ -249,6 +247,8 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       emulator: window["emulator"],
       isRunning: true
     });
+
+    ipcRenderer.send(IPC_COMMANDS.MACHINE_STARTED);
 
     // Restore state. We can't do this right away
     // and randomly chose 500ms as the appropriate
@@ -264,14 +264,28 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   }
 
   /**
+   * Restart emulator
+   */
+  private restartEmulator() {
+    if (this.state.emulator && this.state.isRunning) {
+      console.log(`🚜 Restarting emulator`);
+      this.state.emulator.restart();
+    } else {
+      console.log(`🚜 Restarting emulator failed: Emulator not running`);
+    }
+  }
+
+  /**
    * Stop the emulator
    */
   private async stopEmulator() {
-    const { emulator } = this.state;
+    const { emulator, isRunning } = this.state;
 
-    if (!emulator) {
+    if (!emulator || !isRunning) {
       return;
     }
+
+    console.log(`🚜 Stopping emulator`);
 
     await this.saveState();
     this.unlockMouse();
@@ -279,6 +293,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.setState({ isRunning: false });
 
     document.body.classList.add("paused");
+    ipcRenderer.send(IPC_COMMANDS.MACHINE_STOPPED);
   }
 
   /**
