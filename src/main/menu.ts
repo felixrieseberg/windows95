@@ -112,6 +112,16 @@ async function createMenu({ isRunning } = { isRunning: false }) {
           enabled: isRunning
         },
         {
+          label: "Send Alt+F4",
+          click: () => send(IPC_COMMANDS.MACHINE_ALT_F4),
+          enabled: isRunning
+        },
+        {
+          label: "Send Alt+Enter",
+          click: () => send(IPC_COMMANDS.MACHINE_ALT_ENTER),
+          enabled: isRunning
+        },
+        {
           type: "separator"
         },
         isRunning

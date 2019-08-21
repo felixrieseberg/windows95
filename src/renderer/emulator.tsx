@@ -119,6 +119,32 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       }
     });
 
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_ALT_F4, () => {
+      if (this.state.emulator && this.state.isRunning) {
+        this.state.emulator.keyboard_send_scancodes([
+          0x38, // alt
+          0x3E, // f4
+
+          // break codes
+          0x38 | 0x80,
+          0x3E | 0x80
+        ]);
+      }
+    });
+
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_ALT_ENTER, () => {
+      if (this.state.emulator && this.state.isRunning) {
+        this.state.emulator.keyboard_send_scancodes([
+          0x38, // alt
+          0, // enter
+
+          // break codes
+          0x38 | 0x80,
+          0 | 0x80
+        ]);
+      }
+    });
+
     ipcRenderer.on(IPC_COMMANDS.MACHINE_STOP, this.stopEmulator);
     ipcRenderer.on(IPC_COMMANDS.MACHINE_RESET, this.resetEmulator);
     ipcRenderer.on(IPC_COMMANDS.MACHINE_START, this.startEmulator);
