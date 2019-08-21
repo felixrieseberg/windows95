@@ -9,7 +9,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "standard \"src/**/*.js\"",
+    "lint": "prettier --write src/**/*.{ts,tsx}",
     "less": "node ./tools/lessc.js"
   },
   "keywords": [],
