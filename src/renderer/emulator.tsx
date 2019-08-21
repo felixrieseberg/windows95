@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as fs from "fs-extra";
 import * as path from "path";
-import { ipcRenderer, remote, shell } from "electron";
+import { ipcRenderer, remote, shell, webFrame } from "electron";
 
 import { CONSTANTS, IPC_COMMANDS } from "../constants";
 import { getDiskImageSize } from "../utils/disk-image-size";
@@ -14,6 +14,7 @@ import { EmulatorInfo } from "./emulator-info";
 export interface EmulatorState {
   currentUiCard: string;
   emulator?: any;
+  scale: number;
   floppyFile?: string;
   isBootingFresh: boolean;
   isCursorCaptured: boolean;
@@ -38,7 +39,8 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       isCursorCaptured: false,
       isRunning: false,
       currentUiCard: "start",
-      isInfoDisplayed: true
+      isInfoDisplayed: true,
+      scale: 1
     };
 
     this.setupInputListeners();
@@ -123,11 +125,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       if (this.state.emulator && this.state.isRunning) {
         this.state.emulator.keyboard_send_scancodes([
           0x38, // alt
-          0x3E, // f4
+          0x3e, // f4
 
           // break codes
           0x38 | 0x80,
-          0x3E | 0x80
+          0x3e | 0x80
         ]);
       }
     });
@@ -156,6 +158,14 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     ipcRenderer.on(IPC_COMMANDS.SHOW_DISK_IMAGE, () => {
       this.showDiskImage();
+    });
+
+    ipcRenderer.on(IPC_COMMANDS.ZOOM_IN, () => {
+      this.setScale(this.state.scale * 1.2);
+    });
+
+    ipcRenderer.on(IPC_COMMANDS.ZOOM_OUT, () => {
+      this.setScale(this.state.scale * 0.8);
     });
   }
 
@@ -426,6 +436,20 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       console.warn(
         `Emulator: Tried to lock mouse, but no emulator or not running`
       );
+    }
+  }
+
+  /**
+   * Set the emulator's scale
+   *
+   * @param target
+   */
+  private setScale(target: number) {
+    const { emulator, isRunning } = this.state;
+
+    if (emulator && isRunning) {
+      emulator.screen_set_scale(target);
+      this.setState({ scale: target });
     }
   }
 }

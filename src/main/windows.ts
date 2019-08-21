@@ -1,8 +1,10 @@
 import { BrowserWindow } from "electron";
 
-let mainWindow;
+let mainWindow: BrowserWindow | null = null;
 
-export function createWindow() {
+export function getOrCreateWindow(): BrowserWindow {
+  if (mainWindow) return mainWindow;
+
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 1024,
@@ -18,4 +20,6 @@ export function createWindow() {
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+
+  return mainWindow;
 }

@@ -4,7 +4,7 @@ import { isDevMode } from "../utils/devmode";
 import { setupAboutPanel } from "./about-panel";
 import { shouldQuit } from "./squirrel";
 import { setupUpdates } from "./update";
-import { createWindow } from "./windows";
+import { getOrCreateWindow } from "./windows";
 import { setupMenu } from "./menu";
 
 /**
@@ -14,7 +14,7 @@ import { setupMenu } from "./menu";
 export async function onReady() {
   if (!isDevMode()) process.env.NODE_ENV = "production";
 
-  createWindow();
+  getOrCreateWindow();
   setupAboutPanel();
   setupMenu();
   setupUpdates();
