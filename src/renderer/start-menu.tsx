@@ -14,19 +14,23 @@ export class StartMenu extends React.Component<StartMenuProps, {}> {
   public render() {
     return (
       <nav className="nav nav-bottom">
-        <a onClick={this.navigate} href="#" id="start" className="nav-logo">
-          <img src="../../static/start.png" alt="" />
+        <a onClick={this.navigate} href="#" id="start" className="nav-link">
+          <img src="../../static/start.png" alt="Start" />
           <span>Start</span>
         </a>
         <div className="nav-menu">
-          <a onClick={this.navigate} href="#" id="floppy" className="nav-link">
-            Floppy Disk
+          <a
+            onClick={this.navigate}
+            href="#"
+            id="settings"
+            className="nav-link"
+          >
+            <img src="../../static/settings.png" />
+            <span>Settings</span>
           </a>
-          <a onClick={this.navigate} href="#" id="state" className="nav-link">
-            Reset Machine
-          </a>
-          <a onClick={this.navigate} href="#" id="disk" className="nav-link">
-            Modify C: Drive
+          <a onClick={this.navigate} href="#" id="drive" className="nav-link">
+            <img src="../../static/drive.png" />
+            <span>Modify C: Drive</span>
           </a>
         </div>
       </nav>

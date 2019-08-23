@@ -1,7 +1,7 @@
 @import "./status.less";
 @import "./emulator.less";
 @import "./info.less";
-@import "./floppy.less";
+@import "./settings.less";
 
 /* GENERAL RESETS */
 
@@ -40,13 +40,35 @@ section {
   width: 75%;
   max-width: 700px;
   min-width: 400px;
+
+  .card-title {
+    img {
+      margin-right: 5px;
+    }
+  }
+}
+
+.nav-link > img,
+.btn > img {
+  height: 24px;
+  margin-top: -3px;
+  margin-right: 4px;
 }
 
 .windows95 {
+  * {
+    user-select: none;
+  }
+
+  *:focus {
+    outline: none;
+  }
+
   nav .nav-link,
   nav .nav-logo {
-    height: 30px;
+    height: 33px;
     line-height: 1.5;
+    display: flex;
   }
 
   nav .nav-logo img {
@@ -59,6 +81,11 @@ section {
     top: 9px;
     left: 37px;
     font-weight: bold;
+  }
+
+  .btn {
+    height: 40px;
+    padding-top: 6px;
   }
 
   .btn:focus {

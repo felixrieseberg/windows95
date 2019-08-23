@@ -1,21 +1,21 @@
 import * as React from "react";
 import * as fs from "fs-extra";
 import * as path from "path";
-import { ipcRenderer, remote, shell, webFrame } from "electron";
+import { ipcRenderer, remote, shell } from "electron";
 
 import { CONSTANTS, IPC_COMMANDS } from "../constants";
 import { getDiskImageSize } from "../utils/disk-image-size";
 import { CardStart } from "./card-start";
 import { StartMenu } from "./start-menu";
-import { CardFloppy } from "./card-floppy";
-import { CardState } from "./card-state";
+import { CardSettings } from "./card-settings";
 import { EmulatorInfo } from "./emulator-info";
+import { CardDrive } from "./card-drive";
 
 export interface EmulatorState {
   currentUiCard: string;
   emulator?: any;
   scale: number;
-  floppyFile?: string;
+  floppyFile?: File;
   isBootingFresh: boolean;
   isCursorCaptured: boolean;
   isInfoDisplayed: boolean;
@@ -33,6 +33,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.stopEmulator = this.stopEmulator.bind(this);
     this.restartEmulator = this.restartEmulator.bind(this);
     this.resetEmulator = this.resetEmulator.bind(this);
+    this.bootFromScratch = this.bootFromScratch.bind(this);
 
     this.state = {
       isBootingFresh: false,
@@ -87,13 +88,22 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   public setupUnloadListeners() {
     const handleClose = async () => {
       await this.saveState();
+
+      console.log(`Unload: Now done, quitting again.`);
       this.isQuitting = true;
-      remote.app.quit();
+
+      setImmediate(() => {
+        remote.app.quit();
+      });
     };
 
     window.onbeforeunload = event => {
-      if (this.isQuitting) return;
-      if (this.isResetting) return;
+      if (this.isQuitting || this.isResetting) {
+        console.log(`Unload: Not preventing`);
+        return;
+      }
+
+      console.log(`Unload: Preventing to first save state`);
 
       handleClose();
       event.preventDefault();
@@ -167,6 +177,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     ipcRenderer.on(IPC_COMMANDS.ZOOM_OUT, () => {
       this.setScale(this.state.scale * 0.8);
     });
+
+    ipcRenderer.on(IPC_COMMANDS.ZOOM_RESET, () => {
+      this.setScale(1);
+    });
   }
 
   /**
@@ -175,7 +189,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    * 🤡
    */
   public renderUI() {
-    const { isRunning, currentUiCard } = this.state;
+    const { isRunning, currentUiCard, floppyFile } = this.state;
 
     if (isRunning) {
       return null;
@@ -183,15 +197,16 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     let card;
 
-    if (currentUiCard === "floppy") {
+    if (currentUiCard === "settings") {
       card = (
-        <CardFloppy
-          setFloppyPath={floppyFile => this.setState({ floppyFile })}
-          floppyPath={this.state.floppyFile}
+        <CardSettings
+          setFloppy={floppyFile => this.setState({ floppyFile })}
+          bootFromScratch={this.bootFromScratch}
+          floppy={floppyFile}
         />
       );
-    } else if (currentUiCard === "state") {
-      card = <CardState bootFromScratch={this.bootFromScratch} />;
+    } else if (currentUiCard === "drive") {
+      card = <CardDrive showDiskImage={this.showDiskImage} />;
     } else {
       card = <CardStart startEmulator={this.startEmulator} />;
     }
@@ -348,16 +363,16 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   private async saveState(): Promise<void> {
     const { emulator } = this.state;
 
-    if (!emulator || !emulator.save_state) {
-      console.log(`restoreState: No emulator present`);
-      return;
-    }
-
     return new Promise(resolve => {
+      if (!emulator || !emulator.save_state) {
+        console.log(`restoreState: No emulator present`);
+        return resolve();
+      }
+
       emulator.save_state(async (error: Error, newState: ArrayBuffer) => {
         if (error) {
           console.warn(`saveState: Could not save state`, error);
-          return;
+          return resolve();
         }
 
         await fs.outputFile(CONSTANTS.STATE_PATH, Buffer.from(newState));

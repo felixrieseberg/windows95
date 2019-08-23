@@ -13,7 +13,9 @@ export class CardStart extends React.Component<CardStartProps, {}> {
           id="win95"
           onClick={this.props.startEmulator}
         >
-          Start Windows 95
+          <img src="../../static/run.png" />
+          <span>Start Windows 95</span>
+          <br />
           <br />
           <small>Hit ESC to lock or unlock your mouse</small>
         </div>
