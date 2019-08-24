@@ -1,7 +1,7 @@
 {
   "name": "windows95",
   "productName": "windows95",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Windows 95, in an app. I'm sorry.",
   "main": "./dist/src/main/main",
   "scripts": {
