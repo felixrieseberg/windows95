@@ -69,6 +69,8 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         } else {
           this.lockMouse();
         }
+
+        evt.stopPropagation();
       }
     };
 
@@ -117,44 +119,31 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    */
   public setupIpcListeners() {
     ipcRenderer.on(IPC_COMMANDS.MACHINE_CTRL_ALT_DEL, () => {
-      if (this.state.emulator && this.state.isRunning) {
-        this.state.emulator.keyboard_send_scancodes([
-          0x1d, // ctrl
-          0x38, // alt
-          0x53, // delete
-
-          // break codes
-          0x1d | 0x80,
-          0x38 | 0x80,
-          0x53 | 0x80
-        ]);
-      }
+      this.sendKeys([
+        0x1d, // ctrl
+        0x38, // alt
+        0x53 // delete
+      ]);
     });
 
     ipcRenderer.on(IPC_COMMANDS.MACHINE_ALT_F4, () => {
-      if (this.state.emulator && this.state.isRunning) {
-        this.state.emulator.keyboard_send_scancodes([
-          0x38, // alt
-          0x3e, // f4
-
-          // break codes
-          0x38 | 0x80,
-          0x3e | 0x80
-        ]);
-      }
+      this.sendKeys([
+        0x38, // alt
+        0x3e // f4
+      ]);
     });
 
     ipcRenderer.on(IPC_COMMANDS.MACHINE_ALT_ENTER, () => {
-      if (this.state.emulator && this.state.isRunning) {
-        this.state.emulator.keyboard_send_scancodes([
-          0x38, // alt
-          0, // enter
+      this.sendKeys([
+        0x38, // alt
+        0 // enter
+      ]);
+    });
 
-          // break codes
-          0x38 | 0x80,
-          0 | 0x80
-        ]);
-      }
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_ESC, () => {
+      this.sendKeys([
+        0x18 // alt
+      ]);
     });
 
     ipcRenderer.on(IPC_COMMANDS.MACHINE_STOP, this.stopEmulator);
@@ -465,6 +454,25 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     if (emulator && isRunning) {
       emulator.screen_set_scale(target);
       this.setState({ scale: target });
+    }
+  }
+
+  /**
+   * Send keys to the emulator (including the key-up),
+   * if it's running
+   *
+   * @param {Array<number>} codes
+   */
+  private sendKeys(codes: Array<number>) {
+    if (this.state.emulator && this.state.isRunning) {
+      const scancodes = codes;
+
+      // Push break codes (key-up)
+      for (const scancode of scancodes) {
+        scancodes.push(scancode | 0x80);
+      }
+
+      this.state.emulator.keyboard_send_scancodes(scancodes);
     }
   }
 }

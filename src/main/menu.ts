@@ -141,6 +141,11 @@ async function createMenu({ isRunning } = { isRunning: false }) {
           enabled: isRunning
         },
         {
+          label: "Send Esc",
+          click: () => send(IPC_COMMANDS.MACHINE_ESC),
+          enabled: isRunning
+        },
+        {
           type: "separator"
         },
         isRunning

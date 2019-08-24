@@ -11,7 +11,9 @@ export function getOrCreateWindow(): BrowserWindow {
     height: 768,
     useContentSize: true,
     webPreferences: {
-      nodeIntegration: true
+      nodeIntegration: true,
+      sandbox: false,
+      webviewTag: false
     }
   });
 
