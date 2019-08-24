@@ -234,12 +234,14 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       return null;
     }
 
-    return <EmulatorInfo
-      emulator={this.state.emulator}
-      toggleInfo={() => {
-        this.setState({ isInfoDisplayed: !this.state.isInfoDisplayed });
-      }}
-    />
+    return (
+      <EmulatorInfo
+        emulator={this.state.emulator}
+        toggleInfo={() => {
+          this.setState({ isInfoDisplayed: !this.state.isInfoDisplayed });
+        }}
+      />
+    );
   }
 
   /**
@@ -254,9 +256,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    * Show the disk image on disk
    */
   public showDiskImage() {
+    // Contents/Resources/app/dist/static
     const imagePath = path
-      .join(__dirname, "images/windows95.img")
-      .replace("app.asar", "app.asar.unpacked");
+      .join(__dirname, "../../images/windows95.img");
+
+    console.log(`Showing disk image in ${imagePath}`);``
 
     shell.showItemInFolder(imagePath);
   }
