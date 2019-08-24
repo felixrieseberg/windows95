@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist",
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "removeComments": false,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "lib": [
+      "es2017",
+      "dom"
+    ],
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noImplicitThis": true,
+    "noUnusedParameters": true,
+    "importHelpers": true,
+    "noEmitHelpers": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "pretty": true,
+    "target": "es2017",
+    "jsx": "react",
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "baseUrl": "."
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "formatCodeOptions": {
+    "indentSize": 2,
+    "tabSize": 2
+  }
+}

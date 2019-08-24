@@ -1,0 +1,103 @@
+@import "./status.less";
+@import "./emulator.less";
+@import "./info.less";
+@import "./settings.less";
+@import "./start.less";
+
+/* GENERAL RESETS */
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #000;
+}
+
+body.paused > #emulator {
+  display: none;
+}
+
+body.paused {
+  background: #008080;
+  font-family: Courier;
+}
+
+#buttons {
+  user-select: none;
+}
+
+section {
+  display: flex;
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 75%;
+  max-width: 700px;
+  min-width: 400px;
+
+  .card-title {
+    img {
+      margin-right: 5px;
+    }
+  }
+}
+
+.nav-link > img,
+.btn > img {
+  height: 24px;
+  margin-right: 4px;
+}
+
+.windows95 {
+  * {
+    user-select: none;
+  }
+
+  *:focus {
+    outline: none;
+  }
+
+  nav .nav-link,
+  nav .nav-logo {
+    height: 37px;
+    display: flex;
+  }
+
+  nav .nav-logo img {
+    margin-left: 2px;
+    max-height: 20px;
+  }
+
+  nav .nav-logo > span {
+    position: absolute;
+    top: 9px;
+    left: 37px;
+    font-weight: bold;
+  }
+
+  .btn {
+    height: 40px;
+    padding-top: 3px;
+  }
+
+  .btn:focus {
+    border-color: #fff #000 #000 #fff;
+    outline: 5px auto -webkit-focus-ring-color;
+  }
+
+  .btn.active:before,
+  .btn:focus:before,
+  button.active:before,
+  button:focus:before,
+  input[type=submit].active:before,
+  input[type=submit]:focus:before {
+    border-color: #dedede grey grey #dedede;
+  }
+}

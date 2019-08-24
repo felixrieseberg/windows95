@@ -23,18 +23,23 @@ You'll likely be better off with an actual virtualization app, but the short ans
 
 ## Credits
 
-99.999% of the work was done over at [v86](https://github.com/copy/v86/) by Copy.
+99% of the work was done over at [v86](https://github.com/copy/v86/) by Copy.
 
 ## Contributing
 
 Before you can run this from source, you'll need the disk image. It's not part of the
 repository, but you can grab it using the `Show Disk Image` button from the packaged
-release, which does include the disk image.
+release, which does include the disk image. You can find that button in the
+`Modify C: Drive` section.
 
 Unpack the `images` folder into the `src` folder, creating this layout:
 
 ```
-./src/images/windows95.img
+- /images/windows95.img
+- /images/default-state.bin
+- /assets/...
+- /bios/...
+- /docs/...
 ```
 
 Once you've done so, run `npm install` and `npm start` to run your local build.

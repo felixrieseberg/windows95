@@ -2,6 +2,9 @@ const path = require('path');
 const package = require('./package.json');
 
 module.exports = {
+  hooks: {
+    generateAssets: require('./tools/generateAssets')
+  },
   packagerConfig: {
     asar: false,
     icon: path.resolve(__dirname, 'assets', 'icon'),
@@ -14,6 +17,18 @@ module.exports = {
     osxSign: {
       identity: 'Developer ID Application: Felix Rieseberg (LT94ZKYDCJ)'
     },
+    ignore: [
+      /\/assets(\/?)/,
+      /\/docs(\/?)/,
+      /\/tools(\/?)/,
+      /\/src\/.*\.ts/,
+      /package-lock\.json/,
+      /README\.md/,
+      /tsconfig\.json/,
+      /Dockerfile/,
+      /issue_template\.md/,
+      /HELP\.md/,
+    ]
   },
   makers: [
     {

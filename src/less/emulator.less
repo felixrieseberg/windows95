@@ -1,0 +1,24 @@
+#emulator {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+
+  > div {
+    white-space: pre;
+    font: 14px monospace;
+    line-height: 14px
+  }
+
+  > canvas {
+    display: none;
+    margin: auto;
+  }
+}
+
+.paused {
+  canvas {
+    opacity: 0.2;
+    filter: blur(2px);
+    z-index: -100;
+  }
+}
