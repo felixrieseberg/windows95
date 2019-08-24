@@ -216,12 +216,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   public render() {
     return (
       <>
-        <EmulatorInfo
-          emulator={this.state.emulator}
-          toggleInfo={() => {
-            this.setState({ isInfoDisplayed: !this.state.isInfoDisplayed });
-          }}
-        />
+        {this.renderInfo()}
         {this.renderUI()}
         <div id="emulator">
           <div></div>
@@ -229,6 +224,22 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         </div>
       </>
     );
+  }
+
+  /**
+   * Render the little info thingy
+   */
+  public renderInfo() {
+    if (!this.state.isInfoDisplayed) {
+      return null;
+    }
+
+    return <EmulatorInfo
+      emulator={this.state.emulator}
+      toggleInfo={() => {
+        this.setState({ isInfoDisplayed: !this.state.isInfoDisplayed });
+      }}
+    />
   }
 
   /**

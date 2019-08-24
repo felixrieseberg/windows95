@@ -38,7 +38,7 @@ export class EmulatorInfo extends React.Component<
 
     return (
       <div id="status">
-        Disk: <span>{disk}</span>| CPU Speed: <span>{cpu}</span>|{" "}
+        Disk: <span>{disk}</span> | CPU Speed: <span>{cpu}</span> |{" "}
         <a href="#" onClick={this.props.toggleInfo}>
           Hide
         </a>
