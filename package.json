@@ -18,43 +18,33 @@
   "config": {
     "forge": "./forge.config.js"
   },
-  "standard": {
-    "globals": [
-      "appState",
-      "V86Starter",
-      "windows95"
-    ],
-    "ignore": [
-      "/src/renderer/lib/*.js"
-    ]
-  },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "fs-extra": "^8.1.0",
-    "react": "^16.7.0",
-    "react-dom": "^16.7.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0",
     "tslib": "^1.10.0",
     "update-electron-app": "^1.5.0"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.44",
-    "@electron-forge/maker-deb": "^6.0.0-beta.44",
-    "@electron-forge/maker-flatpak": "^6.0.0-beta.44",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.44",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.44",
-    "@electron-forge/maker-zip": "^6.0.0-beta.44",
-    "@electron-forge/publisher-github": "^6.0.0-beta.44",
+    "@electron-forge/cli": "^6.0.0-beta.45",
+    "@electron-forge/maker-deb": "^6.0.0-beta.45",
+    "@electron-forge/maker-flatpak": "^6.0.0-beta.45",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.45",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.45",
+    "@electron-forge/maker-zip": "^6.0.0-beta.45",
+    "@electron-forge/publisher-github": "^6.0.0-beta.45",
     "@types/fs-extra": "^8.0.0",
-    "@types/node": "^12.7.2",
-    "@types/react": "^16.9.2",
-    "@types/react-dom": "^16.8.5",
-    "electron": "6.0.2",
+    "@types/node": "^12.12.9",
+    "@types/react": "^16.9.11",
+    "@types/react-dom": "^16.9.4",
+    "electron": "7.1.2",
     "less": "^3.10.1",
-    "node-abi": "^2.11.0",
+    "node-abi": "^2.12.0",
     "parcel-bundler": "^1.12.3",
-    "prettier": "^1.18.2",
+    "prettier": "^1.19.1",
     "rimraf": "^3.0.0",
-    "standard": "^13.1.0",
-    "typescript": "^3.5.3"
+    "standard": "^14.3.1",
+    "typescript": "^3.7.2"
   }
 }
