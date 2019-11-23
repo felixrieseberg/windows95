@@ -100,4 +100,18 @@ section {
   input[type=submit]:focus:before {
     border-color: #dedede grey grey #dedede;
   }
+
+  .card {
+    // Fix link colors
+    .link, .link:active, .link:link, .link:visited, a, a:active, a:link, a:visited {
+      color: #008080;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    // Ensure a-elements in fieldsets receive click events
+    fieldset:before {
+      pointer-events: none;
+    }
+  }
 }

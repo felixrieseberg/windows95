@@ -56,12 +56,7 @@ export class CardDrive extends React.Component<CardDriveProps, CardDriveState> {
           can). However, tools exist that let you mount this drive, like the
           freeware tool{" "}
           <a
-            href="#"
-            onClick={() =>
-              shell.openExternal(
-                "https://www.osforensics.com/tools/mount-disk-images.html"
-              )
-            }
+            href="https://google.com"
           >
             OSFMount
           </a>
