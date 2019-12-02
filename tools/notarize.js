@@ -21,7 +21,8 @@ module.exports = function () {
     appBundleId: 'com.felixrieseberg.windows95',
     appPath: buildOutput,
     appleId: process.env.APPLE_ID,
-    appleIdPassword: process.env.APPLE_ID_PASSWORD
+    appleIdPassword: process.env.APPLE_ID_PASSWORD,
+    ascProvider: 'LT94ZKYDCJ'
   }).catch((e) => {
     console.error(e);
     throw e;
