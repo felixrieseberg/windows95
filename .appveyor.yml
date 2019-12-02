@@ -13,6 +13,7 @@ install:
         $filename = "$workingDirectory\cert.p12"
         $bytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_P12)
         [IO.File]::WriteAllBytes($filename, $bytes)
+        $env:WINDOWS_CERTIFICATE_FILE = $filename
       }
   - ps: Install-Product node $env:nodejs_version x64
   - node --version
