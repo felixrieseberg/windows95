@@ -14,6 +14,9 @@ install:
         $bytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_P12)
         [IO.File]::WriteAllBytes($filename, $bytes)
         $env:WINDOWS_CERTIFICATE_FILE = $filename
+        $sec = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+        $cert = Get-PfxData -Password $sec $filename
+        Write-Host $cert.EndEntityCertificates
       }
   - ps: Install-Product node $env:nodejs_version x64
   - node --version
