@@ -3,7 +3,8 @@ const package = require('./package.json');
 
 module.exports = {
   hooks: {
-    generateAssets: require('./tools/generateAssets')
+    generateAssets: require('./tools/generateAssets'),
+    postPackage: require('./tools/notarize')
   },
   packagerConfig: {
     asar: false,
@@ -12,10 +13,15 @@ module.exports = {
     appCategoryType: 'public.app-category.developer-tools',
     win32metadata: {
       CompanyName: 'Felix Rieseberg',
-      OriginalFilename: 'windows95',
+      OriginalFilename: 'windows95'
     },
     osxSign: {
-      identity: 'Developer ID Application: Felix Rieseberg (LT94ZKYDCJ)'
+      identity: 'Developer ID Application: Felix Rieseberg (LT94ZKYDCJ)',
+      'hardened-runtime': true,
+      'gatekeeper-assess': false,
+      'entitlements': 'static/entitlements.plist',
+      'entitlements-inherit': 'static/entitlements.plist',
+      'signature-flags': 'library'
     },
     ignore: [
       /\/assets(\/?)/,

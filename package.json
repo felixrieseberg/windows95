@@ -39,6 +39,7 @@
     "@types/react": "^16.9.13",
     "@types/react-dom": "^16.9.4",
     "electron": "7.1.2",
+    "electron-notarize": "^0.2.1",
     "less": "^3.10.3",
     "node-abi": "^2.13.0",
     "parcel-bundler": "^1.12.4",
