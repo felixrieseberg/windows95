@@ -1,10 +1,10 @@
 # Help & Commonly Asked Questions
 
-## MS-DOS seems to brick the screen
-Hit `Alt + Enter` to make the command screen "full screen" (as far as Windows 95 is
+## MS-DOS seems to mess up the screen
+Hit `Alt + Enter` to make the command screen "Full Screen" (as far as Windows 95 is
 concerned). This should restore the display from the garbled mess you see and allow
-you to access the command prompt. Press Alt-Enter again to leave full screen and go
-back to a window mode. (Thanks to @DisplacedGamer for that wisdom)
+you to access the Command Prompt. Press Alt-Enter again to leave Full Screen and go
+back to Window Mode. (Thanks to @DisplacedGamers for that wisdom)
 
 ## Windows 95 is stuck in a bad state
 
@@ -31,4 +31,5 @@ with the image as input.
 
 ## What's the FrontPage Username and Password?
 Username: windows95
+
 Password: password
