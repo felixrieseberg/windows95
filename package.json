@@ -21,8 +21,8 @@
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "fs-extra": "^8.1.0",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "tslib": "^1.10.0",
     "update-electron-app": "^1.5.0"
   },
