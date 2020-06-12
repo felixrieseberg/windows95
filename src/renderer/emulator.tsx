@@ -99,7 +99,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       });
     };
 
-    window.onbeforeunload = event => {
+    window.onbeforeunload = (event: BeforeUnloadEvent) => {
       if (this.isQuitting || this.isResetting) {
         console.log(`Unload: Not preventing`);
         return;
