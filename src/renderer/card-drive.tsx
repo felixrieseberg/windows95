@@ -1,5 +1,4 @@
 import * as React from "react";
-import { shell } from "electron";
 
 interface CardDriveProps {
   showDiskImage: () => void;

@@ -1,9 +1,8 @@
-import { app, shell, Menu, BrowserWindow, ipcMain, webFrame } from "electron";
+import { app, shell, Menu, BrowserWindow, ipcMain } from "electron";
 
 import { clearCaches } from "../cache";
 import { IPC_COMMANDS } from "../constants";
 import { isDevMode } from "../utils/devmode";
-import { getOrCreateWindow } from "./windows";
 
 const LINKS = {
   homepage: "https://www.twitter.com/felixrieseberg",
