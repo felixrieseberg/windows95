@@ -11,15 +11,13 @@ export async function clearCache() {
   }
 }
 
-export function clearStorageData() {
-  return new Promise((resolve) => {
-    if (!session.defaultSession) {
-      return resolve();
-    }
+export async function clearStorageData() {
+  if (!session.defaultSession) {
+    return;
+  }
 
-    session.defaultSession.clearStorageData({
-      storages: [ 'appcache', 'cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers' ],
-      quotas: [ 'temporary', 'persistent', 'syncable' ]
-    }, resolve)
-  })
+  await session.defaultSession.clearStorageData({
+    storages: [ 'appcache', 'cookies', 'filesystem', 'indexdb', 'localstorage', 'shadercache', 'websql', 'serviceworkers' ],
+    quotas: [ 'temporary', 'persistent', 'syncable' ]
+  });
 }
