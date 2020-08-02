@@ -29,7 +29,7 @@ export class EmulatorInfo extends React.Component<
       cpu: 0,
       disk: "Idle",
       lastCounter: 0,
-      lastTick: 0
+      lastTick: 0,
     };
   }
 
@@ -160,7 +160,7 @@ export class EmulatorInfo extends React.Component<
     this.setState({
       lastTick: now,
       lastCounter: instructionCounter,
-      cpu: Math.round(ips / deltaTime)
+      cpu: Math.round(ips / deltaTime),
     });
   }
 }

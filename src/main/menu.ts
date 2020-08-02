@@ -1,15 +1,14 @@
-import { app, shell, Menu, BrowserWindow, ipcMain, webFrame } from "electron";
+import { app, shell, Menu, BrowserWindow, ipcMain } from "electron";
 
 import { clearCaches } from "../cache";
 import { IPC_COMMANDS } from "../constants";
 import { isDevMode } from "../utils/devmode";
-import { getOrCreateWindow } from "./windows";
 
 const LINKS = {
   homepage: "https://www.twitter.com/felixrieseberg",
   repo: "https://github.com/felixrieseberg/windows95",
   credits: "https://github.com/felixrieseberg/windows95/blob/master/CREDITS.md",
-  help: "https://github.com/felixrieseberg/windows95/blob/master/HELP.md"
+  help: "https://github.com/felixrieseberg/windows95/blob/master/HELP.md",
 };
 
 export async function setupMenu() {
@@ -41,52 +40,52 @@ async function createMenu({ isRunning } = { isRunning: false }) {
       submenu: [
         {
           label: "Toggle Full Screen",
-          accelerator: (function() {
+          accelerator: (function () {
             if (process.platform === "darwin") {
               return "Ctrl+Command+F";
             } else {
               return "F11";
             }
           })(),
-          click: function(_item, focusedWindow) {
+          click: function (_item, focusedWindow) {
             if (focusedWindow) {
               focusedWindow.setFullScreen(!focusedWindow.isFullScreen());
             }
-          }
+          },
         },
         {
           label: "Toggle Developer Tools",
-          accelerator: (function() {
+          accelerator: (function () {
             if (process.platform === "darwin") {
               return "Alt+Command+I";
             } else {
               return "Ctrl+Shift+I";
             }
           })(),
-          click: function(_item, focusedWindow) {
+          click: function (_item, focusedWindow) {
             if (focusedWindow) {
               focusedWindow.webContents.toggleDevTools();
             }
-          }
+          },
         },
         {
-          type: "separator"
+          type: "separator",
         },
         {
           label: "Toggle Emulator Info",
-          click: () => send(IPC_COMMANDS.TOGGLE_INFO)
+          click: () => send(IPC_COMMANDS.TOGGLE_INFO),
         },
         {
-          type: "separator"
+          type: "separator",
         },
         {
-          role: "reload"
-        }
-      ]
+          role: "reload",
+        },
+      ],
     },
     {
       role: "editMenu",
-      visible: isDevMode()
+      visible: isDevMode(),
     },
     {
       label: "Window",
@@ -95,32 +94,32 @@ async function createMenu({ isRunning } = { isRunning: false }) {
         {
           label: "Minimize",
           accelerator: "CmdOrCtrl+M",
-          role: "minimize"
+          role: "minimize",
         },
         {
           label: "Close",
           accelerator: "CmdOrCtrl+W",
-          role: "close"
+          role: "close",
         },
         {
-          type: "separator"
+          type: "separator",
         },
         {
           label: "Zoom in",
           click: () => send(IPC_COMMANDS.ZOOM_IN),
-          enabled: isRunning
+          enabled: isRunning,
         },
         {
           label: "Zoom out",
           click: () => send(IPC_COMMANDS.ZOOM_OUT),
-          enabled: isRunning
+          enabled: isRunning,
         },
         {
           label: "Reset zoom",
           click: () => send(IPC_COMMANDS.ZOOM_RESET),
-          enabled: isRunning
-        }
-      ]
+          enabled: isRunning,
+        },
+      ],
     },
     {
       label: "Machine",
@@ -128,53 +127,53 @@ async function createMenu({ isRunning } = { isRunning: false }) {
         {
           label: "Send Ctrl+Alt+Del",
           click: () => send(IPC_COMMANDS.MACHINE_CTRL_ALT_DEL),
-          enabled: isRunning
+          enabled: isRunning,
         },
         {
           label: "Send Alt+F4",
           click: () => send(IPC_COMMANDS.MACHINE_ALT_F4),
-          enabled: isRunning
+          enabled: isRunning,
         },
         {
           label: "Send Alt+Enter",
           click: () => send(IPC_COMMANDS.MACHINE_ALT_ENTER),
-          enabled: isRunning
+          enabled: isRunning,
         },
         {
           label: "Send Esc",
           click: () => send(IPC_COMMANDS.MACHINE_ESC),
-          enabled: isRunning
+          enabled: isRunning,
         },
         {
-          type: "separator"
+          type: "separator",
         },
         isRunning
           ? {
               label: "Stop",
-              click: () => send(IPC_COMMANDS.MACHINE_STOP)
+              click: () => send(IPC_COMMANDS.MACHINE_STOP),
             }
           : {
               label: "Start",
-              click: () => send(IPC_COMMANDS.MACHINE_START)
+              click: () => send(IPC_COMMANDS.MACHINE_START),
             },
         {
           label: "Restart",
           click: () => send(IPC_COMMANDS.MACHINE_RESTART),
-          enabled: isRunning
+          enabled: isRunning,
         },
         {
           label: "Reset",
           click: () => send(IPC_COMMANDS.MACHINE_RESET),
-          enabled: isRunning
+          enabled: isRunning,
         },
         {
-          type: "separator"
+          type: "separator",
         },
         {
           label: "Go to Disk Image",
-          click: () => send(IPC_COMMANDS.SHOW_DISK_IMAGE)
-        }
-      ]
+          click: () => send(IPC_COMMANDS.SHOW_DISK_IMAGE),
+        },
+      ],
     },
     {
       label: "Help",
@@ -182,18 +181,18 @@ async function createMenu({ isRunning } = { isRunning: false }) {
       submenu: [
         {
           label: "Author",
-          click: () => shell.openExternal(LINKS.homepage)
+          click: () => shell.openExternal(LINKS.homepage),
         },
         {
           label: "windows95 on GitHub",
-          click: () => shell.openExternal(LINKS.repo)
+          click: () => shell.openExternal(LINKS.repo),
         },
         {
           label: "Help",
-          click: () => shell.openExternal(LINKS.help)
+          click: () => shell.openExternal(LINKS.help),
         },
         {
-          type: "separator"
+          type: "separator",
         },
         {
           label: "Troubleshooting",
@@ -205,12 +204,12 @@ async function createMenu({ isRunning } = { isRunning: false }) {
 
                 app.relaunch();
                 app.quit();
-              }
-            }
-          ]
-        }
-      ]
-    }
+              },
+            },
+          ],
+        },
+      ],
+    },
   ];
 
   if (process.platform === "darwin") {
@@ -218,41 +217,41 @@ async function createMenu({ isRunning } = { isRunning: false }) {
       label: "windows95",
       submenu: [
         {
-          role: "about"
+          role: "about",
         },
         {
-          type: "separator"
+          type: "separator",
         },
         {
-          role: "services"
+          role: "services",
         },
         {
-          type: "separator"
+          type: "separator",
         },
         {
           label: "Hide windows95",
           accelerator: "Command+H",
-          role: "hide"
+          role: "hide",
         },
         {
           label: "Hide Others",
           accelerator: "Command+Shift+H",
-          role: "hideothers"
+          role: "hideothers",
         },
         {
-          role: "unhide"
+          role: "unhide",
         },
         {
-          type: "separator"
+          type: "separator",
         },
         {
           label: "Quit",
           accelerator: "Command+Q",
           click() {
             app.quit();
-          }
-        }
-      ]
+          },
+        },
+      ],
     } as any);
   }
 

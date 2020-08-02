@@ -13,8 +13,8 @@ export function getOrCreateWindow(): BrowserWindow {
     webPreferences: {
       nodeIntegration: true,
       sandbox: false,
-      webviewTag: false
-    }
+      webviewTag: false,
+    },
   });
 
   mainWindow.loadFile("./dist/static/index.html");

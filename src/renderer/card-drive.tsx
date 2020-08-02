@@ -1,5 +1,4 @@
 import * as React from "react";
-import { shell } from "electron";
 
 interface CardDriveProps {
   showDiskImage: () => void;
@@ -54,13 +53,8 @@ export class CardDrive extends React.Component<CardDriveProps, CardDriveState> {
         <p>
           Windows 10 cannot mount raw disk images (ironically, macOS and Linux
           can). However, tools exist that let you mount this drive, like the
-          freeware tool{" "}
-          <a
-            href="https://google.com"
-          >
-            OSFMount
-          </a>
-          . I am not affiliated with it, so please use it at your own risk.
+          freeware tool <a href="https://google.com">OSFMount</a>. I am not
+          affiliated with it, so please use it at your own risk.
         </p>
         {this.renderMountButton("Windows Explorer")}
       </fieldset>

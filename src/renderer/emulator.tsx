@@ -41,7 +41,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       isRunning: false,
       currentUiCard: "start",
       isInfoDisplayed: true,
-      scale: 1
+      scale: 1,
     };
 
     this.setupInputListeners();
@@ -58,7 +58,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    */
   public setupInputListeners() {
     // ESC
-    document.onkeydown = evt => {
+    document.onkeydown = (evt) => {
       const { isCursorCaptured } = this.state;
 
       evt = evt || window.event;
@@ -99,7 +99,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       });
     };
 
-    window.onbeforeunload = event => {
+    window.onbeforeunload = (event) => {
       if (this.isQuitting || this.isResetting) {
         console.log(`Unload: Not preventing`);
         return;
@@ -122,27 +122,27 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       this.sendKeys([
         0x1d, // ctrl
         0x38, // alt
-        0x53 // delete
+        0x53, // delete
       ]);
     });
 
     ipcRenderer.on(IPC_COMMANDS.MACHINE_ALT_F4, () => {
       this.sendKeys([
         0x38, // alt
-        0x3e // f4
+        0x3e, // f4
       ]);
     });
 
     ipcRenderer.on(IPC_COMMANDS.MACHINE_ALT_ENTER, () => {
       this.sendKeys([
         0x38, // alt
-        0 // enter
+        0, // enter
       ]);
     });
 
     ipcRenderer.on(IPC_COMMANDS.MACHINE_ESC, () => {
       this.sendKeys([
-        0x18 // alt
+        0x18, // alt
       ]);
     });
 
@@ -189,7 +189,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     if (currentUiCard === "settings") {
       card = (
         <CardSettings
-          setFloppy={floppyFile => this.setState({ floppyFile })}
+          setFloppy={(floppyFile) => this.setState({ floppyFile })}
           bootFromScratch={this.bootFromScratch}
           floppy={floppyFile}
         />
@@ -204,7 +204,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       <>
         {card}
         <StartMenu
-          navigate={target => this.setState({ currentUiCard: target })}
+          navigate={(target) => this.setState({ currentUiCard: target })}
         />
       </>
     );
@@ -257,10 +257,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    */
   public showDiskImage() {
     // Contents/Resources/app/dist/static
-    const imagePath = path
-      .join(__dirname, "../../images/windows95.img");
+    const imagePath = path.join(__dirname, "../../images/windows95.img");
 
-    console.log(`Showing disk image in ${imagePath}`);``
+    console.log(`Showing disk image in ${imagePath}`);
+    ``;
 
     shell.showItemInFolder(imagePath);
   }
@@ -277,20 +277,20 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       video_memory_size: 32 * 1024 * 1024,
       screen_container: document.getElementById("emulator"),
       bios: {
-        url: "../../bios/seabios.bin"
+        url: "../../bios/seabios.bin",
       },
       vga_bios: {
-        url: "../../bios/vgabios.bin"
+        url: "../../bios/vgabios.bin",
       },
       hda: {
         url: "../../images/windows95.img",
         async: true,
-        size: imageSize
+        size: imageSize,
       },
       fda: {
-        buffer: this.state.floppyFile
+        buffer: this.state.floppyFile,
       },
-      boot_order: 0x132
+      boot_order: 0x132,
     };
 
     console.log(`🚜 Starting emulator with options`, options);
@@ -300,7 +300,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     // New v86 instance
     this.setState({
       emulator: window["emulator"],
-      isRunning: true
+      isRunning: true,
     });
 
     ipcRenderer.send(IPC_COMMANDS.MACHINE_STARTED);
@@ -367,7 +367,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   private async saveState(): Promise<void> {
     const { emulator } = this.state;
 
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       if (!emulator || !emulator.save_state) {
         console.log(`restoreState: No emulator present`);
         return resolve();

@@ -24,7 +24,7 @@ export class CardSettings extends React.Component<
     this.onResetState = this.onResetState.bind(this);
 
     this.state = {
-      isStateReset: false
+      isStateReset: false,
     };
   }
 

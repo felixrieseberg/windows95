@@ -12,7 +12,7 @@ export function setupAboutPanel(): void {
     applicationName: "windows95",
     applicationVersion: app.getVersion(),
     version: process.versions.electron,
-    copyright: "Felix Rieseberg"
+    copyright: "Felix Rieseberg",
   };
 
   switch (process.platform) {
