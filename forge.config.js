@@ -1,10 +1,19 @@
 const path = require('path');
+const fs = require('fs');
 const package = require('./package.json');
+
+if (process.env['WINDOWS_CODESIGN_FILE']) {
+  const certPath = path.join(__dirname, 'win-certificate.pfx');
+  const certExists = fs.existsSync(certPath);
+
+  if (certExists) {
+    process.env['WINDOWS_CODESIGN_FILE'] = certPath;
+  }
+}
 
 module.exports = {
   hooks: {
     generateAssets: require('./tools/generateAssets'),
-    postPackage: require('./tools/notarize')
   },
   packagerConfig: {
     asar: false,
@@ -19,9 +28,15 @@ module.exports = {
       identity: 'Developer ID Application: Felix Rieseberg (LT94ZKYDCJ)',
       'hardened-runtime': true,
       'gatekeeper-assess': false,
-      'entitlements': 'static/entitlements.plist',
-      'entitlements-inherit': 'static/entitlements.plist',
+      'entitlements': 'assets/entitlements.plist',
+      'entitlements-inherit': 'assets/entitlements.plist',
       'signature-flags': 'library'
+    },
+    osxNotarize: {
+      appBundleId: 'com.felixrieseberg.macintoshjs',
+      appleId: process.env['APPLE_ID'],
+      appleIdPassword: process.env['APPLE_ID_PASSWORD'],
+      ascProvider: 'LT94ZKYDCJ'
     },
     ignore: [
       /\/assets(\/?)/,
@@ -49,8 +64,8 @@ module.exports = {
           remoteReleases: '',
           setupExe: `windows95-${package.version}-setup-${arch}.exe`,
           setupIcon: path.resolve(__dirname, 'assets', 'icon.ico'),
-          certificateFile: process.env.WINDOWS_CERTIFICATE_FILE,
-          certificatePassword: process.env.WINDOWS_CERTIFICATE_PASSWORD
+          certificateFile: process.env['WINDOWS_CODESIGN_FILE'],
+          certificatePassword: process.env['WINDOWS_CODESIGN_PASSWORD'],
         }
       }
     },
@@ -65,19 +80,6 @@ module.exports = {
     {
       name: '@electron-forge/maker-rpm',
       platforms: ['linux']
-    }
-  ],
-  publishers: [
-    {
-      name: '@electron-forge/publisher-github',
-      config: {
-        repository: {
-          owner: 'felixrieseberg',
-          name: 'windows95'
-        },
-        draft: true,
-        prerelease: true
-      }
     }
   ]
 };
