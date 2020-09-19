@@ -1,4 +1,4 @@
-# windows95
+# Windows 95
 
 This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, it's the full thing. I'm sorry.
 
@@ -10,16 +10,16 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
 
 ![Screenshot](https://user-images.githubusercontent.com/1426799/44532591-4ceb3680-a6a8-11e8-8c2c-bc29f3bfdef7.png)
 
-## Does it work?
-Yes! Quite well, actually - on macOS, Windows, and Linux. Bear in mind that this is written entirely in JavaScript, so please adjust your expectations.
+## Does it really work?
+Yes! Quite well, actually - on macOS, Windows, and Linux. Keep in mind that this is a website packaged into an application, thus it is written entirely in JavaScript, so please adjust your expectations.
 
 ## Should this have been a native app?
 Absolutely.
 
-## Does it run Doom (or my other favorite game)?
-You'll likely be better off with an actual virtualization app, but the short answer is yes. [Thanks to
-@DisplacedGamers](https://youtu.be/xDXqmdFxofM) I can recommend that you switch to a resolution of
-640x480 @ 256 colors before starting DOS games - just like in the good ol' days.
+## Does it run Doom (or another game)?
+You'll likely be better off with an actual virtualization app, but yes, you can. [Thanks to
+@DisplacedGamers](https://youtu.be/xDXqmdFxofM). I can recommend that you switch to a resolution of
+640x480 with 256 colors before starting DOS games, just like in the good ol' days.
 
 ## Credits
 
@@ -46,7 +46,7 @@ Once you've done so, run `npm install` and `npm start` to run your local build.
 
 ## Other Questions
 
- * [MS-DOS seems to brick the screen](./HELP.md#ms-dos-seems-to-brick-the-screen)
+ * [Opening MS-DOS Prompt seems to glitch up the screen](./HELP.md#opening-ms-dos-prompt-seems-to-glitch-up-the-screen)
  * [Windows 95 is stuck in a bad state](./HELP.md#windows-95-is-stuck-in-a-bad-state)
  * [I want to install additional apps or games](./HELP.md#i-want-to-install-additional-apps-or-games)
  * [Running in Docker](./docs/docker-instructions.md)
