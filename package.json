@@ -38,7 +38,7 @@
     "@types/node": "^12.12.14",
     "@types/react": "^16.9.44",
     "@types/react-dom": "^16.9.8",
-    "electron": "9.1.2",
+    "electron": "9.3.1",
     "less": "^3.12.2",
     "node-abi": "^2.18.0",
     "parcel-bundler": "^1.12.4",
