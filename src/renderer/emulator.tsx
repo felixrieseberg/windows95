@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as fs from "fs-extra";
 import * as path from "path";
-import { ipcRenderer, remote, shell } from "electron";
+import { ipcRenderer, shell } from "electron";
 
 import { CONSTANTS, IPC_COMMANDS } from "../constants";
 import { getDiskImageSize } from "../utils/disk-image-size";
@@ -10,6 +10,7 @@ import { StartMenu } from "./start-menu";
 import { CardSettings } from "./card-settings";
 import { EmulatorInfo } from "./emulator-info";
 import { CardDrive } from "./card-drive";
+import { getStatePath } from './utils/get-state-path';
 
 export interface EmulatorState {
   currentUiCard: string;
@@ -95,11 +96,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       this.isQuitting = true;
 
       setImmediate(() => {
-        remote.app.quit();
+        ipcRenderer.invoke(IPC_COMMANDS.APP_QUIT);
       });
     };
 
-    window.onbeforeunload = (event) => {
+    window.onbeforeunload = (event: Event) => {
       if (this.isQuitting || this.isResetting) {
         console.log(`Unload: Not preventing`);
         return;
@@ -366,6 +367,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    */
   private async saveState(): Promise<void> {
     const { emulator } = this.state;
+    const statePath = await getStatePath();
 
     return new Promise((resolve) => {
       if (!emulator || !emulator.save_state) {
@@ -379,9 +381,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
           return resolve();
         }
 
-        await fs.outputFile(CONSTANTS.STATE_PATH, Buffer.from(newState));
+        await fs.outputFile(statePath, Buffer.from(newState));
 
-        console.log(`saveState: Saved state to ${CONSTANTS.STATE_PATH}`);
+        console.log(`saveState: Saved state to ${statePath}`);
 
         resolve();
       });
@@ -391,9 +393,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   /**
    * Restores state to the emulator.
    */
-  private restoreState() {
+  private async restoreState() {
     const { emulator } = this.state;
-    const state = this.getState();
+    const state = await this.getState();
 
     // Nothing to do with if we don't have a state
     if (!state) {
@@ -420,9 +422,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    *
    * @returns {ArrayBuffer}
    */
-  private getState(): ArrayBuffer | null {
-    const statePath = fs.existsSync(CONSTANTS.STATE_PATH)
-      ? CONSTANTS.STATE_PATH
+  private async getState(): Promise<ArrayBuffer | null> {
+    const expectedStatePath = await getStatePath();
+    const statePath = fs.existsSync(expectedStatePath)
+      ? expectedStatePath
       : CONSTANTS.DEFAULT_STATE_PATH;
 
     if (fs.existsSync(statePath)) {

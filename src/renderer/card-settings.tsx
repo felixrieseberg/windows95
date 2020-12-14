@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as fs from "fs-extra";
 
-import { CONSTANTS } from "../constants";
+import { getStatePath } from './utils/get-state-path';
 
 interface CardSettingsProps {
   bootFromScratch: () => void;
@@ -152,8 +152,10 @@ export class CardSettings extends React.Component<
    * Handle the state reset
    */
   private async onResetState() {
-    if (fs.existsSync(CONSTANTS.STATE_PATH)) {
-      await fs.remove(CONSTANTS.STATE_PATH);
+    const statePath = await getStatePath();
+
+    if (fs.existsSync(statePath)) {
+      await fs.remove(statePath);
     }
 
     this.setState({ isStateReset: true });

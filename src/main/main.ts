@@ -6,6 +6,7 @@ import { shouldQuit } from "./squirrel";
 import { setupUpdates } from "./update";
 import { getOrCreateWindow } from "./windows";
 import { setupMenu } from "./menu";
+import { setupIpcListeners } from './ipc';
 
 /**
  * Handle the app's "ready" event. This is essentially
@@ -14,6 +15,7 @@ import { setupMenu } from "./menu";
 export async function onReady() {
   if (!isDevMode()) process.env.NODE_ENV = "production";
 
+  setupIpcListeners();
   getOrCreateWindow();
   setupAboutPanel();
   setupMenu();

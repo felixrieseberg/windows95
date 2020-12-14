@@ -1,13 +1,9 @@
-import { remote, app } from "electron";
 import * as path from "path";
-
-const _app = app || remote.app;
 
 export const CONSTANTS = {
   IMAGE_PATH: path.join(__dirname, "../../images/windows95.img"),
   IMAGE_DEFAULT_SIZE: 1073741824, // 1GB
-  DEFAULT_STATE_PATH: path.join(__dirname, "../../images/default-state.bin"),
-  STATE_PATH: path.join(_app.getPath("userData"), "state-v2.bin"),
+  DEFAULT_STATE_PATH: path.join(__dirname, "../../images/default-state.bin")
 };
 
 export const IPC_COMMANDS = {
@@ -28,4 +24,7 @@ export const IPC_COMMANDS = {
   // Machine events
   MACHINE_STARTED: "MACHINE_STARTED",
   MACHINE_STOPPED: "MACHINE_STOPPED",
+  // Else
+  APP_QUIT: "APP_QUIT",
+  GET_STATE_PATH: "GET_STATE_PATH",
 };
