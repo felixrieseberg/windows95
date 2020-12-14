@@ -10,7 +10,8 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "prettier --write src/**/*.{ts,tsx}",
-    "less": "node ./tools/lessc.js"
+    "less": "node ./tools/lessc.js",
+    "tsc": "tsc -p tsconfig.json --noEmit"
   },
   "keywords": [],
   "author": "Felix Rieseberg, felix@felixrieseberg.com",
@@ -45,6 +46,6 @@
     "prettier": "^2.2.1",
     "rimraf": "^3.0.2",
     "standard": "^16.0.3",
-    "typescript": "^3.9.7"
+    "typescript": "^4.1.3"
   }
 }
