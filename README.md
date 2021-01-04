@@ -4,12 +4,15 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
 
 ## Downloads
 
-<table style="width: 100%">
+<table class="is-fullwidth">
 </thead>
 <tbody>
 </tbody>
   <tr>
-    <td><h2>Windows</h2></td>
+    <td>
+      <img src="./.github/images/windows.png" width="24"><br />
+      Windows
+    </td>
     <td>
       <span>32-bit</span>
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-setup-ia32.exe">
@@ -39,7 +42,10 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
     </td>
   </tr>
   <tr>
-    <td><h2>macOS</h2></td>
+    <td>
+      <img src="./.github/images/macos.png" width="24"><br />
+      macOS
+    </td>
     <td>
       <span>Intel Processor</span>
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-darwin-arm64-2.3.0.zip">
@@ -55,33 +61,36 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
     </td>
   </tr>
   <tr>
-    <td><h2>Linux</h2></td>
+    <td>
+      <img src="./.github/images/linux.png" width="24"><br />
+      Linux
+    </td>
     <td>
       <span>32-bit</span>
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.i386.rpm">
         💿 rpm
-      </a>
+      </a> |
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_i386.deb">
         💿 deb
       </a><br />
       <span>32-bit</span>
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.x86_64.rpm">
         💿 rpm
-      </a>
+      </a> |
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_amd64.deb">
         💿 deb
       </a><br />
       <span>ARM64</span>
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.arm64.rpm">
         💿 rpm
-      </a>
+      </a> |
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_arm64.deb">
-        💿 deb, ARM64
+        💿 deb
       </a><br />
       <span>ARMv7 (armhf)</span>
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.arm64.rpm">
         💿 rpm
-      </a>
+      </a> |
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_armhf.deb">
         💿 deb
       </a>
