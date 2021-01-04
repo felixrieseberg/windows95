@@ -3,10 +3,83 @@
 This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, it's the full thing. I'm sorry.
 
 ## Downloads
-|  | Windows | macOS | Linux |
-|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Standalone Download | 📦[Standalone, 32-bit](https://github.com/felixrieseberg/windows95/releases/download/v2.2.2/windows95-win32-ia32-2.2.2.zip) <br /> 📦[Standalone, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v2.2.2/windows95-win32-x64-2.2.2.zip)  | 📦[Standalone](https://github.com/felixrieseberg/windows95/releases/download/v2.2.2/windows95-darwin-x64-2.2.2.zip) |  |
-| Installer | 💽[Setup, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v2.2.2/windows95-2.2.2-setup-x64.exe) <br /> 💽[Setup, 32-bit](https://github.com/felixrieseberg/windows95/releases/download/v2.2.2/windows95-2.2.2-setup-ia32.exe)  |  |  💽[deb, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v2.2.2/windows95_2.2.2_amd64.deb) <br /> 💽[rpm, 64-bit](https://github.com/felixrieseberg/windows95/releases/download/v2.2.2/windows95-2.2.2-1.x86_64.rpm) |
+
+<table style="width: 100%">
+<thead>
+  <tr>
+    <th>Type</th>
+    <th>Windows</th>
+    <th>macOS</th>
+    <th>Linux</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td>Standalone Download</td>
+    <td>
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-win32-ia32-2.3.0.zip">
+        📦 Standalone, 32-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-win32-ia32-2.3.0.zip">
+        📦 Standalone, 64-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-win32-ia32-2.3.0.zip">
+        📦 Standalone, ARM64
+      </a>
+    </td>
+    <td>
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-darwin-arm64-2.3.0.zip">
+        📦 Standalone, 64-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-darwin-x64-2.3.0.zip">
+        📦 Standalone, ARM64
+      </a>
+    </td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Installers</td>
+    <td>
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-setup-ia32.exe">
+        💿 Installer, 32-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-setup-x64.exe">
+        💿 Installer, 64-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-setup-arm64.exe">
+        💿 Installer, ARM64
+      </a>
+    </td>
+    <td></td>
+    <td>
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.i386.rpm">
+        💿 rpm, 32-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.x86_64.rpm">
+        💿 rpm, 64-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.arm64.rpm">
+        💿 rpm, ARM64
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.arm64.rpm">
+        💿 rpm, ARMv7 (armhf)
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_i386.deb">
+        💿 deb, 32-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_amd64.deb">
+        💿 deb, 64-bit
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_arm64.deb">
+        💿 deb, ARM64
+      </a><br />
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_armhf.deb">
+        💿 deb, ARMv7 (armhf)
+      </a>
+    </td>
+  </tr>
+</tbody>
+</table>
 
 ![Screenshot](https://user-images.githubusercontent.com/1426799/44532591-4ceb3680-a6a8-11e8-8c2c-bc29f3bfdef7.png)
 
