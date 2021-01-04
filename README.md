@@ -37,7 +37,7 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
         📦 Standalone Zip
       </a><br />
       <span>
-        ❓ Don't know what kind of chip you have? <a href="ms-settings:about">Open your settings</a>.
+        ❓ Don't know what kind of chip you have? Hit start, enter "processor" for info.
       </span>
     </td>
   </tr>
