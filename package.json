@@ -9,9 +9,10 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "prettier --write src/**/*.{ts,tsx}",
+    "lint": "prettier --write src/**/*.{ts,tsx} && npm run check-links",
     "less": "node ./tools/lessc.js",
-    "tsc": "tsc -p tsconfig.json --noEmit"
+    "tsc": "tsc -p tsconfig.json --noEmit",
+    "check-links": "node tools/check-links.js"
   },
   "keywords": [],
   "author": "Felix Rieseberg, felix@felixrieseberg.com",

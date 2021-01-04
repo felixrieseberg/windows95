@@ -10,7 +10,7 @@ import { StartMenu } from "./start-menu";
 import { CardSettings } from "./card-settings";
 import { EmulatorInfo } from "./emulator-info";
 import { CardDrive } from "./card-drive";
-import { getStatePath } from './utils/get-state-path';
+import { getStatePath } from "./utils/get-state-path";
 
 export interface EmulatorState {
   currentUiCard: string;

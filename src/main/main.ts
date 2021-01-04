@@ -6,7 +6,7 @@ import { shouldQuit } from "./squirrel";
 import { setupUpdates } from "./update";
 import { getOrCreateWindow } from "./windows";
 import { setupMenu } from "./menu";
-import { setupIpcListeners } from './ipc';
+import { setupIpcListeners } from "./ipc";
 
 /**
  * Handle the app's "ready" event. This is essentially

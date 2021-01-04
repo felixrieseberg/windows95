@@ -1,7 +1,7 @@
-import { ipcRenderer } from 'electron';
-import { IPC_COMMANDS } from '../../constants';
+import { ipcRenderer } from "electron";
+import { IPC_COMMANDS } from "../../constants";
 
-let _statePath = '';
+let _statePath = "";
 
 export async function getStatePath(): Promise<string> {
   if (_statePath) {
@@ -9,6 +9,5 @@ export async function getStatePath(): Promise<string> {
   }
 
   const statePath = await ipcRenderer.invoke(IPC_COMMANDS.GET_STATE_PATH);
-  return _statePath = statePath;
+  return (_statePath = statePath);
 }
-

@@ -16,19 +16,17 @@ export async function clearStorageData() {
     return;
   }
 
-  await session.defaultSession.clearStorageData(
-    {
-      storages: [
-        "appcache",
-        "cookies",
-        "filesystem",
-        "indexdb",
-        "localstorage",
-        "shadercache",
-        "websql",
-        "serviceworkers",
-      ],
-      quotas: ["temporary", "persistent", "syncable"],
-    }
-  );
+  await session.defaultSession.clearStorageData({
+    storages: [
+      "appcache",
+      "cookies",
+      "filesystem",
+      "indexdb",
+      "localstorage",
+      "shadercache",
+      "websql",
+      "serviceworkers",
+    ],
+    quotas: ["temporary", "persistent", "syncable"],
+  });
 }

@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as fs from "fs-extra";
 
-import { getStatePath } from './utils/get-state-path';
+import { getStatePath } from "./utils/get-state-path";
 
 interface CardSettingsProps {
   bootFromScratch: () => void;
