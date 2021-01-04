@@ -4,3 +4,4 @@ src/images
 .DS_Store
 images
 dist
+!.github/images
