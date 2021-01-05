@@ -73,7 +73,7 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_i386.deb">
         💿 deb
       </a><br />
-      <span>32-bit</span>
+      <span>64-bit</span>
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.x86_64.rpm">
         💿 rpm
       </a> |
