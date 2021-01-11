@@ -48,11 +48,11 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
     </td>
     <td>
       <span>Intel Processor</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-darwin-arm64-2.3.0.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-darwin-x64-2.3.0.zip">
         📦 Standalone Zip
       </a><br />
       <span>Apple M1 Processor</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-darwin-x64-2.3.0.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-darwin-arm64-2.3.0.zip">
         📦 Standalone Zip
       </a><br />
       <span>
