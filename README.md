@@ -103,7 +103,7 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
 ![Screenshot](https://user-images.githubusercontent.com/1426799/44532591-4ceb3680-a6a8-11e8-8c2c-bc29f3bfdef7.png)
 
 ## Does it work?
-Yes! Quite well, actually - on macOS, Windows, and Linux. Bear in mind that this is written entirely in JavaScript, so please adjust your expectations.
+Yes! Quite well, actually – on macOS, Windows, and Linux. Bear in mind that this is written entirely in JavaScript, so please adjust your expectations.
 
 ## Should this have been a native app?
 Absolutely.
