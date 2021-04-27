@@ -88,7 +88,7 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
         💿 deb
       </a><br />
       <span>ARMv7 (armhf)</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.arm64.rpm">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95-2.3.0-1.armv7hl.rpm">
         💿 rpm
       </a> |
       <a href="https://github.com/felixrieseberg/windows95/releases/download/v2.3.0/windows95_2.3.0_armhf.deb">
