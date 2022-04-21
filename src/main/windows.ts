@@ -14,8 +14,11 @@ export function getOrCreateWindow(): BrowserWindow {
       nodeIntegration: true,
       sandbox: false,
       webviewTag: false,
+      contextIsolation: false,
     },
   });
+
+  mainWindow.webContents.toggleDevTools();
 
   mainWindow.loadFile("./dist/static/index.html");
 
