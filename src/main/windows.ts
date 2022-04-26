@@ -18,10 +18,9 @@ export function getOrCreateWindow(): BrowserWindow {
     },
   });
 
-  mainWindow.webContents.toggleDevTools();
-
+  // mainWindow.webContents.toggleDevTools();
   mainWindow.loadFile("./dist/static/index.html");
-
+  
   mainWindow.on("closed", () => {
     mainWindow = null;
   });

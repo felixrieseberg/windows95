@@ -85,7 +85,7 @@ export class EmulatorInfo extends React.Component<
     }
 
     // TypeScript think's we're using a Node.js setInterval. We're not.
-    this.cpuInterval = (setInterval(this.cpuCount, 500) as unknown) as number;
+    this.cpuInterval = setInterval(this.cpuCount, 500) as unknown as number;
 
     // Disk
     emulator.add_listener("ide-read-start", this.onIDEReadStart);

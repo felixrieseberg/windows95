@@ -272,26 +272,29 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   private async startEmulator() {
     document.body.classList.remove("paused");
 
-    const imageSize = await getDiskImageSize();
+    console.log(__dirname)
+
     const options = {
+      wasm_path: path.join(__dirname, "build/v86.wasm"),
       memory_size: 128 * 1024 * 1024,
-      video_memory_size: 32 * 1024 * 1024,
+      vga_memory_size: 32 * 1024 * 1024,
       screen_container: document.getElementById("emulator"),
       bios: {
-        url: "../../bios/seabios.bin",
+        url: path.join(__dirname, "../../bios/seabios.bin"),
       },
       vga_bios: {
-        url: "../../bios/vgabios.bin",
+        url: path.join(__dirname, "../../bios/vgabios.bin"),
       },
       hda: {
-        url: "../../images/windows95.img",
+        url: CONSTANTS.IMAGE_PATH,
         async: true,
-        size: imageSize,
+        size: await getDiskImageSize(),
       },
       fda: {
         buffer: this.state.floppyFile,
       },
       boot_order: 0x132,
+      // network_relay_url: "ws://localhost:8080/"
     };
 
     console.log(`🚜 Starting emulator with options`, options);
