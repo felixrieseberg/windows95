@@ -6,7 +6,9 @@ import { getStatePath } from "./utils/get-state-path";
 interface CardSettingsProps {
   bootFromScratch: () => void;
   setFloppy: (file: File) => void;
+  setCdrom: (cdrom: File) => void;
   floppy?: File;
+  cdrom?: File;
 }
 
 interface CardSettingsState {
@@ -21,6 +23,7 @@ export class CardSettings extends React.Component<
     super(props);
 
     this.onChangeFloppy = this.onChangeFloppy.bind(this);
+    this.onChangeCdrom = this.onChangeCdrom.bind(this);
     this.onResetState = this.onResetState.bind(this);
 
     this.state = {
@@ -39,12 +42,53 @@ export class CardSettings extends React.Component<
             </h2>
           </div>
           <div className="card-body">
+            {this.renderCdrom()}
+            <hr />
             {this.renderFloppy()}
             <hr />
             {this.renderState()}
           </div>
         </div>
       </section>
+    );
+  }
+
+  public renderCdrom() {
+    // CD is currently not working, so.. let's return nothing.
+    return null;
+
+    const { cdrom } = this.props;
+
+    return (
+      <fieldset>
+        <legend>
+          <img src="../../static/cdrom.png" />
+          CD-ROM
+        </legend>
+        <input
+          id="cdrom-input"
+          type="file"
+          onChange={this.onChangeCdrom}
+          style={{ display: "none" }}
+        />
+        <p>
+          windows95 comes with a virtual CD drive. It can mount images in the "iso" format.
+        </p>
+        <p id="floppy-path">
+          {cdrom
+            ? `Inserted CD: ${cdrom.path}`
+            : `No CD mounted`}
+        </p>
+        <button
+          className="btn"
+          onClick={() =>
+            (document.querySelector("#cdrom-input") as any).click()
+          }
+        >
+          <img src="../../static/select-cdrom.png" />
+          <span>Mount CD</span>
+        </button>
+      </fieldset>
     );
   }
 
@@ -145,6 +189,24 @@ export class CardSettings extends React.Component<
       this.props.setFloppy(floppyFile);
     } else {
       console.log(`Floppy: Input changed but no file selected`);
+    }
+  }
+
+  /**
+   * Handle a change in the cdrom input
+   *
+   * @param event
+   */
+    private onChangeCdrom(event: React.ChangeEvent<HTMLInputElement>) {
+    const CdromFile =
+      event.target.files && event.target.files.length > 0
+        ? event.target.files[0]
+        : null;
+
+    if (CdromFile) {
+      this.props.setCdrom(CdromFile);
+    } else {
+      console.log(`Cdrom: Input changed but no file selected`);
     }
   }
 

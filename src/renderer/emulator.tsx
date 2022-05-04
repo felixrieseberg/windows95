@@ -17,6 +17,7 @@ export interface EmulatorState {
   emulator?: any;
   scale: number;
   floppyFile?: File;
+  cdromFile?: File;
   isBootingFresh: boolean;
   isCursorCaptured: boolean;
   isInfoDisplayed: boolean;
@@ -179,7 +180,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    * 🤡
    */
   public renderUI() {
-    const { isRunning, currentUiCard, floppyFile } = this.state;
+    const { isRunning, currentUiCard, floppyFile, cdromFile } = this.state;
 
     if (isRunning) {
       return null;
@@ -191,8 +192,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       card = (
         <CardSettings
           setFloppy={(floppyFile) => this.setState({ floppyFile })}
+          setCdrom={(cdromFile) => this.setState({ cdromFile })}
           bootFromScratch={this.bootFromScratch}
           floppy={floppyFile}
+          cdrom={cdromFile}
         />
       );
     } else if (currentUiCard === "drive") {
@@ -272,7 +275,12 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   private async startEmulator() {
     document.body.classList.remove("paused");
 
-    console.log(__dirname)
+    const cdrom: any = {};
+    if (this.state.cdromFile?.path) {
+      cdrom.url = this.state.cdromFile.path;
+      cdrom.async = true;
+      cdrom.size = await getDiskImageSize(this.state.cdromFile.path);
+    }
 
     const options = {
       wasm_path: path.join(__dirname, "build/v86.wasm"),
@@ -288,11 +296,12 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       hda: {
         url: CONSTANTS.IMAGE_PATH,
         async: true,
-        size: await getDiskImageSize(),
+        size: await getDiskImageSize(CONSTANTS.IMAGE_PATH),
       },
       fda: {
         buffer: this.state.floppyFile,
       },
+      cdrom: cdrom,
       boot_order: 0x132,
       // network_relay_url: "ws://localhost:8080/"
     };

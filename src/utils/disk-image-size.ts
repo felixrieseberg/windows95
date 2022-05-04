@@ -7,9 +7,9 @@ import { CONSTANTS } from "../constants";
  *
  * @returns {number}
  */
-export async function getDiskImageSize() {
+export async function getDiskImageSize(path: string) {
   try {
-    const stats = await fs.stat(CONSTANTS.IMAGE_PATH);
+    const stats = await fs.stat(path);
 
     if (stats) {
       return stats.size;
