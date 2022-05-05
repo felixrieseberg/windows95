@@ -81,8 +81,11 @@ jobs:
           DISK_URL: ${{ secrets.DISK_URL }}
       - name: Install
         run: yarn
-      - name: Make
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Make (Linux)
+        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'ubuntu-latest'
+        run: yarn make
+      - name: Make (macOS, Windows)
+        if: startsWith(github.ref, 'refs/tags/') && matrix.os != 'ubuntu-latest'
         run: yarn make --arch=all
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
