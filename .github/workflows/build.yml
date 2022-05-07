@@ -84,14 +84,24 @@ jobs:
       - name: Make (Linux)
         if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'ubuntu-latest'
         run: yarn make
-      - name: Make (macOS, Windows)
-        if: startsWith(github.ref, 'refs/tags/') && matrix.os != 'ubuntu-latest'
+      - name: Make (Windows)
+        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'windows-latest'
         run: yarn make --arch=all
+        env:
+          WINDOWS_CODESIGN_FILE: ${{ steps.write_file.outputs.filePath }}
+          WINDOWS_CODESIGN_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_PASSWORD }}
+      - name: Make (macOS/x64)
+        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'macOS-latest'
+        run: yarn make --arch=x64
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          WINDOWS_CODESIGN_FILE: ${{ steps.write_file.outputs.filePath }}
-          WINDOWS_CODESIGN_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_PASSWORD }}
+      - name: Make (macOS/arm64)
+        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'macOS-latest'
+        run: yarn make --arch=arm64
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
       # - name: Archive production artifacts
       #   uses: actions/upload-artifact@v2
       #   with:
