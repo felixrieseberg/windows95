@@ -62,6 +62,8 @@ module.exports = {
           exe: 'windows95.exe',
           noMsi: true,
           remoteReleases: '',
+          iconUrl: 'https://raw.githubusercontent.com/felixrieseberg/windows95/master/assets/icon.ico',
+          loadingGif: './assets/boot.gif',
           setupExe: `windows95-${package.version}-setup-${arch}.exe`,
           setupIcon: path.resolve(__dirname, 'assets', 'icon.ico'),
           certificateFile: process.env['WINDOWS_CODESIGN_FILE'],
