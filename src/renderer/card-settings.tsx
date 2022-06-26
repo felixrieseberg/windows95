@@ -72,12 +72,11 @@ export class CardSettings extends React.Component<
           style={{ display: "none" }}
         />
         <p>
-          windows95 comes with a virtual CD drive. It can mount images in the "iso" format.
+          windows95 comes with a virtual CD drive. It can mount images in the
+          "iso" format.
         </p>
         <p id="floppy-path">
-          {cdrom
-            ? `Inserted CD: ${cdrom.path}`
-            : `No CD mounted`}
+          {cdrom ? `Inserted CD: ${cdrom?.path}` : `No CD mounted`}
         </p>
         <button
           className="btn"
@@ -197,7 +196,7 @@ export class CardSettings extends React.Component<
    *
    * @param event
    */
-    private onChangeCdrom(event: React.ChangeEvent<HTMLInputElement>) {
+  private onChangeCdrom(event: React.ChangeEvent<HTMLInputElement>) {
     const CdromFile =
       event.target.files && event.target.files.length > 0
         ? event.target.files[0]

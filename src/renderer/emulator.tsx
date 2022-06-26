@@ -312,7 +312,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     console.log(`🚜 Starting emulator with options`, options);
 
     window["emulator"] = new V86Starter(options);
-    
 
     // New v86 instance
     this.setState({
