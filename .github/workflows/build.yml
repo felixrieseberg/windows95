@@ -28,16 +28,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - name: Install
-        run: yarn
+        run: yarn --frozen-lockfile
       - name: lint
         run: yarn lint
   build:
     needs: lint
-    name: Build (${{ matrix.os }})
+    name: Build (${{ matrix.os }} - ${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        # Build for supported platforms
+        # https://github.com/electron/electron-packager/blob/ebcbd439ff3e0f6f92fa880ff28a8670a9bcf2ab/src/targets.js#L9
+        # 32-bit Linux unsupported as of 2019: https://www.electronjs.org/blog/linux-32bit-support
         os: [ macOS-latest, ubuntu-latest, windows-latest ]
+        arch: [ x64, arm64 ]
+        include:
+        - os: windows-latest
+          arch: ia32
+        - os: ubuntu-latest
+          arch: armv7l
+        # Publishing artifacts for multiple Windows architectures has
+        # a bug which can cause the wrong architecture to be downloaded
+        # for an update, so until that is fixed, only build Windows x64
+        exclude:
+        - os: windows-latest
+          arch: arm64
+
     steps:
       - uses: actions/checkout@v2
       - name: Setup Node.js
@@ -81,32 +97,15 @@ jobs:
           DISK_URL: ${{ secrets.DISK_URL }}
       - name: Install
         run: yarn
-      - name: Make (Linux)
-        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'ubuntu-latest'
-        run: yarn make
-      - name: Make (Windows)
-        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'windows-latest'
-        run: yarn make --arch=all
+      - name: Make
+        if: startsWith(github.ref, 'refs/tags/')
+        run: yarn make --arch=${{ matrix.arch }}
         env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WINDOWS_CODESIGN_FILE: ${{ steps.write_file.outputs.filePath }}
           WINDOWS_CODESIGN_PASSWORD: ${{ secrets.WINDOWS_CODESIGN_PASSWORD }}
-      - name: Make (macOS/x64)
-        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'macOS-latest'
-        run: yarn make --arch=x64
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-      - name: Make (macOS/arm64)
-        if: startsWith(github.ref, 'refs/tags/') && matrix.os == 'macOS-latest'
-        run: yarn make --arch=arm64
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-      # - name: Archive production artifacts
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: ${{ matrix.os }}
-      #     path: out/make/**/*
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
