@@ -43,7 +43,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       isRunning: false,
       currentUiCard: "start",
       isInfoDisplayed: true,
-      scale: 1,
+      // We can start pretty large
+      // If it's too large, it'll just grow until it hits borders
+      scale: 2,
     };
 
     this.setupInputListeners();
@@ -264,7 +266,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     const imagePath = path.join(__dirname, "../../images/windows95.img");
 
     console.log(`Showing disk image in ${imagePath}`);
-    ``;
 
     shell.showItemInFolder(imagePath);
   }
@@ -276,10 +277,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     document.body.classList.remove("paused");
 
     const cdrom: any = {};
-    if (this.state.cdromFile?.path) {
-      cdrom.url = this.state.cdromFile.path;
+    const cdromFile: any = this.state.cdromFile;
+    if (cdromFile?.path) {
+      cdrom.url = cdromFile.path;
       cdrom.async = true;
-      cdrom.size = await getDiskImageSize(this.state.cdromFile.path);
+      cdrom.size = await getDiskImageSize(cdromFile.path);
     }
 
     const options = {
@@ -303,12 +305,14 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       },
       cdrom: cdrom,
       boot_order: 0x132,
+      // One day, maybe!
       // network_relay_url: "ws://localhost:8080/"
     };
 
     console.log(`🚜 Starting emulator with options`, options);
 
     window["emulator"] = new V86Starter(options);
+    
 
     // New v86 instance
     this.setState({
@@ -328,6 +332,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
       this.lockMouse();
       this.state.emulator.run();
+      this.state.emulator.screen_set_scale(this.state.scale);
     }, 500);
   }
 
