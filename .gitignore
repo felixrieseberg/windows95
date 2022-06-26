@@ -7,3 +7,4 @@ images_new
 dist
 !.github/images
 *.code-workspace
+*.pfx
