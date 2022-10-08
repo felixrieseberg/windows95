@@ -361,7 +361,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     await this.saveState();
     this.unlockMouse();
-    emulator.stop();
+    await emulator.stop();
     this.setState({ isRunning: false });
 
     document.body.classList.add("paused");
@@ -385,25 +385,17 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     const { emulator } = this.state;
     const statePath = await getStatePath();
 
-    return new Promise((resolve) => {
-      if (!emulator || !emulator.save_state) {
-        console.log(`restoreState: No emulator present`);
-        return resolve();
-      }
+    if (!emulator || !emulator.save_state) {
+      console.log(`restoreState: No emulator present`);
+      return;
+    }
 
-      emulator.save_state(async (error: Error, newState: ArrayBuffer) => {
-        if (error) {
-          console.warn(`saveState: Could not save state`, error);
-          return resolve();
-        }
-
-        await fs.outputFile(statePath, Buffer.from(newState));
-
-        console.log(`saveState: Saved state to ${statePath}`);
-
-        resolve();
-      });
-    });
+    try {
+      const newState = await emulator.save_state();
+      await fs.outputFile(statePath, Buffer.from(newState));
+    } catch (error) {
+      console.warn(`saveState: Could not save state`, error);
+    }
   }
 
   /**
@@ -423,7 +415,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     }
 
     try {
-      this.state.emulator.restore_state(state);
+      await this.state.emulator.restore_state(state);
     } catch (error) {
       console.log(
         `State: Could not read state file. Maybe none exists?`,
