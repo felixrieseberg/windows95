@@ -1,11 +1,9 @@
-mkdir images
-cd images
+New-Item -ItemType Directory .\images > $null
+Set-Location -Path .\images
 
-$wc = New-Object System.Net.WebClient
-$wc.DownloadFile($env:DISK_URL, "$(Resolve-Path .)\images.zip")
+(New-Object System.Net.WebClient).DownloadFile($env:DISK_URL, "$(Resolve-Path .)\images.zip")
 
 7z x images.zip -y -aoa
-Remove-Item images.zip
-Remove-Item __MACOSX -Recurse -ErrorAction Ignore
-cd ..
-Tree ./ /F
+Remove-Item -Recurse -Path __MACOSX, images.zip -ErrorAction Ignore
+Set-Location -Path ..
+tree.com .\ /F

@@ -73,7 +73,7 @@ jobs:
             ${{ runner.os }}-yarn-
       - name: Set MacOS signing certs
         if: matrix.os == 'macOS-latest'
-        run: chmod +x tools/add-macos-cert.sh && ./tools/add-macos-cert.sh
+        run: ./tools/add-macos-cert.sh
         env:
           MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
           MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
@@ -91,7 +91,7 @@ jobs:
         env:
           DISK_URL: ${{ secrets.DISK_URL }}
       - name: Download disk image (sh)
-        run: chmod +x tools/download-disk.sh && ./tools/download-disk.sh
+        run: ./tools/download-disk.sh
         if: matrix.os != 'windows-latest' && startsWith(github.ref, 'refs/tags/')
         env:
           DISK_URL: ${{ secrets.DISK_URL }}
