@@ -20,4 +20,4 @@ security import $MACOS_CERT_P12_FILE -k $KEY_CHAIN -P $MACOS_CERT_PASSWORD -T /u
 security set-key-partition-list -S apple-tool:,apple: -s -k actions $KEY_CHAIN
 
 # remove certs
-rm -fr *.p12
+rm *.p12
