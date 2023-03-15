@@ -35,5 +35,5 @@ xhost +
 ```
 4. run 
 ```
-docker run -it -e DISPLAY=host.docker.internal:1 toolboc/windows95
+docker run -it -e DISPLAY=host.docker.internal:0 toolboc/windows95
 ```
