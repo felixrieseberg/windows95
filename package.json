@@ -40,7 +40,7 @@
     "@types/node": "^12.19.9",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
-    "electron": "25.3.0",
+    "electron": "25.8.4",
     "less": "^3.13.0",
     "node-abi": "^3.45.0",
     "parcel-bundler": "^1.12.5",
