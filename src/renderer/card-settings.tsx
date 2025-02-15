@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as fs from "fs-extra";
+import * as fs from "fs";
 
 import { getStatePath } from "./utils/get-state-path";
 
@@ -216,7 +216,11 @@ export class CardSettings extends React.Component<
     const statePath = await getStatePath();
 
     if (fs.existsSync(statePath)) {
-      await fs.remove(statePath);
+      try {
+        await fs.promises.unlink(statePath);
+      } catch (error) {
+        console.error(`Failed to delete state file: ${error}`);
+      }
     }
 
     this.setState({ isStateReset: true });

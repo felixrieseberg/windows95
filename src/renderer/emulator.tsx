@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as fs from "fs-extra";
+import * as fs from "fs";
 import * as path from "path";
 import { ipcRenderer, shell } from "electron";
 
@@ -390,7 +390,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     try {
       const newState = await emulator.save_state();
-      await fs.outputFile(statePath, Buffer.from(newState));
+      await fs.promises.writeFile(statePath, Buffer.from(newState), {
+        flush: true
+      });
     } catch (error) {
       console.warn(`saveState: Could not save state`, error);
     }

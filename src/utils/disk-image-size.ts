@@ -1,4 +1,4 @@
-import * as fs from "fs-extra";
+import * as fs from "fs";
 
 import { CONSTANTS } from "../constants";
 
@@ -9,7 +9,7 @@ import { CONSTANTS } from "../constants";
  */
 export async function getDiskImageSize(path: string) {
   try {
-    const stats = await fs.stat(path);
+    const stats = await fs.promises.stat(path);
 
     if (stats) {
       return stats.size;

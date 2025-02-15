@@ -2,7 +2,7 @@
 
 const Bundler = require('parcel-bundler')
 const path = require('path')
-const fs = require('fs-extra')
+const fs = require('fs')
 
 async function copyLib() {
   const target = path.join(__dirname, '../dist/static')
@@ -10,7 +10,7 @@ async function copyLib() {
   const index = path.join(target, 'index.html')
 
   // Copy in lib
-  await fs.copy(lib, target)
+  await fs.promises.cp(lib, target, { recursive: true });
 
   // Patch so that fs.read is used
   const libv86path = path.join(target, 'libv86.js')
@@ -65,8 +65,6 @@ async function compileParcel (options = {}) {
 
   await copyLib();
 }
-
-
 
 module.exports = {
   compileParcel
