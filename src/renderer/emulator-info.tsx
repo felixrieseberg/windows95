@@ -74,7 +74,7 @@ export class EmulatorInfo extends React.Component<
 
     if (!emulator) {
       console.log(
-        `Emulator info: Tried to install listeners, but emulator not defined yet.`
+        `Emulator info: Tried to install listeners, but emulator not defined yet.`,
       );
       return;
     }
@@ -104,7 +104,7 @@ export class EmulatorInfo extends React.Component<
 
     if (!emulator) {
       console.log(
-        `Emulator info: Tried to uninstall listeners, but emulator not defined yet.`
+        `Emulator info: Tried to uninstall listeners, but emulator not defined yet.`,
       );
       return;
     }

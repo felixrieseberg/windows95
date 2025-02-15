@@ -295,11 +295,13 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       // fda: {
       //   buffer: this.state.floppyFile,
       // },
-      cdrom: this.state.cdromFile?.path ? {
-        url: this.state.cdromFile.path,
-        async: true,
-        size: await getDiskImageSize(this.state.cdromFile.path),
-      } : undefined,
+      cdrom: this.state.cdromFile?.path
+        ? {
+            url: this.state.cdromFile.path,
+            async: true,
+            size: await getDiskImageSize(this.state.cdromFile.path),
+          }
+        : undefined,
       boot_order: 0x132,
       // One day, maybe!
       // network_relay_url: "ws://localhost:8080/"
@@ -415,7 +417,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     } catch (error) {
       console.log(
         `State: Could not read state file. Maybe none exists?`,
-        error
+        error,
       );
     }
   }
@@ -460,7 +462,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       emulator.lock_mouse();
     } else {
       console.warn(
-        `Emulator: Tried to lock mouse, but no emulator or not running`
+        `Emulator: Tried to lock mouse, but no emulator or not running`,
       );
     }
   }

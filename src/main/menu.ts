@@ -15,10 +15,10 @@ export async function setupMenu() {
   await createMenu();
 
   ipcMain.on(IPC_COMMANDS.MACHINE_STARTED, () =>
-    createMenu({ isRunning: true })
+    createMenu({ isRunning: true }),
   );
   ipcMain.on(IPC_COMMANDS.MACHINE_STOPPED, () =>
-    createMenu({ isRunning: false })
+    createMenu({ isRunning: false }),
   );
 }
 

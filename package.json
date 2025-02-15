@@ -44,7 +44,7 @@
     "less": "^3.13.0",
     "node-abi": "^3.45.0",
     "parcel-bundler": "^1.12.5",
-    "prettier": "^3.0.0",
+    "prettier": "^3.5.1",
     "rimraf": "^5.0.1",
     "typescript": "^5.1.6"
   }

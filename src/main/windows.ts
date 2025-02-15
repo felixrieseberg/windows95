@@ -22,10 +22,10 @@ export function getOrCreateWindow(): BrowserWindow {
   mainWindow.loadFile("./dist/static/index.html");
 
   mainWindow.webContents.on("will-navigate", (event, url) =>
-    handleNavigation(event, url)
+    handleNavigation(event, url),
   );
   mainWindow.webContents.on("new-window", (event, url) =>
-    handleNavigation(event, url)
+    handleNavigation(event, url),
   );
 
   mainWindow.on("closed", () => {
