@@ -15,7 +15,10 @@ async function copyLib() {
   // Patch so that fs.read is used
   const libv86path = path.join(target, 'libv86.js')
   const libv86 = fs.readFileSync(libv86path, 'utf-8')
-  const patchedLibv86 = libv86.replace('v86util.load_file="undefined"===typeof XMLHttpRequest', 'v86util.load_file="undefined"!==typeof XMLHttpRequest')
+
+  let patchedLibv86 = libv86.replace('k.load_file="undefined"===typeof XMLHttpRequest?pa:qa', 'k.load_file=pa')
+  patchedLibv86 = patchedLibv86.replace('H.exportSymbol=function(a,b){"undefined"!==typeof module&&"undefined"!==typeof module.exports?module.exports[a]=b:"undefined"!==typeof window?window[a]=b:"function"===typeof importScripts&&(self[a]=b)}', 'H.exportSymbol=function(a,b){"undefined"!==typeof window?window[a]=b:"undefined"!==typeof module&&"undefined"!==typeof module.exports?module.exports[a]=b:"function"===typeof importScripts&&(self[a]=b)}')
+
   fs.writeFileSync(libv86path, patchedLibv86)
 
   // Overwrite

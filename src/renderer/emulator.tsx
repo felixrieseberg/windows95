@@ -276,14 +276,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   private async startEmulator() {
     document.body.classList.remove("paused");
 
-    const cdrom: any = {};
-    const cdromFile: any = this.state.cdromFile;
-    if (cdromFile?.path) {
-      cdrom.url = cdromFile.path;
-      cdrom.async = true;
-      cdrom.size = await getDiskImageSize(cdromFile.path);
-    }
-
     const options = {
       wasm_path: path.join(__dirname, "build/v86.wasm"),
       memory_size: 128 * 1024 * 1024,
@@ -300,10 +292,14 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         async: true,
         size: await getDiskImageSize(CONSTANTS.IMAGE_PATH),
       },
-      fda: {
-        buffer: this.state.floppyFile,
-      },
-      cdrom: cdrom,
+      // fda: {
+      //   buffer: this.state.floppyFile,
+      // },
+      cdrom: this.state.cdromFile?.path ? {
+        url: this.state.cdromFile.path,
+        async: true,
+        size: await getDiskImageSize(this.state.cdromFile.path),
+      } : undefined,
       boot_order: 0x132,
       // One day, maybe!
       // network_relay_url: "ws://localhost:8080/"
@@ -311,7 +307,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     console.log(`🚜 Starting emulator with options`, options);
 
-    window["emulator"] = new V86Starter(options);
+    window["emulator"] = new V86(options);
 
     // New v86 instance
     this.setState({

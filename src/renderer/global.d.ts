@@ -1,2 +1,2 @@
-declare const V86Starter: any;
+declare const V86: any;
 declare const win95: any;
