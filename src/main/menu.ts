@@ -3,6 +3,7 @@ import { app, shell, Menu, BrowserWindow, ipcMain } from "electron";
 import { clearCaches } from "../cache";
 import { IPC_COMMANDS } from "../constants";
 import { isDevMode } from "../utils/devmode";
+import { log } from "./logging";
 
 const LINKS = {
   homepage: "https://www.twitter.com/felixrieseberg",
@@ -26,10 +27,10 @@ function send(cmd: string) {
   const windows = BrowserWindow.getAllWindows();
 
   if (windows[0]) {
-    console.log(`Sending "${cmd}"`);
+    log(`Sending "${cmd}"`);
     windows[0].webContents.send(cmd);
   } else {
-    console.log(`Tried to send "${cmd}", but could not find window`);
+    log(`Tried to send "${cmd}", but could not find window`);
   }
 }
 

@@ -7,6 +7,8 @@ import { setupUpdates } from "./update";
 import { getOrCreateWindow } from "./windows";
 import { setupMenu } from "./menu";
 import { setupIpcListeners } from "./ipc";
+import { setupSession } from "./session";
+import { setupFileServer } from './fileserver/fileserver';
 
 /**
  * Handle the app's "ready" event. This is essentially
@@ -15,11 +17,13 @@ import { setupIpcListeners } from "./ipc";
 export async function onReady() {
   if (!isDevMode()) process.env.NODE_ENV = "production";
 
+  setupSession();
   setupIpcListeners();
   getOrCreateWindow();
   setupAboutPanel();
   setupMenu();
   setupUpdates();
+  setupFileServer();
 }
 
 /**

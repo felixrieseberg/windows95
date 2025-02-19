@@ -8,12 +8,11 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "lib": [
-      "es2017",
+      "es2021",
       "dom"
     ],
     "noImplicitAny": true,
     "noImplicitReturns": true,
-    "suppressImplicitAnyIndexErrors": true,
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noImplicitThis": true,

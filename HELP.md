@@ -11,25 +11,4 @@ back to Window Mode. (Thanks to @DisplacedGamers for that wisdom)
 On the app's home screen, select "Settings" in the lower menu. Then, delete your
 machine's state before starting it again - this time hopefully without issues.
 
-## I want to install additional apps or games
 
-If you are running macOS, or Linux, you can probably "mount" the
-virtual hard drive used by `windows95` to add files. Hit the "Modify C: Drive"
-button, which will take you to the disk image.
-
-On macOS, double-click the disk image to open it.
-
-On Windows 10, Windows will _think_ that it can open up the image, but will
-actually fail to do so. Use a tool [like OSFMount][osfmount] to mount your
-disk image.
-
-On Linux, search the Internet for instructions on how to mount an `img` disk
-image on your distribution. It's likely that you'll be able to run `mount`
-with the image as input.
-
-[osfmount]: https://www.osforensics.com/tools/mount-disk-images.html
-
-## What's the FrontPage Username and Password?
-Username: windows95
-
-Password: password

@@ -279,8 +279,13 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     const options = {
       wasm_path: path.join(__dirname, "build/v86.wasm"),
       memory_size: 128 * 1024 * 1024,
-      vga_memory_size: 32 * 1024 * 1024,
+      vga_memory_size: 64 * 1024 * 1024,
       screen_container: document.getElementById("emulator"),
+      preserve_mac_from_state_image: true,
+      net_device: {
+        relay_url: "fetch",
+        type: "ne2k",
+      },
       bios: {
         url: path.join(__dirname, "../../bios/seabios.bin"),
       },
@@ -367,7 +372,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   }
 
   /**
-   * Reset the emulator by reloading the whole page (lol)
+   * Reset the emulator by reloading the whole page
    */
   private async resetEmulator() {
     this.isResetting = true;
