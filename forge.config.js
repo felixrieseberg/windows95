@@ -26,14 +26,8 @@ module.exports = {
     },
     osxSign: {
       identity: 'Developer ID Application: Felix Rieseberg (LT94ZKYDCJ)',
-      'hardened-runtime': true,
-      'gatekeeper-assess': false,
-      'entitlements': 'assets/entitlements.plist',
-      'entitlements-inherit': 'assets/entitlements.plist',
-      'signature-flags': 'library'
     },
     osxNotarize: {
-      appBundleId: 'com.felixrieseberg.macintoshjs',
       appleId: process.env['APPLE_ID'],
       appleIdPassword: process.env['APPLE_ID_PASSWORD'],
       ascProvider: 'LT94ZKYDCJ'
