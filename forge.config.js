@@ -30,7 +30,7 @@ module.exports = {
     osxNotarize: {
       appleId: process.env['APPLE_ID'],
       appleIdPassword: process.env['APPLE_ID_PASSWORD'],
-      ascProvider: 'LT94ZKYDCJ'
+      teamId: 'LT94ZKYDCJ'
     },
     ignore: [
       /\/assets(\/?)/,
@@ -47,9 +47,9 @@ module.exports = {
       /issue_template\.md/,
       /HELP\.md/,
       /forge\.config\.js/,
-      /.github/,
-      /.circleci/,
-      /\.vscode/,
+      /\.github(\/?)/,
+      /\.circleci(\/?)/,
+      /\.vscode(\/?)/,
       /\.gitignore/,
       /\.gitattributes/,
       /\.eslintignore/,
