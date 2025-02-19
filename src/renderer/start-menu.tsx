@@ -28,10 +28,6 @@ export class StartMenu extends React.Component<StartMenuProps, {}> {
             <img src="../../static/settings.png" />
             <span>Settings</span>
           </a>
-          <a onClick={this.navigate} href="#" id="drive" className="nav-link">
-            <img src="../../static/drive.png" />
-            <span>Modify C: Drive</span>
-          </a>
         </div>
       </nav>
     );

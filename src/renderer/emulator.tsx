@@ -9,11 +9,13 @@ import { CardStart } from "./card-start";
 import { StartMenu } from "./start-menu";
 import { CardSettings } from "./card-settings";
 import { EmulatorInfo } from "./emulator-info";
-import { CardDrive } from "./card-drive";
 import { getStatePath } from "./utils/get-state-path";
+import { Win95Window } from "./app";
+
+declare let window: Win95Window;
 
 export interface EmulatorState {
-  currentUiCard: string;
+  currentUiCard: "start" | "settings";
   emulator?: any;
   scale: number;
   floppyFile?: File;
@@ -200,8 +202,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
           cdrom={cdromFile}
         />
       );
-    } else if (currentUiCard === "drive") {
-      card = <CardDrive showDiskImage={this.showDiskImage} />;
     } else {
       card = <CardStart startEmulator={this.startEmulator} />;
     }
@@ -210,7 +210,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       <>
         {card}
         <StartMenu
-          navigate={(target) => this.setState({ currentUiCard: target })}
+          navigate={(target) => this.setState({ currentUiCard: target as "start" | "settings" })}
         />
       </>
     );
@@ -308,8 +308,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
           }
         : undefined,
       boot_order: 0x132,
-      // One day, maybe!
-      // network_relay_url: "ws://localhost:8080/"
     };
 
     console.log(`🚜 Starting emulator with options`, options);

@@ -1,3 +1,12 @@
+export interface Win95Window extends Window {
+  emulator: any;
+  win95: {
+    app: App;
+  };
+}
+
+declare let window: Win95Window;
+
 /**
  * The top-level class controlling the whole app. This is *not* a React component,
  * but it does eventually render all components.
@@ -27,8 +36,8 @@ export class App {
   }
 }
 
-window["win95"] = window["win95"] || {
+window.win95 = window.win95 || {
   app: new App(),
 };
 
-window["win95"].app.setup();
+window.win95.app.setup();
