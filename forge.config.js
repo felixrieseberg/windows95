@@ -39,6 +39,7 @@ module.exports = {
       /\/src\/.*\.ts/,
       /\/test(\/?)/,
       /\/@types(\/?)/,
+      /\/helper-images(\/?)/,
       /package-lock\.json/,
       /README\.md/,
       /tsconfig\.json/,

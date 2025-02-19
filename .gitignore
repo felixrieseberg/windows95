@@ -4,6 +4,7 @@ src/images
 .DS_Store
 images
 images_new
+helper-images
 dist
 !.github/images
 *.code-workspace
