@@ -6,7 +6,7 @@ import { isDevMode } from "../utils/devmode";
 import { log } from "./logging";
 
 const LINKS = {
-  homepage: "https://www.twitter.com/felixrieseberg",
+  homepage: "https://www.felixrieseberg.com",
   repo: "https://github.com/felixrieseberg/windows95",
   credits: "https://github.com/felixrieseberg/windows95/blob/master/CREDITS.md",
   help: "https://github.com/felixrieseberg/windows95/blob/master/HELP.md",
