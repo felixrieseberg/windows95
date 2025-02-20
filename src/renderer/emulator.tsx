@@ -225,8 +225,8 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         {this.renderInfo()}
         {this.renderUI()}
         <div id="emulator">
-          <div></div>
-          <canvas></canvas>
+          <div id="emulator-text-screen"></div>
+          <canvas id="emulator-canvas"></canvas>
         </div>
       </>
     );
@@ -263,11 +263,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    */
   public showDiskImage() {
     // Contents/Resources/app/dist/static
-    const imagePath = path.join(__dirname, "../../images/windows95.img");
+    console.log(`Showing disk image in ${CONSTANTS.IMAGE_PATH}`);
 
-    console.log(`Showing disk image in ${imagePath}`);
-
-    shell.showItemInFolder(imagePath);
+    shell.showItemInFolder(CONSTANTS.IMAGE_PATH);
   }
 
   /**
@@ -281,7 +279,8 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       memory_size: 128 * 1024 * 1024,
       vga_memory_size: 64 * 1024 * 1024,
       screen_container: document.getElementById("emulator"),
-      preserve_mac_from_state_image: true,
+      // preserve_mac_from_state_image: true,
+      use_graphical_text: true,
       net_device: {
         relay_url: "fetch",
         type: "ne2k",
@@ -364,6 +363,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.unlockMouse();
     await emulator.stop();
     this.setState({ isRunning: false });
+    this.resetCanvas();
 
     document.body.classList.add("paused");
     ipcRenderer.send(IPC_COMMANDS.MACHINE_STOPPED);
@@ -405,23 +405,25 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    * Restores state to the emulator.
    */
   private async restoreState() {
-    const { emulator } = this.state;
+    const { emulator, isBootingFresh } = this.state;
     const state = await this.getState();
 
-    // Nothing to do with if we don't have a state
-    if (!state) {
+    if (isBootingFresh) {
+      console.log(`restoreState: Booting fresh, not restoring.`);
+      return;
+    } else if (!state) {
       console.log(`restoreState: No state present, not restoring.`);
-    }
-
-    if (!emulator) {
+      return;
+    } else if (!emulator) {
       console.log(`restoreState: No emulator present`);
+      return;
     }
 
     try {
       await this.state.emulator.restore_state(state);
     } catch (error) {
       console.log(
-        `State: Could not read state file. Maybe none exists?`,
+        `restoreState: Could not read state file. Maybe none exists?`,
         error,
       );
     }
@@ -441,6 +443,8 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     if (fs.existsSync(statePath)) {
       return fs.readFileSync(statePath).buffer;
+    } else {
+      console.log(`getState: No state file found at ${statePath}`);
     }
 
     return null;
@@ -502,6 +506,18 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       }
 
       this.state.emulator.keyboard_send_scancodes(scancodes);
+    }
+  }
+
+  /**
+   * Reset the canvas
+   */
+  private resetCanvas() {
+    const canvas = document.getElementById("emulator-canvas");
+    
+    if (canvas instanceof HTMLCanvasElement) {
+      const ctx = canvas.getContext('2d');
+      ctx?.clearRect(0, 0, canvas.width, canvas.height);
     }
   }
 }
