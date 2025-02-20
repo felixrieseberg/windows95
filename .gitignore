@@ -9,3 +9,6 @@ dist
 !.github/images
 *.code-workspace
 *.pfx
+Microsoft.Trusted.Signing.Client*
+trusted-signing-metadata.json
+.env

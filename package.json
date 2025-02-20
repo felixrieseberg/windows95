@@ -37,6 +37,7 @@
     "@types/node": "^20",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
+    "dotenv": "^16.4.7",
     "electron": "34.2.0",
     "less": "^3.13.0",
     "parcel-bundler": "^1.12.5",

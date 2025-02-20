@@ -2,14 +2,24 @@ const path = require('path');
 const fs = require('fs');
 const package = require('./package.json');
 
-if (process.env['WINDOWS_CODESIGN_FILE']) {
-  const certPath = path.join(__dirname, 'win-certificate.pfx');
-  const certExists = fs.existsSync(certPath);
+require('dotenv').config()
 
-  if (certExists) {
-    process.env['WINDOWS_CODESIGN_FILE'] = certPath;
-  }
+process.env.TEMP = process.env.TMP = `C:\\Users\\FelixRieseberg\\AppData\\Local\\Temp`
+
+const FLAGS = {
+  SIGNTOOL_PATH: process.env.SIGNTOOL_PATH,
+  AZURE_CODE_SIGNING_DLIB: process.env.AZURE_CODE_SIGNING_DLIB || path.resolve(__dirname, 'Microsoft.Trusted.Signing.Client.1.0.60', 'bin', 'x64', 'Azure.CodeSigning.Dlib.dll'),
+  AZURE_METADATA_JSON: process.env.AZURE_METADATA_JSON || path.resolve(__dirname, 'trusted-signing-metadata.json'),
+  AZURE_TENANT_ID: process.env.AZURE_TENANT_ID,
+  AZURE_CLIENT_ID: process.env.AZURE_CLIENT_ID,
+  AZURE_CLIENT_SECRET: process.env.AZURE_CLIENT_SECRET,
 }
+
+fs.writeFileSync(FLAGS.AZURE_METADATA_JSON, JSON.stringify({
+  Endpoint: process.env.AZURE_CODE_SIGNING_ENDPOINT || "https://wcus.codesigning.azure.net",
+  CodeSigningAccountName: process.env.AZURE_CODE_SIGNING_ACCOUNT_NAME,
+  CertificateProfileName: process.env.AZURE_CODE_SIGNING_CERTIFICATE_PROFILE_NAME,
+}, null, 2));
 
 module.exports = {
   hooks: {
@@ -31,6 +41,12 @@ module.exports = {
       appleId: process.env['APPLE_ID'],
       appleIdPassword: process.env['APPLE_ID_PASSWORD'],
       teamId: 'LT94ZKYDCJ'
+    },
+    windowsSign: {
+      signToolPath: FLAGS.SIGNTOOL_PATH,
+      signWithParams: `/v /dlib ${process.env.AZURE_CODE_SIGNING_DLIB} /dmdf ${FLAGS.AZURE_METADATA_JSON}`,
+      timestampServer: "http://timestamp.acs.microsoft.com",
+      hashes: ["sha256"],
     },
     ignore: [
       /\/assets(\/?)/,
@@ -55,6 +71,8 @@ module.exports = {
       /\.eslintignore/,
       /\.eslintrc/,
       /\.prettierrc/,
+      /\/Microsoft\.Trusted\.Signing\.Client.*/,
+      /\/trusted-signing-metadata/,
     ]
   },
   makers: [
@@ -72,8 +90,12 @@ module.exports = {
           loadingGif: './assets/boot.gif',
           setupExe: `windows95-${package.version}-setup-${arch}.exe`,
           setupIcon: path.resolve(__dirname, 'assets', 'icon.ico'),
-          certificateFile: process.env['WINDOWS_CODESIGN_FILE'],
-          certificatePassword: process.env['WINDOWS_CODESIGN_PASSWORD'],
+          windowsSign: {
+            signToolPath: FLAGS.SIGNTOOL_PATH,
+            signWithParams: `/v /dlib ${process.env.AZURE_CODE_SIGNING_DLIB} /dmdf ${FLAGS.AZURE_METADATA_JSON}`,
+            timestampServer: "http://timestamp.acs.microsoft.com",
+            hashes: ["sha256"],
+          }
         }
       }
     },
