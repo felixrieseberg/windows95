@@ -1,0 +1,32 @@
+diff --git a/node_modules/@electron/packager/dist/win32.js b/node_modules/@electron/packager/dist/win32.js
+index 5399b3e..f3b6e88 100644
+--- a/node_modules/@electron/packager/dist/win32.js
++++ b/node_modules/@electron/packager/dist/win32.js
+@@ -57,7 +57,26 @@ class WindowsApp extends platform_1.App {
+             resOpts.iconPath = icon;
+         }
+         (0, common_1.debug)(`Running resedit with the options ${JSON.stringify(resOpts)}`);
+-        await (0, resedit_1.resedit)(this.electronBinaryPath, resOpts);
++
++        // This causes segmentation faults for me on multiple machines
++        // It's unclear why exactly but this spawn hack fixes it
++        // await (0, resedit_1.resedit)(this.electronBinaryPath, resOpts);
++
++        const { spawnSync } = require('child_process');
++        const resEditProcess = spawnSync('node', [
++        'C:\\Users\\FelixRieseberg\\Code\\windows95\\tools\\resedit.js',
++        this.electronBinaryPath
++        ], {
++        stdio: 'inherit'
++        });
++
++        if (resEditProcess.error) {
++        throw resEditProcess.error;
++        }
++
++        if (resEditProcess.status !== 0) {
++        throw new Error(`Resedit process exited with code ${resEditProcess.status}`);
++        }
+     }
+     async signAppIfSpecified() {
+         const windowsSignOpt = this.opts.windowsSign;

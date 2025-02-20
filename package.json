@@ -12,7 +12,8 @@
     "lint": "prettier --write src/**/*.{ts,tsx} && npm run check-links",
     "less": "node ./tools/lessc.js",
     "tsc": "tsc -p tsconfig.json --noEmit",
-    "check-links": "node tools/check-links.js"
+    "check-links": "node tools/check-links.js",
+    "postinstall": "patch-package"
   },
   "keywords": [],
   "author": "Felix Rieseberg, felix@felixrieseberg.com",
@@ -41,6 +42,7 @@
     "electron": "34.2.0",
     "less": "^3.13.0",
     "parcel-bundler": "^1.12.5",
+    "patch-package": "^8.0.0",
     "prettier": "^3.5.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.7.3"
