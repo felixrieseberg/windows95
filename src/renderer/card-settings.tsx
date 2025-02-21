@@ -122,7 +122,7 @@ export class CardSettings extends React.Component<
         </p>
         <p id="floppy-path">
           {floppy
-            ? `Inserted Floppy Disk: ${floppy.path}`
+            ? `Inserted Floppy Disk: ${floppy.name}`
             : `No floppy mounted`}
         </p>
         <button

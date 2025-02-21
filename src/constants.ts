@@ -1,9 +1,12 @@
 import * as path from "path";
 
+const IMAGES_PATH = path.join(__dirname, "../../images");
+
 export const CONSTANTS = {
-  IMAGE_PATH: path.join(__dirname, "../../images/windows95_v4.raw"),
+  IMAGES_PATH,
+  IMAGE_PATH: path.join(IMAGES_PATH, "windows95.img"),
   IMAGE_DEFAULT_SIZE: 1073741824, // 1GB
-  DEFAULT_STATE_PATH: path.join(__dirname, "../../images/default-state.bin"),
+  DEFAULT_STATE_PATH: path.join(IMAGES_PATH, "default-state.bin"),
 };
 
 export const IPC_COMMANDS = {

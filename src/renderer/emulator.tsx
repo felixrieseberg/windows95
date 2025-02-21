@@ -278,9 +278,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       wasm_path: path.join(__dirname, "build/v86.wasm"),
       memory_size: 128 * 1024 * 1024,
       vga_memory_size: 64 * 1024 * 1024,
-      screen_container: document.getElementById("emulator"),
-      // preserve_mac_from_state_image: true,
-      use_graphical_text: true,
+      screen: {
+        container: document.getElementById("emulator"),
+        scale: 0
+      },
+      preserve_mac_from_state_image: true,
       net_device: {
         relay_url: "fetch",
         type: "ne2k",
@@ -296,9 +298,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         async: true,
         size: await getDiskImageSize(CONSTANTS.IMAGE_PATH),
       },
-      // fda: {
-      //   buffer: this.state.floppyFile,
-      // },
+      fda: this.state.floppyFile
+        ? {
+            buffer: this.state.floppyFile,
+          }
+        : undefined,
       cdrom: this.state.cdromFile?.path
         ? {
             url: this.state.cdromFile.path,
