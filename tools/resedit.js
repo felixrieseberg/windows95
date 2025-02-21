@@ -1,3 +1,5 @@
+const path = require('path');
+
 const resedit = require('../node_modules/@electron/packager/dist/resedit.js')
 const package = require('../package.json');
 
@@ -11,6 +13,7 @@ async function main() {
     "productVersion": package.version,
     "fileVersion": package.version,
     "productName": package.productName,
+    "icon": path.join(__dirname, "../assets/icon.ico"),
     "win32Metadata": {
       "FileDescription": package.productName,
       "InternalName": package.name,
