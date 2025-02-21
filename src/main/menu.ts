@@ -1,4 +1,4 @@
-import { app, shell, Menu, BrowserWindow, ipcMain } from "electron";
+import { app, shell, Menu, BrowserWindow, ipcMain, dialog } from "electron";
 
 import { clearCaches } from "../cache";
 import { IPC_COMMANDS } from "../constants";
@@ -164,7 +164,20 @@ async function createMenu({ isRunning } = { isRunning: false }) {
         },
         {
           label: "Reset",
-          click: () => send(IPC_COMMANDS.MACHINE_RESET),
+          click: async () => {
+            const result = await dialog.showMessageBox({
+              type: 'warning',
+              buttons: ['Reset', 'Cancel'],
+              defaultId: 1,
+              title: 'Reset Machine',
+              message: 'Are you sure you want to reset the machine?',
+              detail: 'This will delete the machine state, including all changes you have made.',
+            });
+
+            if (result.response === 0) {
+              send(IPC_COMMANDS.MACHINE_RESET);
+            }
+          },
           enabled: isRunning,
         },
         {

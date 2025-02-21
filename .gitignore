@@ -3,6 +3,7 @@ out
 .DS_Store
 
 /images*/
+/helper-images/
 
 dist
 !.github/images

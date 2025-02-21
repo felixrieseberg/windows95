@@ -20,7 +20,7 @@ Installation
 qemu-system-i386 \
     -cdrom Win95_OSR25.iso \
     -m 128 \
-    -hda images/windows95_v4.raw \
+    -hda windows95.img \
     -device sb16 \
     -nic user,model=ne2k_pci \
     -fda Win95_boot.img \
@@ -39,10 +39,10 @@ qemu-system-i386 \
 ```sh
 qemu-system-i386 \
     -m 128 \
-    -hda images/windows95_v4.raw \
+    -hda images/windows95.img \
     -device sb16 \
     -M pc,acpi=off \
     -cpu pentium \
-    -netdev user,id=mynet0,net=192.168.76.0/24,dhcpstart=192.168.76.9 \
+    -netdev user,id=mynet0 \
     -device ne2k_isa,netdev=mynet0,irq=10
 ```

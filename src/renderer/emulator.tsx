@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as fs from "fs";
 import * as path from "path";
-import { ipcRenderer, shell } from "electron";
+import { ipcRenderer, shell, webUtils } from "electron";
 
 import { CONSTANTS, IPC_COMMANDS } from "../constants";
 import { getDiskImageSize } from "../utils/disk-image-size";
@@ -11,6 +11,7 @@ import { CardSettings } from "./card-settings";
 import { EmulatorInfo } from "./emulator-info";
 import { getStatePath } from "./utils/get-state-path";
 import { Win95Window } from "./app";
+import { resetState } from "./utils/reset-state";
 
 declare let window: Win95Window;
 
@@ -53,10 +54,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.setupInputListeners();
     this.setupIpcListeners();
     this.setupUnloadListeners();
-
-    if (document.location.hash.includes("AUTO_START")) {
-      this.startEmulator();
-    }
   }
 
   /**
@@ -274,6 +271,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   private async startEmulator() {
     document.body.classList.remove("paused");
 
+    const cdromPath = this.state.cdromFile
+      ? webUtils.getPathForFile(this.state.cdromFile)
+      : null;
+
     const options = {
       wasm_path: path.join(__dirname, "build/v86.wasm"),
       memory_size: 128 * 1024 * 1024,
@@ -303,11 +304,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
             buffer: this.state.floppyFile,
           }
         : undefined,
-      cdrom: this.state.cdromFile?.path
+      cdrom: cdromPath
         ? {
-            url: this.state.cdromFile.path,
+            url: cdromPath,
             async: true,
-            size: await getDiskImageSize(this.state.cdromFile.path),
+            size: await getDiskImageSize(cdromPath),
           }
         : undefined,
       boot_order: 0x132,
@@ -378,7 +379,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    */
   private async resetEmulator() {
     this.isResetting = true;
-    document.location.hash = `#AUTO_START`;
+
+    await this.stopEmulator();
+    await resetState();
+
     document.location.reload();
   }
 
@@ -518,7 +522,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    */
   private resetCanvas() {
     const canvas = document.getElementById("emulator-canvas");
-    
+
     if (canvas instanceof HTMLCanvasElement) {
       const ctx = canvas.getContext('2d');
       ctx?.clearRect(0, 0, canvas.width, canvas.height);

@@ -1,7 +1,6 @@
 import * as React from "react";
-import * as fs from "fs";
 
-import { getStatePath } from "./utils/get-state-path";
+import { resetState } from "./utils/reset-state";
 
 interface CardSettingsProps {
   bootFromScratch: () => void;
@@ -213,16 +212,7 @@ export class CardSettings extends React.Component<
    * Handle the state reset
    */
   private async onResetState() {
-    const statePath = await getStatePath();
-
-    if (fs.existsSync(statePath)) {
-      try {
-        await fs.promises.unlink(statePath);
-      } catch (error) {
-        console.error(`Failed to delete state file: ${error}`);
-      }
-    }
-
+    await resetState();
     this.setState({ isStateReset: true });
   }
 }
