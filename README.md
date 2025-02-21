@@ -15,29 +15,29 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
     </td>
     <td>
       <span>32-bit</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-3.1.1-setup-ia32.exe">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-4.0.0-setup-ia32.exe">
         💿 Installer
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-win32-ia32-3.1.1.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-win32-ia32-4.0.0.zip">
         📦 Standalone Zip
       </a>
       <br />
       <span>64-bit</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-3.1.1-setup-x64.exe">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-4.0.0-setup-x64.exe">
         💿 Installer
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-win32-x64-3.1.1.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-win32-x64-4.0.0.zip">
         📦 Standalone Zip
       </a><br />
       <span>ARM64</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-3.1.1-setup-arm64.exe">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-4.0.0-setup-arm64.exe">
         💿 Installer
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-win32-arm64-3.1.1.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-win32-arm64-4.0.0.zip">
         📦 Standalone Zip
       </a><br />
       <span>
-        ❓ Don't know what kind of chip you have? Hit start, enter "processor" for info.
+        ❓ Don't know what kind of chip you have? It's probably `x64`. To confirm, on your computer, hit Start, enter "processor" for info.
       </span>
     </td>
   </tr>
@@ -47,16 +47,16 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
       macOS
     </td>
     <td>
+      <span>Apple Silicon Processor</span>
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-darwin-arm64-4.0.0.zip">
+        📦 Standalone Zip
+      </a><br />
       <span>Intel Processor</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-darwin-x64-3.1.1.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-darwin-x64-4.0.0.zip">
         📦 Standalone Zip
-      </a><br />
-      <span>Apple M1 Processor</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-darwin-arm64-3.1.1.zip">
-        📦 Standalone Zip
-      </a><br />
+      </a>
       <span>
-        ❓ Don't know what kind of chip you have? Learn more at <a href="https://support.apple.com/en-us/HT211814">apple.com</a>.
+        ❓ Don't know what kind of chip you have? If you bought your computer after 2020, select "Apple Silicon". Learn more at <a href="https://support.apple.com/en-us/HT211814">apple.com</a>.
       </span>
     </td>
   </tr>
@@ -67,33 +67,28 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
     </td>
     <td>
       <span>64-bit</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-3.1.1-1.x86_64.rpm">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95-4.0.0-1.x86_64.rpm">
         💿 rpm
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95_3.1.1_amd64.deb">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v4.0.0/windows95_4.0.0_amd64.deb">
         💿 deb
       </a><br />
-      <span>ARM64</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-3.1.1-1.arm64.rpm">
-        💿 rpm
-      </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95_3.1.1_arm64.deb">
-        💿 deb
-      </a><br />
-      <span>ARMv7 (armhf)</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95-3.1.1-1.armv7hl.rpm">
-        💿 rpm
-      </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v3.1.1/windows95_3.1.1_armhf.deb">
-        💿 deb
-      </a>
     </td>
   </tr>
 </table>
 
 <hr />
 
-![Screenshot](https://user-images.githubusercontent.com/1426799/44532591-4ceb3680-a6a8-11e8-8c2c-bc29f3bfdef7.png)
+<table width="100%">
+  <tr>
+    <td width="50%">
+      <img src="https://github.com/user-attachments/assets/43ab7126-765e-444b-ad14-27b1beadbc7c" width="100%" alt="Screenshot showing Windows 95">
+    </td>
+    <td width="50%">
+      <img src="https://github.com/user-attachments/assets/7ac5dc36-cbd4-4455-a616-0e5cca314b34" width="100%" alt="Screenshot showing Windows 95">
+    </td>
+  </tr>
+</table>
 
 ## Does it work?
 Yes! Quite well, actually - on macOS, Windows, and Linux. Bear in mind that this is written entirely in JavaScript, so please adjust your expectations.
@@ -102,7 +97,7 @@ Yes! Quite well, actually - on macOS, Windows, and Linux. Bear in mind that this
 Absolutely.
 
 ## Does it run Doom (or my other favorite game)?
-You'll likely be better off with an actual virtualization app, but the short answer is yes. [Thanks to
+You'll likely be better off with an actual virtualization app, but the short answer is yes. In fact, a few games are already preinstalled - and more can be found on the Internet, for instance at [archive.org](https://www.archive.org). [Thanks to
 @DisplacedGamers](https://youtu.be/xDXqmdFxofM) I can recommend that you switch to a resolution of
 640x480 @ 256 colors before starting DOS games - just like in the good ol' days.
 
