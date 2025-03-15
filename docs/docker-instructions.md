@@ -6,7 +6,7 @@
 * Linux OS with a running X-Server Display
 * [Docker](http://docker.io) 
 
-        docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --device /dev/snd --name windows95 toolboc/windows95
+        docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=unix$DISPLAY --name windows95 toolboc/windows95
 
 
 Note: You may need to run `xhost +` on your system to allow connections to the X server running on the host.
@@ -31,9 +31,14 @@ Note: You may need to run `xhost +` on your system to allow connections to the X
 2. Restart XQuartz
 3. In the terminal, run 
 ```
-xhost +
+xhost +localhost
 ```
 4. run 
 ```
-docker run -it -e DISPLAY=host.docker.internal:0 toolboc/windows95
+docker run -it \
+  --platform linux/amd64 \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -e DISPLAY=host.docker.internal:0 \
+  --name windows95 \
+  windows95-arm64
 ```

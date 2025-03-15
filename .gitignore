@@ -14,3 +14,4 @@ Microsoft.Trusted.Signing.Client*
 trusted-signing-metadata.json
 .env
 electron-windows-sign.log
+.parcel-cache

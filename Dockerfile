@@ -21,11 +21,12 @@
 #       xhost +
 #
 
-FROM node:10.9-stretch
+FROM node:20-bullseye
 
-LABEL maintainer "Paul DeCarlo <toolboc@gmail.com>"
+LABEL name="windows95-arm64"
 
-RUN apt update && apt install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     libcanberra-gtk3-module \
     libx11-xcb-dev \
@@ -38,8 +39,23 @@ RUN apt update && apt install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-COPY . .
+# Create app directory and set permissions
+WORKDIR /app
+ENV NODE_ENV=development
 
-RUN npm install 
+# Copy package files first
+COPY package*.json ./
+COPY patches ./patches
+
+# Install dependencies
+RUN npm config set legacy-peer-deps true && \
+    npm install -g @electron-forge/cli@6.4.2 patch-package && \
+    npm install fs-extra@11.2.0 glob@8.1.0 && \
+    npm cache clean --force && \
+    npm install --legacy-peer-deps --force && \
+    npm rebuild
+
+# Copy the rest of the application
+COPY . .
 
 ENTRYPOINT [ "npm", "start"]
