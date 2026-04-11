@@ -1,25 +1,16 @@
 import { protocol } from "electron";
 import * as fs from "fs";
 import * as path from "path";
-import { generateDirectoryListing } from "./page-directory-listing";
-import { generateErrorPage } from "./page-error";
 import { log } from "../logging";
 
-export interface FileEntry {
-  name: string;
-  fullPath: string;
-  stats: fs.Stats;
-}
-
-export const APP_INTERCEPT = "http://windows95/";
-export const MY_COMPUTER_INTERCEPT = "http://my-computer/";
-
-const interceptedUrls = [MY_COMPUTER_INTERCEPT, APP_INTERCEPT];
+// Serves the bundled static/www site to the guest at http://windows95/.
+// Host-filesystem browsing was removed in favour of the SMB share.
+const APP_INTERCEPT = "http://windows95/";
+const WWW_ROOT = path.resolve(__dirname, "../../../static/www");
 
 export function setupFileServer() {
-  // Register protocol handler for our custom schema
   protocol.handle("http", async (request) => {
-    if (!interceptedUrls.some((url) => request.url.startsWith(url))) {
+    if (!request.url.startsWith(APP_INTERCEPT)) {
       return fetch(request.url, {
         headers: request.headers,
         method: request.method,
@@ -28,137 +19,46 @@ export function setupFileServer() {
     }
 
     try {
-      const { fullPath, decodedPath } = getFilePath(request.url);
-
-      log(`FileServer: Handling request for ${request.url}`, {
-        fullPath,
-        decodedPath,
-      });
-
-      // Check if path exists
-      if (!fs.existsSync(fullPath)) {
-        return new Response(
-          generateErrorPage("File or Directory Not Found", decodedPath),
-          {
-            status: 404,
-            headers: {
-              "Content-Type": "text/html",
-            },
-          },
-        );
+      const rel = decodeURIComponent(request.url.slice(APP_INTERCEPT.length));
+      let fullPath = path.join(WWW_ROOT, rel);
+      if (fullPath !== WWW_ROOT && !fullPath.startsWith(WWW_ROOT + path.sep)) {
+        fullPath = WWW_ROOT;
       }
+      log(`FileServer: ${request.url} → ${fullPath}`);
 
-      // Check if it's a directory
       const stats = await fs.promises.stat(fullPath);
-      if (stats.isDirectory()) {
-        // If we're in an app-intercept, check if there's an index.htm file in the directory
-        if (request.url.startsWith(APP_INTERCEPT)) {
-          const indexHtmlPath = path.join(fullPath, "index.htm");
-          if (fs.existsSync(indexHtmlPath)) {
-            return serveFile(indexHtmlPath);
-          }
-        }
-
-        // Generate directory listing
-        const files = await fs.promises.readdir(fullPath);
-        const listing = generateDirectoryListing(fullPath, files);
-        return new Response(listing, {
-          status: 200,
-          headers: {
-            "Content-Type": "text/html",
-          },
-        });
-      } else {
-        try {
-          return await serveFile(fullPath);
-        } catch (error) {
-          // Handle specific file read errors
-          if ((error as NodeJS.ErrnoException).code === "EACCES") {
-            return new Response(
-              generateErrorPage(
-                "Access Denied",
-                "You do not have permission to access this file",
-              ),
-              {
-                status: 403,
-                headers: {
-                  "Content-Type": "text/html",
-                },
-              },
-            );
-          }
-
-          // Re-throw other errors to be caught by outer try-catch
-          throw error;
-        }
-      }
+      if (stats.isDirectory()) fullPath = path.join(fullPath, "index.htm");
+      return await serveFile(fullPath);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const errorPage = generateErrorPage(
-        "Internal Server Error",
-        `An error occurred while processing your request: ${message}`,
-      );
-      return new Response(errorPage, {
-        status: 500,
-        headers: {
-          "Content-Type": "text/html",
-        },
+      const code = (error as NodeJS.ErrnoException).code;
+      const status = code === "ENOENT" ? 404 : code === "EACCES" ? 403 : 500;
+      return new Response(`${status} ${code ?? "Error"}: ${request.url}`, {
+        status,
+        headers: { "Content-Type": "text/plain" },
       });
     }
   });
 }
 
-function getFilePath(url: string) {
-  let urlPath: string;
-  let fullPath: string;
-  let decodedPath: string;
-
-  if (url.startsWith(APP_INTERCEPT)) {
-    fullPath = path.resolve(
-      __dirname,
-      "../../../static/www",
-      url.replace(APP_INTERCEPT, ""),
-    );
-    decodedPath = ".";
-  } else if (url.startsWith(MY_COMPUTER_INTERCEPT)) {
-    urlPath = url.replace(MY_COMPUTER_INTERCEPT, "");
-    decodedPath = decodeURIComponent(urlPath);
-    fullPath = path.join("/", decodedPath);
-  } else {
-    throw new Error("Invalid URL");
-  }
-
-  return { fullPath, decodedPath };
-}
+const CONTENT_TYPES: Record<string, string> = {
+  ".htm": "text/html",
+  ".html": "text/html",
+  ".txt": "text/plain",
+  ".css": "text/css",
+  ".js": "text/javascript",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".gif": "image/gif",
+};
 
 async function serveFile(fullPath: string): Promise<Response> {
   const fileData = await fs.promises.readFile(fullPath);
-
-  // Determine content type based on file extension
   const ext = path.extname(fullPath).toLowerCase();
-  let contentType = "application/octet-stream";
-
-  // Common content types
-  const contentTypes: Record<string, string> = {
-    ".htm": "text/html",
-    ".html": "text/html",
-    ".txt": "text/plain",
-    ".css": "text/css",
-    ".js": "text/javascript",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".gif": "image/gif",
-  };
-
-  if (ext in contentTypes) {
-    contentType = contentTypes[ext];
-  }
-
   return new Response(fileData, {
     status: 200,
     headers: {
-      "Content-Type": contentType,
+      "Content-Type": CONTENT_TYPES[ext] ?? "application/octet-stream",
     },
   });
 }

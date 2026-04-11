@@ -97,7 +97,7 @@ Clean API. The new code keeps both paths; the bus event is a no-op on old builds
 - Share path validated in main-process IPC (`realpathSync` + `isDirectory()`).
 
 ## Tests
-`test-standalone.ts` — 48 protocol tests, full round-trips with real file I/O.
+`test-standalone.ts` — 55 protocol tests, full round-trips with real file I/O.
 Run: `npx ts-node --skip-project --transpile-only --compiler-options
 '{"module":"commonjs","moduleResolution":"bundler","ignoreDeprecations":"6.0"}'
 src/renderer/smb/test-standalone.ts`

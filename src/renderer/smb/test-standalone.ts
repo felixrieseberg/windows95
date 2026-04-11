@@ -1,6 +1,6 @@
 // Standalone test of the SMB stack — no v86, no Electron. Feeds canned
 // requests through NetBIOSFramer + SmbSession and inspects responses.
-// Run: npx ts-node src/renderer/smb/test-standalone.ts
+// Run: see src/renderer/smb/README.md for the ts-node invocation.
 
 import * as fs from "fs";
 import * as path from "path";
@@ -224,6 +224,54 @@ console.log("\n[5b] TRANS2 FIND_FIRST2 level=0x104");
   }
   ok(names.includes("A Long Filename Here.txt"), `LFN intact: ${JSON.stringify(names)}`);
   ok(names.includes(".") && names.includes(".."), "dot entries present");
+}
+
+// ─── Test 5d: filename safety + hidden attrs ─────────────────────────────────
+console.log("\n[5d] filename safety");
+{
+  const hz = path.join(tmpRoot, "hazard");
+  fs.mkdirSync(hz);
+  for (const n of ["con.txt", "aux", "nul.tar.gz", ".DS_Store", ".secret", "trail. "])
+    fs.writeFileSync(path.join(hz, n), "x");
+
+  const t2params = [...u16(0x16), ...u16(100), ...u16(0), ...u16(0x104),
+                    ...u32(0), ...cstr("\\hazard\\*")];
+  const wc = 14 + 1;
+  const bytesStart = 32 + 1 + wc * 2 + 2;
+  const paramOff = bytesStart + 3;
+  const words = [
+    ...u16(t2params.length), ...u16(0), ...u16(100), ...u16(8000),
+    1, 0, ...u16(0), ...u32(0), ...u16(0),
+    ...u16(t2params.length), ...u16(paramOff),
+    ...u16(0), ...u16(0),
+    1, 0, ...u16(1)
+  ];
+  const reply = session.handle(smbReq(CMD_TRANSACTION2, words,
+                                      [0, 0, 0, ...t2params], 1, 1))!;
+  const parsed = parseSmb(reply)!;
+  const rw = parsed.words;
+  const dOff = (rw[14] | (rw[15] << 8)) - (32 + 1 + parsed.wordCount * 2 + 2);
+  const dLen = rw[12] | (rw[13] << 8);
+  const data = parsed.bytes.slice(dOff, dOff + dLen);
+  const ents = new Map<string, number>();
+  for (let off = 0;;) {
+    const next = data[off] | (data[off+1]<<8) | (data[off+2]<<16) | (data[off+3]<<24);
+    const attr = data[off+56] | (data[off+57]<<8);
+    const fnLen = data[off+60] | (data[off+61]<<8);
+    const nm = String.fromCharCode(...data.slice(off+94, off+94+fnLen)).replace(/\0$/, "");
+    ents.set(nm, attr);
+    if (next === 0) break;
+    off += next;
+  }
+  const reserved = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
+  const bad = [...ents.keys()].filter(n => reserved.test(n.split(".")[0]));
+  ok(bad.length === 0, `no reserved basenames: ${JSON.stringify([...ents.keys()])}`);
+  ok(ents.has("con_.txt") && ents.has("aux_"), "reserved names suffixed");
+  ok(ents.has("nul_.tar.gz"), "reserved across multi-ext");
+  ok(ents.has("trail__"), "trailing dot/space replaced");
+  ok((ents.get(".DS_Store")! & 0x06) === 0x06, ".DS_Store hidden+system");
+  ok((ents.get(".secret")! & 0x02) === 0x02, "dotfile hidden");
+  ok((ents.get("con_.txt")! & 0x02) === 0, "regular file not hidden");
 }
 
 // ─── Test 5c: RAP NetShareEnum lists user share + TOOLS ──────────────────────
