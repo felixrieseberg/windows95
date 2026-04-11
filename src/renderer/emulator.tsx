@@ -261,13 +261,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    * Render the little info thingy
    */
   public renderInfo() {
-    if (!this.state.isInfoDisplayed) {
-      return null;
-    }
-
     return (
       <EmulatorInfo
         emulator={this.state.emulator}
+        hidden={!this.state.isInfoDisplayed}
         toggleInfo={() => {
           this.setState({ isInfoDisplayed: !this.state.isInfoDisplayed });
         }}

@@ -1,8 +1,19 @@
+#status-hotzone {
+  position: absolute;
+  z-index: 99;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
 #status {
   user-select: none;
   position: absolute;
   z-index: 100;
-  left: calc(50vw - 110px);
+  left: 50vw;
+  transform: translateX(-50%);
+  white-space: nowrap;
   background: white;
   font-size: 10px;
   padding-bottom: 3px;
@@ -13,4 +24,14 @@
   padding-right: 10px;
   max-height: 18px;
   top: 0;
+  transition: transform 0.12s ease-out;
+
+  &.hidden {
+    transform: translateX(-50%) translateY(-100%);
+  }
+}
+
+#status-hotzone:hover + #status.hidden,
+#status.hidden:hover {
+  transform: translateX(-50%) translateY(0);
 }
