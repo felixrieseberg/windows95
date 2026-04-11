@@ -210,7 +210,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
    * 🤡
    */
   public renderUI() {
-    const { isRunning, currentUiCard, floppyFile } = this.state;
+    const { isRunning, currentUiCard, floppyFile, cdromFile } = this.state;
 
     if (isRunning) {
       return null;
@@ -225,6 +225,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       card = (
         <CardSettings
           setFloppy={(floppyFile) => this.setState({ floppyFile })}
+          setCdrom={(cdromFile) => this.setState({ cdromFile })}
           setSmbSharePath={(smbSharePath) => {
             this.setState({ smbSharePath });
             ipcRenderer.invoke(IPC_COMMANDS.SET_SMB_SHARE_PATH, smbSharePath);
@@ -232,6 +233,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
           pickFolder={() => ipcRenderer.invoke(IPC_COMMANDS.PICK_FOLDER)}
           bootFromScratch={this.bootFromScratch}
           floppy={floppyFile}
+          cdrom={cdromFile}
           smbSharePath={this.state.smbSharePath}
           navigate={navigate}
         />

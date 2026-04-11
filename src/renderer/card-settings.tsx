@@ -2,17 +2,22 @@ import * as React from "react";
 
 import { resetState } from "./utils/reset-state";
 
+// v86's IDE CD-ROM path is currently broken; flip this once it works again.
+const CDROM_ENABLED = false;
+
 interface CardSettingsProps {
   bootFromScratch: () => void;
   setFloppy: (file: File) => void;
+  setCdrom: (file: File) => void;
   setSmbSharePath: (path: string) => void;
   pickFolder: () => Promise<string | null>;
   navigate: (to: "start" | "settings") => void;
   floppy?: File;
+  cdrom?: File;
   smbSharePath: string;
 }
 
-type Tab = "floppy" | "network" | "state";
+type Tab = "floppy" | "cdrom" | "network" | "state";
 
 interface CardSettingsState {
   tab: Tab;
@@ -27,6 +32,7 @@ export class CardSettings extends React.Component<
     super(props);
 
     this.onChangeFloppy = this.onChangeFloppy.bind(this);
+    this.onChangeCdrom = this.onChangeCdrom.bind(this);
     this.onResetState = this.onResetState.bind(this);
 
     this.state = {
@@ -53,12 +59,14 @@ export class CardSettings extends React.Component<
         <div className="window-body">
           <menu role="tablist">
             {this.renderTab("floppy", "Floppy Drive")}
+            {CDROM_ENABLED && this.renderTab("cdrom", "CD-ROM")}
             {this.renderTab("network", "Network Share")}
             {this.renderTab("state", "Machine State")}
           </menu>
           <div className="window settings-panel" role="tabpanel">
             <div className="window-body">
               {tab === "floppy" && this.renderFloppy()}
+              {tab === "cdrom" && this.renderCdrom()}
               {tab === "network" && this.renderSmbShare()}
               {tab === "state" && this.renderState()}
             </div>
@@ -122,6 +130,48 @@ export class CardSettings extends React.Component<
           <button
             onClick={() =>
               (document.querySelector("#floppy-input") as any).click()
+            }
+          >
+            Mount image...
+          </button>
+        </div>
+      </fieldset>
+    );
+  }
+
+  private renderCdrom() {
+    const { cdrom } = this.props;
+
+    return (
+      <fieldset>
+        <legend>Drive D:</legend>
+        <input
+          id="cdrom-input"
+          type="file"
+          onChange={this.onChangeCdrom}
+          style={{ display: "none" }}
+        />
+        <div className="settings-row">
+          <img className="settings-icon" src="../../static/cdrom.png" />
+          <p>
+            windows95 ships with a virtual CD-ROM drive. Mount an{" "}
+            <code>.iso</code> image here, then boot the machine to read it from
+            inside Windows.
+          </p>
+        </div>
+        <div className="field-row-stacked">
+          <label htmlFor="cdrom-path">Mounted image</label>
+          <input
+            id="cdrom-path"
+            type="text"
+            readOnly
+            value={cdrom ? cdrom.name : "(No disc in drive)"}
+          />
+        </div>
+        <div className="settings-buttons">
+          <button
+            onClick={() =>
+              (document.querySelector("#cdrom-input") as any).click()
             }
           >
             Mount image...
@@ -200,6 +250,19 @@ export class CardSettings extends React.Component<
       this.props.setFloppy(floppyFile);
     } else {
       console.log(`Floppy: Input changed but no file selected`);
+    }
+  }
+
+  private onChangeCdrom(event: React.ChangeEvent<HTMLInputElement>) {
+    const cdromFile =
+      event.target.files && event.target.files.length > 0
+        ? event.target.files[0]
+        : null;
+
+    if (cdromFile) {
+      this.props.setCdrom(cdromFile);
+    } else {
+      console.log(`Cdrom: Input changed but no file selected`);
     }
   }
 
