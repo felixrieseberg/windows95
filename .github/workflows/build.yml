@@ -17,11 +17,11 @@ jobs:
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 20.x
-          cache: yarn
+          cache: npm
       - name: Install
-        run: yarn --frozen-lockfile
+        run: npm ci
       - name: lint
-        run: yarn lint
+        run: npm run lint
   build:
     needs: lint
     name: Build (${{ matrix.os }} - ${{ matrix.arch }})
@@ -51,7 +51,7 @@ jobs:
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 20.x
-          cache: yarn
+          cache: npm
       - name: Set MacOS signing certs
         if: matrix.os == 'macOS-latest'
         run: chmod +x tools/add-macos-cert.sh && ./tools/add-macos-cert.sh
@@ -77,10 +77,10 @@ jobs:
         env:
           DISK_URL: ${{ secrets.DISK_URL }}
       - name: Install
-        run: yarn --frozen-lockfile
+        run: npm ci
       - name: Make
         if: startsWith(github.ref, 'refs/tags/')
-        run: yarn make --arch=${{ matrix.arch }}
+        run: npm run make -- --arch=${{ matrix.arch }}
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
