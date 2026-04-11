@@ -76,7 +76,11 @@ export function startProbe(emulator: any) {
 
   // WIN95_PROBE_SCRIPT=\\HOST  → after desktop, send Win+R, type, Enter
   const scriptCmd = process.env.WIN95_PROBE_SCRIPT;
-  let scriptArmed = !!scriptCmd;
+  // WIN95_PROBE_RUN='telnet 1.2.3.4 7777' → literal text into Start→Run,
+  // Enter, then optional WIN95_PROBE_RUN_AFTER keystrokes after _RUN_WAIT ms.
+  const runCmd = process.env.WIN95_PROBE_RUN;
+  const runAfter = process.env.WIN95_PROBE_RUN_AFTER;
+  let scriptArmed = !!scriptCmd || !!runCmd;
 
   const tick = () => {
     try {
@@ -99,6 +103,32 @@ export function startProbe(emulator: any) {
       // we send Esc first to clear it.
       if (scriptArmed && s.phase === "desktop" && s.uptimeSec > 8) {
         scriptArmed = false;
+        if (runCmd) {
+          console.log("[probe] desktop detected, Run →", runCmd);
+          runScript(emulator, [
+            { type: "wait", ms: 3000 },
+            { type: "keys", dn: SC.ESC_DN, up: SC.ESC_UP },
+            { type: "wait", ms: 1000 },
+            { type: "keys", dn: SC.ESC_DN, up: SC.ESC_UP },
+            { type: "wait", ms: 1000 },
+            { type: "chord", keys: [
+              { dn: SC.CTRL_DN, up: SC.CTRL_UP },
+              { dn: SC.ESC_DN, up: SC.ESC_UP },
+            ]},
+            { type: "wait", ms: 1200 },
+            { type: "keys", dn: SC.R_DN, up: SC.R_UP },
+            { type: "wait", ms: 1000 },
+            { type: "text", text: runCmd },
+            { type: "wait", ms: 400 },
+            { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
+            ...(runAfter ? [
+              { type: "wait", ms: Number(process.env.WIN95_PROBE_RUN_WAIT) || 6000 },
+              { type: "text", text: runAfter },
+              { type: "wait", ms: 200 },
+              { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
+            ] : []),
+          ]);
+        } else {
         console.log("[probe] desktop detected, running script:", scriptCmd);
         runScript(emulator, [
           { type: "wait", ms: 3000 },
@@ -130,6 +160,7 @@ export function startProbe(emulator: any) {
           { type: "wait", ms: 400 },
           { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
         ]);
+        }
       }
 
       if (s.verdict) {
@@ -242,7 +273,7 @@ function collectStatus(emulator: any): ProbeStatus {
   // Made it to ≥640×480 graphics → desktop reached. But if a keyboard
   // script is running, hold off — the outer harness reads the SMB log
   // directly and we just keep the app alive.
-  else if (atDesktop && uptimeSec > 30 && !process.env.WIN95_PROBE_SCRIPT) verdict = "SUCCESS";
+  else if (atDesktop && uptimeSec > 30 && !process.env.WIN95_PROBE_SCRIPT && !process.env.WIN95_PROBE_RUN) verdict = "SUCCESS";
   // Timeout
   else if (uptimeSec > 180) verdict = "FAIL_OTHER";
 

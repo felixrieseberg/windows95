@@ -17,6 +17,8 @@ import { getStatePath } from "./utils/get-state-path";
 import { Win95Window } from "./app";
 import { resetState } from "./utils/reset-state";
 import { setupSmbShare } from "./smb";
+import { setupTcpRelay } from "./net/tcp-relay";
+import { setupDnsShim } from "./net/dns-shim";
 import { startProbe } from "./debug-harness";
 
 const PROBE = process.env.WIN95_PROBE === "1";
@@ -349,6 +351,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       net_device: {
         relay_url: "fetch",
         type: "ne2k",
+        // Real IPs for the guest so the raw-TCP relay knows where to dial;
+        // the default "static" resolver returns a placeholder for every name.
+        dns_method: "doh",
       },
       bios: {
         url: path.join(__dirname, "../../bios/seabios.bin"),
@@ -382,7 +387,14 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     console.log(`🚜 Starting emulator with options`, options);
 
+    // Answer the app's magic hostnames locally before v86's DoH path sends
+    // them to Cloudflare (which would NXDOMAIN them).
+    setupDnsShim();
+
     window["emulator"] = new V86(options);
+
+    // Raw TCP egress for ports the fetch adapter ignores (everything but 80).
+    setupTcpRelay(window["emulator"]);
 
     // Serve a host folder over SMB on port 139. Read-only, traversal/symlink
     // guarded. In Win95: Start → Run → \\HOST\HOST. The env var wins so the
