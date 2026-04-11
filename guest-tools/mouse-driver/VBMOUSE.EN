@@ -1,0 +1,54 @@
+# Language: English
+# Codepage: 437
+#
+# Spaces before text must be kept. Be sure that no spaces are
+# added to the end of the lines.
+#
+0.0:Usage:
+0.1:  VBMOUSE <ACTION> <ARGS..>
+0.2:Supported actions and options:
+0.3:  install                 Install the driver (default).
+0.4:    low                     Install in conventional memory (otherwise UMB).
+0.5:  uninstall               Uninstall the driver from memory.
+0.6:  wheel <ON|OFF>          Enable/disable wheel API support.
+0.7:  wheelkey <KEY|OFF>      Emulate a specific keystroke on wheel scroll.
+0.8:                            Supported keys: updn, pageupdn.
+0.9:  integ <ON|OFF>          Enable/disable VirtualBox integration.
+0.10:  hostcur <ON|OFF>        Enable/disable mouse cursor rendering in the host.
+0.11:  reset                   Reset mouse driver.
+1.0:Wheel mouse found and enabled\n
+1.1:Setting wheel support to %s\n
+1.2:enabled
+1.3:disabled
+1.4:Generate Up Arrow / Down Arrow key presses on wheel movement\n
+1.5:Generate PageUp / PageDown key presses on wheel movement\n
+1.6:Disabling wheel keystroke generation\n
+1.7:VirtualBox integration enabled\n
+1.8:Disabled VirtualBox integration\n
+1.9:VirtualBox integration already disabled or not available\n
+1.10:Setting host cursor to %s\n
+1.11:Found VMware protocol version %ld\n
+1.12:VMware integration enabled\n
+1.13:Disabled VMware integration\n
+1.14:VMware integration already disabled or not available\n
+1.15:Neither VirtualBox nor VMware integration available\n
+1.16:VirtualBox integration not available\n
+1.17:Driver installed\n
+1.18:Driver uninstalled\n
+1.19:Reset mouse driver\n
+1.20:\nVBMouse %x.%x (like MSMOUSE %x.%x)\n
+1.21:VBMouse already installed\n
+3.0:Could not find PS/2 wheel mouse\n
+3.1:Wheel not detected or support not enabled\n
+3.2:Unknown key '%s'\n
+3.3:Cannot find VirtualBox PCI device, err=%d\n
+3.4:Cannot lock buffer used for VirtualBox communication, err=%d\n
+3.5:VirtualBox communication is not working, err=%d\n
+3.6:Could not detect VMware, err=%ld\n
+3.7:VMware absolute pointer error, err=0x%lx\n
+3.8:Cannot init PS/2 mouse BIOS, err=%d\n
+3.9:INT33 has been hooked by someone else, cannot safely remove\n
+3.10:INT2F has been hooked by someone else, cannot safely remove\n
+3.11:Driver data not found (driver not installed?)\n
+3.12:Invalid argument '%s'\n
+3.13:Argument required for '%s'\n

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "rootDir": ".",
     "outDir": "./dist",
     "allowJs": true,
     "allowSyntheticDefaultImports": true,

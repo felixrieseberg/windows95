@@ -7,6 +7,7 @@ export const CONSTANTS = {
   IMAGE_PATH: path.join(IMAGES_PATH, "windows95.img"),
   IMAGE_DEFAULT_SIZE: 1073741824, // 1GB
   DEFAULT_STATE_PATH: path.join(IMAGES_PATH, "default-state.bin"),
+  TOOLS_PATH: path.join(__dirname, "../../guest-tools"),
 };
 
 export const IPC_COMMANDS = {

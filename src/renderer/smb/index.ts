@@ -56,9 +56,9 @@ interface V86 {
 
 const log = (...a: unknown[]) => console.log("[smb]", ...a);
 
-export function setupSmbShare(emulator: V86, hostPath: string) {
+export function setupSmbShare(emulator: V86, hostPath: string, toolsRoot?: string) {
   log(`serving ${hostPath} on \\\\HOST\\${shareNameFor(hostPath)} ` +
-      `(+ \\\\HOST\\${TOOLS_SHARE}) port 139`);
+      `(+ \\\\HOST\\${TOOLS_SHARE}${toolsRoot ? ` ← ${toolsRoot}` : ""}) port 139`);
 
   // SPIKE diagnostic: count every ethernet frame so we know if the NIC is
   // emitting anything at all (DHCP, ARP, anything). Logged on a timer so
@@ -101,7 +101,7 @@ export function setupSmbShare(emulator: V86, hostPath: string) {
   const wireConn = (conn: TCPConnection) => {
     log(`← TCP SYN ${conn.tuple}`);
     const framer = new NetBIOSFramer();
-    const session = new SmbSession(hostPath);
+    const session = new SmbSession(hostPath, toolsRoot);
 
     const handler = (data: Uint8Array) => {
       for (const msg of framer.push(data)) {
