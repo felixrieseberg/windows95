@@ -1,189 +1,166 @@
 #!/usr/bin/env node
 /**
- * Updates v86 by building the wasm from a local checkout. The libv86.js +
- * v86.wasm pair MUST be ABI-matched — copy.sh historically rebuilds the JS
- * without rebuilding the wasm, and a mismatch silently breaks fresh boot
- * (state restore still works because the CPU snapshot is opaque, so you
- * won't notice until Win95 BSODs at the splash screen with "Invalid VxD
- * dynamic link call").
+ * Build and install v86 (wasm + libv86.js + BIOS) from a local checkout.
  *
  * Usage:
- *   node tools/update-v86.js [path/to/v86]       # builds wasm from source
- *   node tools/update-v86.js --js-only           # just download libv86.js
+ *   node tools/update-v86.js [path/to/v86]
  *
- * The wasm build needs `rustup target add wasm32-unknown-unknown` and clang.
- * libv86.js needs Java + Closure; if you don't have those, --js-only fetches
- * from copy.sh and warns if its Last-Modified is far from your wasm build.
+ * Defaults to ../v86 relative to this repo. Expects the checkout to be on
+ * `fork/windows95-base` (or a branch with both bug fixes applied):
+ *
+ *   - `electron-renderer-fs-loader` — file loader uses require() instead of
+ *     dynamic import (needed for Electron renderer, PR #1540)
+ *   - `ide-shared-registers` — ATA Command Block register writes hit both
+ *     master and slave, as the spec says they should (fixes Win95/98 boot
+ *     on disks >535MiB, PR #1541)
+ *
+ * If either PR is merged into upstream, rebase windows95-base and drop it.
+ *
+ * Prereqs (all must be installed — no fallbacks):
+ *   cargo + rustup target add wasm32-unknown-unknown
+ *   clang
+ *   java (e.g. brew install openjdk)
+ *   <v86>/closure-compiler/compiler.jar  (v20210601 — pinned by v86's Makefile)
  */
 
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
-const LIB_DIR = path.join(__dirname, '../src/renderer/lib');
-const V86_DIR = process.argv.find(a => a !== process.argv[0] && a !== process.argv[1] && !a.startsWith('--'))
-              || path.resolve(__dirname, '../../v86');
-const JS_ONLY = process.argv.includes('--js-only');
-const SKEW_DAYS = 14;
+const WINDOWS95_DIR = path.resolve(__dirname, '..');
+const V86_DIR = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.resolve(WINDOWS95_DIR, '../v86');
 
-function head(url) {
-  return new Promise((resolve, reject) => {
-    https.request(url, { method: 'HEAD' }, (res) => {
-      resolve({ status: res.statusCode, lastModified: res.headers['last-modified'] });
-    }).on('error', reject).end();
-  });
+const LIB_DIR = path.join(WINDOWS95_DIR, 'src/renderer/lib');
+const BIOS_DIR = path.join(WINDOWS95_DIR, 'bios');
+
+const JAVA_BIN = '/opt/homebrew/opt/openjdk/bin/java';
+
+function require_tool(cmd, desc) {
+  try {
+    execFileSync('sh', ['-c', `command -v ${cmd}`], { stdio: 'ignore' });
+  } catch {
+    throw new Error(`Missing prerequisite: ${desc} (${cmd} not on PATH)`);
+  }
 }
 
-function download(url, dest) {
-  return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
-      if (res.statusCode !== 200) return reject(new Error(`${url} → HTTP ${res.statusCode}`));
-      const chunks = [];
-      res.on('data', (c) => chunks.push(c));
-      res.on('end', () => {
-        const buf = Buffer.concat(chunks);
-        fs.writeFileSync(dest, buf);
-        console.log(`  ${path.basename(dest)}: ${(buf.length / 1024).toFixed(0)} KB`);
-        resolve(res.headers['last-modified']);
-      });
-    }).on('error', reject);
-  });
+function run(cmd, args, opts = {}) {
+  execFileSync(cmd, args, { stdio: 'inherit', ...opts });
+}
+
+function check_prereqs() {
+  require_tool('cargo', 'rust/cargo');
+  require_tool('clang', 'clang');
+
+  // cargo needs the wasm32 target
+  const targets = execFileSync('rustup', ['target', 'list', '--installed']).toString();
+  if (!targets.includes('wasm32-unknown-unknown')) {
+    throw new Error('Missing rust target. Run: rustup target add wasm32-unknown-unknown');
+  }
+
+  // Java comes from homebrew openjdk on macOS — the v86 Makefile invokes `java`
+  // directly, so we have to put the homebrew java on PATH for its make calls
+  // (or install openjdk into the system). We check for an explicit binary so
+  // the error is clear.
+  if (!fs.existsSync(JAVA_BIN)) {
+    throw new Error(`Missing java at ${JAVA_BIN}. Install with: brew install openjdk`);
+  }
+
+  const closureJar = path.join(V86_DIR, 'closure-compiler', 'compiler.jar');
+  if (!fs.existsSync(closureJar)) {
+    throw new Error(
+      `Missing Closure compiler at ${closureJar}.\n` +
+      `Download v20210601 (pinned by v86's Makefile):\n` +
+      `  mkdir -p ${path.dirname(closureJar)}\n` +
+      `  curl -sL https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/v20210601/closure-compiler-v20210601.jar -o ${closureJar}`
+    );
+  }
+
+  if (!fs.existsSync(path.join(V86_DIR, 'Makefile'))) {
+    throw new Error(`No v86 checkout at ${V86_DIR}. Pass a path as the first argument or clone copy/v86 there.`);
+  }
+}
+
+function build_v86() {
+  const env = { ...process.env, PATH: `/opt/homebrew/opt/openjdk/bin:${process.env.PATH}` };
+  console.log('Building v86.wasm…');
+  run('make', ['build/v86.wasm'], { cwd: V86_DIR, env });
+  console.log('Building libv86.js…');
+  run('make', ['build/libv86.js'], { cwd: V86_DIR, env });
+}
+
+function install() {
+  const copies = [
+    ['build/v86.wasm',   'build/v86.wasm'],
+    ['build/libv86.js',  'libv86.js'],
+  ];
+  for (const [src, dest] of copies) {
+    fs.copyFileSync(path.join(V86_DIR, src), path.join(LIB_DIR, dest));
+    const size = fs.statSync(path.join(LIB_DIR, dest)).size;
+    console.log(`  ${dest}: ${(size / 1024).toFixed(0)} KB`);
+  }
+
+  for (const bios of ['seabios.bin', 'vgabios.bin']) {
+    fs.copyFileSync(path.join(V86_DIR, 'bios', bios), path.join(BIOS_DIR, bios));
+  }
+  console.log('  seabios.bin + vgabios.bin');
 }
 
 /**
- * v86 commit 1b90d2e7 (May 2025) changed ATA Command Block register writes
- * to only target current_interface instead of both master and slave. Those
- * registers (ports 0x1F1-0x1F6) are channel-shared per the ATA spec — both
- * drives on the cable see the same register file. Win95's ESDI_506.PDR
- * writes them, switches drive-select, expects them to still be there.
- * Result: IDE IRQ never fires, splash screen hang.
- *
- * Found via JS-only bisect: prod wasm + freshly-built libv86.js, parent
- * 3c944a02 boots, 1b90d2e7 hangs deterministically.
+ * Sanity check the installed files for the invariants our SMB integration
+ * and Electron renderer depend on. If any of these fail, v86 changed under us
+ * and src/renderer/smb/index.ts probably needs updating — see the README at
+ * src/renderer/smb/README.md for why.
  */
-function patchIdeSharedRegisters(ideJsPath) {
-  let s = fs.readFileSync(ideJsPath, 'utf-8');
-  const re = /this\.current_interface\.(\w+_reg) = \(this\.current_interface\.\1 << 8 \| data\) & 0xFFFF;/g;
-  const matches = [...s.matchAll(re)];
-  if (matches.length === 0) {
-    console.log('  ide.js: shared-register patch already applied or upstream fixed it');
-    return;
+function sanity_check() {
+  const js = fs.readFileSync(path.join(LIB_DIR, 'libv86.js'), 'utf-8');
+
+  const checks = [
+    // The electron-renderer-fs-loader fix: don't use dynamic import for fs
+    [!/await import\("node:/.test(js),
+     'libv86.js uses `await import("node:...")` — the Electron renderer fs loader PR was reverted?'],
+
+    // The ide-shared-registers fix: writes go to both master and slave
+    // (minified has no spaces: `this.master.features_reg=(this.master...`)
+    [/this\.master\.features_reg=\(this\.master\.features_reg/.test(js),
+     'libv86.js ide.js did not get the shared-register fix — is the windows95-base branch still in sync?'],
+
+    // Export pattern still shims the way parcel-build expects
+    [js.includes('module.exports') && js.includes('window'),
+     'libv86.js export pattern changed — check the runtime shim in parcel-build.js'],
+
+    // SMB integration needs the tcp-connection bus event (new API path in index.ts)
+    [js.includes('tcp-connection'),
+     'libv86.js no longer fires the tcp-connection bus event — SMB will fall back to the old-API theft hack'],
+
+    // Old-API fallback still present for defense in depth
+    [js.includes('on_tcp_connection'),
+     'libv86.js no longer has on_tcp_connection — harmless but surprising'],
+  ];
+
+  let passed = 0;
+  for (const [ok, msg] of checks) {
+    if (ok) passed++;
+    else console.warn('  WARN:', msg);
   }
-  if (matches.length < 5) {
-    throw new Error(`ide.js: expected ≥5 register write sites, found ${matches.length} — pattern changed`);
-  }
-  s = s.replace(re, (_, reg) =>
-    `this.master.${reg} = (this.master.${reg} << 8 | data) & 0xFFFF;\n` +
-    `        this.slave.${reg} = (this.slave.${reg} << 8 | data) & 0xFFFF;`
-  );
-  fs.writeFileSync(ideJsPath, s);
-  console.log(`  ide.js: restored shared-register writes (${matches.length} sites)`);
+  console.log(`  sanity: ${passed}/${checks.length} checks passed`);
 }
 
-async function main() {
-  const jsDest = path.join(LIB_DIR, 'libv86.js');
-  const wasmDest = path.join(LIB_DIR, 'build/v86.wasm');
+function main() {
+  console.log(`v86 checkout: ${V86_DIR}`);
+  const head = execFileSync('git', ['log', '-1', '--format=%h %s'], { cwd: V86_DIR }).toString().trim();
+  console.log(`             ${head}`);
 
-  // ─── source patch (before any build) ─────────────────────────────────────
-  if (!JS_ONLY) {
-    const ideJs = path.join(V86_DIR, 'src/ide.js');
-    if (fs.existsSync(ideJs)) {
-      patchIdeSharedRegisters(ideJs);
-    }
-  }
-
-  // ─── wasm ────────────────────────────────────────────────────────────────
-  let wasmDate;
-  if (JS_ONLY) {
-    if (!fs.existsSync(wasmDest)) {
-      throw new Error(`--js-only requires an existing wasm at ${wasmDest}`);
-    }
-    wasmDate = fs.statSync(wasmDest).mtime;
-    console.log(`Keeping existing wasm (${wasmDate.toISOString().slice(0, 10)})`);
-  } else {
-    if (!fs.existsSync(path.join(V86_DIR, 'Makefile'))) {
-      throw new Error(`No v86 checkout at ${V86_DIR}. Clone copy/v86 there or pass a path.`);
-    }
-    const head = execSync('git log -1 --format="%h %ci"', { cwd: V86_DIR }).toString().trim();
-    console.log(`Building wasm from ${V86_DIR} @ ${head}`);
-    execSync('make build/v86.wasm', { cwd: V86_DIR, stdio: 'inherit' });
-    fs.copyFileSync(path.join(V86_DIR, 'build/v86.wasm'), wasmDest);
-    wasmDate = new Date();
-    console.log(`  v86.wasm: ${(fs.statSync(wasmDest).size / 1024).toFixed(0)} KB`);
-  }
-
-  // ─── libv86.js ───────────────────────────────────────────────────────────
-  // Build from source if Closure is available; otherwise fetch and check skew.
-  const hasClosure = !JS_ONLY && fs.existsSync(path.join(V86_DIR, 'closure-compiler/compiler.jar'));
-  if (hasClosure) {
-    console.log('Building libv86.js (Closure)…');
-    execSync('make build/libv86.js', { cwd: V86_DIR, stdio: 'inherit' });
-    fs.copyFileSync(path.join(V86_DIR, 'build/libv86.js'), jsDest);
-    console.log(`  libv86.js: ${(fs.statSync(jsDest).size / 1024).toFixed(0)} KB`);
-  } else {
-    console.log('No Closure jar — fetching libv86.js from copy.sh');
-    const lm = await download('https://copy.sh/v86/build/libv86.js', jsDest);
-    const jsDate = new Date(lm);
-    const skew = Math.abs(jsDate - wasmDate) / 86400000;
-    console.log(`  JS:   ${jsDate.toISOString().slice(0, 10)}`);
-    console.log(`  wasm: ${wasmDate.toISOString().slice(0, 10)}`);
-    if (skew > SKEW_DAYS) {
-      throw new Error(
-        `JS and wasm are ${skew.toFixed(0)} days apart. ` +
-        `Either install Closure (java + v86/closure-compiler/compiler.jar) ` +
-        `to build libv86.js from the same commit, or git-checkout v86 to a ` +
-        `commit near ${jsDate.toISOString().slice(0, 10)} and rebuild the wasm.`
-      );
-    }
-  }
-
-  // ─── BIOS ────────────────────────────────────────────────────────────────
-  // SeaBIOS sets up the interrupt controller for whatever the emulated
-  // hardware presents. New v86 + old BIOS = APIC never armed = IDE IRQs
-  // never fire = boot hangs at the splash screen with no disk activity.
-  if (!JS_ONLY) {
-    const biosDir = path.join(__dirname, '../bios');
-    for (const f of ['seabios.bin', 'vgabios.bin']) {
-      fs.copyFileSync(path.join(V86_DIR, 'bios', f), path.join(biosDir, f));
-      console.log(`  ${f}: ${(fs.statSync(path.join(biosDir, f)).size / 1024).toFixed(0)} KB`);
-    }
-  }
-
-  // ─── patch: phantom slave drive ──────────────────────────────────────────
-  // v86 bug since 1b90d2e7 (May 2025 IDE refactor): cpu.js does
-  //   ide_config[0][1] = { buffer: settings.hdb }
-  // unconditionally inside the `if(settings.hda)` block. When hdb is
-  // undefined this creates a phantom 0-size HD on primary slave; Win95's
-  // ESDI_506.PDR detects it, sends IDENTIFY, and spins forever waiting for
-  // DRQ from a drive that has no sectors. State restore skips driver init,
-  // so it only bites on fresh boot.
-  //
-  // The pattern is structurally stable: `buffer` and `hdb` are option keys
-  // (externed, not mangled), `[0][1]=` is literal.
-  let js = fs.readFileSync(jsDest, 'utf-8');
-  const phantom = /(\w+)\[0\]\[1\]=\{buffer:(\w+)\.hdb\}/g;
-  const matches = [...js.matchAll(phantom)];
-  if (matches.length !== 1) {
-    throw new Error(
-      `phantom-slave patch: expected exactly 1 match, found ${matches.length}. ` +
-      `Either v86 fixed this upstream (good — remove this patch) or the ` +
-      `pattern changed. Check src/cpu.js around ide_config[0][1].`
-    );
-  }
-  js = js.replace(phantom, '$2.hdb&&($1[0][1]={buffer:$2.hdb})');
-  fs.writeFileSync(jsDest, js);
-  console.log('  patched: phantom slave drive guard (1 site)');
-
-  // ─── sanity ──────────────────────────────────────────────────────────────
-  if (!js.includes('process.versions.node'))
-    throw new Error('libv86 lost the process.versions.node check (file loader regression)');
-  if (!/this\.fetch=\([^)]*\)=>fetch\(/.test(js))
-    throw new Error('libv86 lost the fetch arrow wrapper');
-  if (!js.includes('window.V86=') && !js.includes('module.exports.V86='))
-    throw new Error('libv86 export pattern changed — check the runtime shim');
-
-  console.log('✓ installed (sanity checks pass)');
+  check_prereqs();
+  build_v86();
+  install();
+  sanity_check();
+  console.log('done');
 }
 
-main().catch((e) => { console.error('✗', e.message); process.exit(1); });
+try { main(); }
+catch (e) {
+  console.error('✗', e.message);
+  process.exit(1);
+}
