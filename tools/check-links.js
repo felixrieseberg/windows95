@@ -15,9 +15,13 @@ async function main() {
       const response = await fetch(link, { method: 'HEAD' })
 
       if (!response.ok) {
-        // If we're inside GitHub's release asset server, we just ran into AWS not allowing
-        // HEAD requests, which is different from a 404.
-        if (!response.url.startsWith('https://github-production-release-asset')) {
+        // GitHub's release-asset and user-attachments CDNs reject anonymous HEAD
+        // requests (403), which is different from a 404.
+        const isGithubCdn =
+          response.url.startsWith('https://github-production-release-asset') ||
+          response.url.startsWith('https://github-production-user-asset') ||
+          link.startsWith('https://github.com/user-attachments/')
+        if (!isGithubCdn) {
           throw new Error (`HTTP Error Response: ${response.status} ${response.statusText}`)
         }
       }
