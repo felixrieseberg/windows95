@@ -36,7 +36,77 @@ const SC = {
   R_DN: [0x13], R_UP: [0x93],
   ENTER_DN: [0x1c], ENTER_UP: [0x9c],
   BACKSLASH_DN: [0x2b], BACKSLASH_UP: [0xab],
+  ALT_DN: [0x38], ALT_UP: [0xb8],
 };
+
+// WIN95_PROBE_VGATRACE=1 → wrap VGA I/O ports at the io.ports[] layer (the
+// VGAScreen.portXXX_write methods are captured by-value at registration time,
+// so monkey-patching them on the instance is a no-op for most ports). Each
+// entry is [port, op, value, "eip VMPE cplN"] so you can tell vgabios in V86
+// mode apart from the ring-0 display driver.
+const VGATRACE_FILE = "/tmp/win95-vgatrace.json";
+let vgaTrace: any[] | undefined;
+
+function armVgaTrace(emulator: any) {
+  const cpu = emulator.v86?.cpu;
+  const io = cpu?.io;
+  if (!io || vgaTrace) return;
+  vgaTrace = [];
+  const ctx = () => {
+    try {
+      const ip = (cpu.instruction_pointer[0] >>> 0).toString(16);
+      const vm = cpu.flags[0] & (1 << 17) ? "VM" : "  ";
+      const pe = cpu.cr[0] & 1 ? "PE" : "  ";
+      return `${ip} ${vm}${pe} cpl${cpu.cpl[0]}`;
+    } catch { return "?"; }
+  };
+  const W = [0x3c0, 0x3c2, 0x3c4, 0x3c5, 0x3ce, 0x3cf, 0x3d4, 0x3d5, 0x3b4, 0x3b5, 0x1ce, 0x1cf];
+  const R = [0x1cf, 0x3da, 0x3c1];
+  for (const p of W) for (const w of ["write8", "write16"]) {
+    const orig = io.ports[p][w];
+    io.ports[p][w] = function (v: number) {
+      vgaTrace!.push([p, w, v, ctx()]);
+      return orig.call(this, v);
+    };
+  }
+  for (const p of R) for (const r of ["read8", "read16"]) {
+    const orig = io.ports[p][r];
+    io.ports[p][r] = function () {
+      const v = orig.call(this);
+      vgaTrace!.push([p, r, v, ctx()]);
+      return v;
+    };
+  }
+  console.log("[probe] vga trace armed");
+}
+
+function dumpVgaTrace(emulator: any) {
+  if (!vgaTrace) return;
+  const d = emulator.v86?.cpu?.devices?.vga;
+  const state = d && {
+    svga_enabled: d.svga_enabled,
+    graphical_mode: d.graphical_mode,
+    attribute_mode: d.attribute_mode,
+    miscellaneous_graphics_register: d.miscellaneous_graphics_register,
+    sequencer_memory_mode: d.sequencer_memory_mode,
+    clocking_mode: d.clocking_mode,
+    plane_write_bm: d.plane_write_bm,
+    crtc_mode: d.crtc_mode,
+    max_scan_line: d.max_scan_line,
+    underline_location_register: d.underline_location_register,
+    horizontal_display_enable_end: d.horizontal_display_enable_end,
+    horizontal_blank_start: d.horizontal_blank_start,
+    vertical_display_enable_end: d.vertical_display_enable_end,
+    vertical_blank_start: d.vertical_blank_start,
+    offset_register: d.offset_register,
+    dispi_enable_value: d.dispi_enable_value,
+    screen_width: d.screen_width,
+    screen_height: d.screen_height,
+    max_cols: d.max_cols,
+    max_rows: d.max_rows,
+  };
+  fs.writeFileSync(VGATRACE_FILE, JSON.stringify({ state, trace: vgaTrace }));
+}
 
 function sendChord(emu: any, ...keys: { dn: number[]; up: number[] }[]) {
   for (const k of keys) emu.keyboard_send_scancodes(k.dn);
@@ -80,10 +150,16 @@ export function startProbe(emulator: any) {
   // Enter, then optional WIN95_PROBE_RUN_AFTER keystrokes after _RUN_WAIT ms.
   const runCmd = process.env.WIN95_PROBE_RUN;
   const runAfter = process.env.WIN95_PROBE_RUN_AFTER;
-  let scriptArmed = !!scriptCmd || !!runCmd;
+  // WIN95_PROBE_DOSBOX=1 → after desktop, open COMMAND.COM, type `dir`,
+  // optionally Alt+Enter to fullscreen. Regression test for the windowed
+  // DOS box clobbering VBE (felixrieseberg/v86 vga-defer-vbe-disable-v86).
+  const dosBox = process.env.WIN95_PROBE_DOSBOX === "1";
+  const wantVgaTrace = process.env.WIN95_PROBE_VGATRACE === "1";
+  let scriptArmed = !!scriptCmd || !!runCmd || dosBox;
 
   const tick = () => {
     try {
+      if (wantVgaTrace && !vgaTrace) armVgaTrace(emulator);
       const s = collectStatus(emulator);
       fs.writeFileSync(STATUS_FILE, JSON.stringify(s, null, 2));
 
@@ -98,11 +174,46 @@ export function startProbe(emulator: any) {
         }
       } catch {}
 
+      dumpVgaTrace(emulator);
+
       // Once at desktop, fire the keyboard script (once). The 8s settle is
       // for the "Welcome to Windows 95" tip dialog to be dismissable —
       // we send Esc first to clear it.
       if (scriptArmed && s.phase === "desktop" && s.uptimeSec > 8) {
         scriptArmed = false;
+        if (dosBox) {
+          console.log("[probe] desktop detected, opening DOS box");
+          runScript(emulator, [
+            { type: "wait", ms: 3000 },
+            { type: "keys", dn: SC.ESC_DN, up: SC.ESC_UP },
+            { type: "wait", ms: 1000 },
+            { type: "keys", dn: SC.ESC_DN, up: SC.ESC_UP },
+            { type: "wait", ms: 1000 },
+            { type: "chord", keys: [
+              { dn: SC.CTRL_DN, up: SC.CTRL_UP },
+              { dn: SC.ESC_DN, up: SC.ESC_UP },
+            ]},
+            { type: "wait", ms: 1200 },
+            { type: "keys", dn: SC.R_DN, up: SC.R_UP },
+            { type: "wait", ms: 1000 },
+            { type: "text", text: "command" },
+            { type: "wait", ms: 400 },
+            { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
+            { type: "wait", ms: 5000 },
+            { type: "text", text: "dir" },
+            { type: "wait", ms: 200 },
+            { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
+            { type: "wait", ms: 3000 },
+            ...(process.env.WIN95_PROBE_DOSBOX_ALTENTER === "1" ? [
+              { type: "chord", keys: [
+                { dn: SC.ALT_DN, up: SC.ALT_UP },
+                { dn: SC.ENTER_DN, up: SC.ENTER_UP },
+              ]},
+              { type: "wait", ms: 4000 },
+            ] : []),
+          ]);
+          return;
+        }
         if (runCmd) {
           console.log("[probe] desktop detected, Run →", runCmd);
           runScript(emulator, [
@@ -128,7 +239,8 @@ export function startProbe(emulator: any) {
               { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
             ] : []),
           ]);
-        } else {
+          return;
+        }
         console.log("[probe] desktop detected, running script:", scriptCmd);
         runScript(emulator, [
           { type: "wait", ms: 3000 },
@@ -160,7 +272,6 @@ export function startProbe(emulator: any) {
           { type: "wait", ms: 400 },
           { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
         ]);
-        }
       }
 
       if (s.verdict) {
@@ -273,7 +384,7 @@ function collectStatus(emulator: any): ProbeStatus {
   // Made it to ≥640×480 graphics → desktop reached. But if a keyboard
   // script is running, hold off — the outer harness reads the SMB log
   // directly and we just keep the app alive.
-  else if (atDesktop && uptimeSec > 30 && !process.env.WIN95_PROBE_SCRIPT && !process.env.WIN95_PROBE_RUN) verdict = "SUCCESS";
+  else if (atDesktop && uptimeSec > 30 && !process.env.WIN95_PROBE_SCRIPT && !process.env.WIN95_PROBE_RUN && !process.env.WIN95_PROBE_DOSBOX) verdict = "SUCCESS";
   // Timeout
   else if (uptimeSec > 180) verdict = "FAIL_OTHER";
 
