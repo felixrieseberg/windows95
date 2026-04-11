@@ -1,15 +1,16 @@
-@import "./status.less";
-@import "./emulator.less";
-@import "./info.less";
-@import "./start.less";
-@import "./settings.less";
+@import "./status.css";
+@import "./emulator.css";
+@import "./info.css";
+@import "./start.css";
+@import "./settings.css";
 
-// 98.css uses the actual MS Sans Serif bitmap font and pixel-exact bevels.
-// Everything below is layout — the chrome comes from 98.css.
+/* 98.css uses the actual MS Sans Serif bitmap font and pixel-exact bevels.
+   Everything below is layout — the chrome comes from 98.css. */
 
-@win-teal: #008080;
-@win-silver: silver;
-@win-font: "Pixelated MS Sans Serif", Arial, sans-serif;
+:root {
+  --win-teal: #008080;
+  --win-font: "Pixelated MS Sans Serif", Arial, sans-serif;
+}
 
 * {
   user-select: none;
@@ -25,13 +26,13 @@ body {
 
 body {
   background: #000;
-  font-family: @win-font;
+  font-family: var(--win-font);
   -webkit-font-smoothing: none;
   image-rendering: pixelated;
 }
 
 body.paused {
-  background: @win-teal;
+  background: var(--win-teal);
 
   > #emulator {
     display: none;
@@ -48,8 +49,8 @@ button:focus {
   outline: none;
 }
 
-// 98.css renders button text via text-shadow (color: transparent) so the
-// bitmap font stays crisp; <img> children need their own alignment.
+/* 98.css renders button text via text-shadow (color: transparent) so the
+   bitmap font stays crisp; <img> children need their own alignment. */
 button img {
   height: 16px;
   width: 16px;
@@ -58,7 +59,7 @@ button img {
 }
 
 p {
-  font-family: @win-font;
+  font-family: var(--win-font);
   font-size: 11px;
   line-height: 1.5;
 }
