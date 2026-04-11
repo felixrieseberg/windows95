@@ -51,9 +51,47 @@ function download(url, dest) {
   });
 }
 
+/**
+ * v86 commit 1b90d2e7 (May 2025) changed ATA Command Block register writes
+ * to only target current_interface instead of both master and slave. Those
+ * registers (ports 0x1F1-0x1F6) are channel-shared per the ATA spec — both
+ * drives on the cable see the same register file. Win95's ESDI_506.PDR
+ * writes them, switches drive-select, expects them to still be there.
+ * Result: IDE IRQ never fires, splash screen hang.
+ *
+ * Found via JS-only bisect: prod wasm + freshly-built libv86.js, parent
+ * 3c944a02 boots, 1b90d2e7 hangs deterministically.
+ */
+function patchIdeSharedRegisters(ideJsPath) {
+  let s = fs.readFileSync(ideJsPath, 'utf-8');
+  const re = /this\.current_interface\.(\w+_reg) = \(this\.current_interface\.\1 << 8 \| data\) & 0xFFFF;/g;
+  const matches = [...s.matchAll(re)];
+  if (matches.length === 0) {
+    console.log('  ide.js: shared-register patch already applied or upstream fixed it');
+    return;
+  }
+  if (matches.length < 5) {
+    throw new Error(`ide.js: expected ≥5 register write sites, found ${matches.length} — pattern changed`);
+  }
+  s = s.replace(re, (_, reg) =>
+    `this.master.${reg} = (this.master.${reg} << 8 | data) & 0xFFFF;\n` +
+    `        this.slave.${reg} = (this.slave.${reg} << 8 | data) & 0xFFFF;`
+  );
+  fs.writeFileSync(ideJsPath, s);
+  console.log(`  ide.js: restored shared-register writes (${matches.length} sites)`);
+}
+
 async function main() {
   const jsDest = path.join(LIB_DIR, 'libv86.js');
   const wasmDest = path.join(LIB_DIR, 'build/v86.wasm');
+
+  // ─── source patch (before any build) ─────────────────────────────────────
+  if (!JS_ONLY) {
+    const ideJs = path.join(V86_DIR, 'src/ide.js');
+    if (fs.existsSync(ideJs)) {
+      patchIdeSharedRegisters(ideJs);
+    }
+  }
 
   // ─── wasm ────────────────────────────────────────────────────────────────
   let wasmDate;
