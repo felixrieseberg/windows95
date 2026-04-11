@@ -23,7 +23,7 @@ fallbacks, no fetching from copy.sh.
 ## The fork branch
 
 v86 should be checked out on **`felixrieseberg/v86:windows95-base`**.
-That branch merges two bugfix branches, each with an open upstream PR:
+That branch merges three feature branches, each upstreamable on its own:
 
 - **`electron-renderer-fs-loader`** (PR #1540) — `src/lib.js` uses
   `require("fs")` instead of `await import("node:fs/promises")`. Dynamic
@@ -35,6 +35,11 @@ That branch merges two bugfix branches, each with an open upstream PR:
   writes to target only `current_interface`, but per ATA spec they're
   channel-shared (one register file on the IDE cable; both drives latch
   the same value).
+- **`vmware-abspointer`** — `src/vmware.js` implements the VMware mouse
+  backdoor (port `0x5658`, GETVERSION + ABSPOINTER_*) so a guest driver
+  (VBADOS VBMOUSE) can read absolute cursor position and track the host
+  cursor 1:1 without pointer lock. Consumes the `mouse-absolute` bus
+  event that `MouseAdapter` already emits.
 
 ## Prerequisites
 
