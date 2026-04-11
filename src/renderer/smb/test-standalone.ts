@@ -93,12 +93,18 @@ console.log("\n[2] NEGOTIATE");
   ok(parsed.cmd === CMD_NEGOTIATE, "cmd echoed");
   ok((parsed.flags & 0x80) !== 0, "reply flag set");
   ok(parsed.status === 0, "status OK");
-  ok(parsed.wordCount === 13, "13-word LM response");
-  // word[0] = dialect index — we pick LANMAN2.1 (idx 3) since our 13-word
-  // response is the LANMAN format; picking NT LM 0.12 would require the
-  // 17-word NT response which we don't implement
+  ok(parsed.wordCount === 17, "17-word NT response");
+  // word[0] = dialect index — NT LM 0.12 is idx 4 and gets the 17-word
+  // response; the 13-word LM shape is now only emitted as a fallback.
   const pickedIdx = parsed.words[0] | (parsed.words[1] << 8);
-  ok(pickedIdx === 3, `picked LANMAN2.1 (idx ${pickedIdx})`);
+  ok(pickedIdx === 4, `picked NT LM 0.12 (idx ${pickedIdx})`);
+
+  // Fallback: a client that doesn't offer NT LM 0.12 still gets the 13-word
+  // LANMAN response.
+  const lmBytes: number[] = [];
+  for (const d of dialects.slice(0, 4)) { lmBytes.push(0x02); lmBytes.push(...cstr(d)); }
+  const lmParsed = parseSmb(session.handle(smbReq(CMD_NEGOTIATE, [], lmBytes))!)!;
+  ok(lmParsed.wordCount === 13, "13-word LM fallback");
 }
 
 // ─── Test 3: SESSION_SETUP ───────────────────────────────────────────────────
@@ -170,13 +176,83 @@ console.log("\n[5] TRANS2 FIND_FIRST2");
   const pStart = replyParamOffset - replyBytesStart;
   const replyParams = parsed.bytes.slice(pStart, pStart + replyParamCount);
   const searchCount = replyParams[2] | (replyParams[3] << 8);
-  // Should find: . .. _MAPZ.BAT(virtual) hello.txt subdir = 5
-  ok(searchCount === 5, `found ${searchCount} entries (expect 5)`);
+  // Should find: . .. hello.txt subdir = 4 (virtuals moved to TOOLS share)
+  ok(searchCount === 4, `found ${searchCount} entries (expect 4)`);
   // Data block has the entries — just verify they're in there somewhere
   const dataStr = String.fromCharCode(...parsed.bytes);
-  ok(dataStr.includes("_MAPZ.BAT"), "virtual _MAPZ.BAT in listing");
+  ok(!dataStr.includes("_MAPZ.BAT"), "no virtual leak in user share");
   ok(dataStr.includes("hello.txt"), "hello.txt in listing");
   ok(dataStr.includes("subdir"), "subdir in listing");
+}
+
+// ─── Test 5b: FIND_FIRST2 level 0x104 (LFN) ──────────────────────────────────
+console.log("\n[5b] TRANS2 FIND_FIRST2 level=0x104");
+{
+  fs.writeFileSync(path.join(tmpRoot, "A Long Filename Here.txt"), "lfn");
+  // Same envelope as [5] but InfoLevel=0x104
+  const t2params = [...u16(0x16), ...u16(100), ...u16(0), ...u16(0x104),
+                    ...u32(0), ...cstr("\\*")];
+  const wc = 14 + 1;
+  const bytesStart = 32 + 1 + wc * 2 + 2;
+  const paramOff = bytesStart + 3;
+  const words = [
+    ...u16(t2params.length), ...u16(0), ...u16(100), ...u16(8000),
+    1, 0, ...u16(0), ...u32(0), ...u16(0),
+    ...u16(t2params.length), ...u16(paramOff),
+    ...u16(0), ...u16(0),
+    1, 0, ...u16(1)
+  ];
+  const bytes = [0, 0, 0, ...t2params];
+  const reply = session.handle(smbReq(CMD_TRANSACTION2, words, bytes, 1, 1))!;
+  const parsed = parseSmb(reply)!;
+  ok(parsed.status === 0, "status OK");
+  // Walk the data block via NextEntryOffset and verify the long name appears
+  // intact and the chain terminates with 0.
+  const rw = parsed.words;
+  const dOff = (rw[14] | (rw[15] << 8)) - (32 + 1 + parsed.wordCount * 2 + 2);
+  const dLen = rw[12] | (rw[13] << 8);
+  const data = parsed.bytes.slice(dOff, dOff + dLen);
+  const names: string[] = [];
+  let off = 0;
+  for (;;) {
+    const next = data[off] | (data[off+1]<<8) | (data[off+2]<<16) | (data[off+3]<<24);
+    const fnLen = data[off+60] | (data[off+61]<<8);
+    // FileNameLength counts the trailing null (Samba/win9x compat)
+    names.push(String.fromCharCode(...data.slice(off+94, off+94+fnLen)).replace(/\0$/, ""));
+    if (next === 0) break;
+    off += next;
+  }
+  ok(names.includes("A Long Filename Here.txt"), `LFN intact: ${JSON.stringify(names)}`);
+  ok(names.includes(".") && names.includes(".."), "dot entries present");
+}
+
+// ─── Test 5c: RAP NetShareEnum lists user share + TOOLS ──────────────────────
+console.log("\n[5c] RAP NetShareEnum");
+{
+  // TREE_CONNECT IPC$ first
+  const ipc = parseSmb(session.handle(smbReq(CMD_TREE_CONNECT_ANDX,
+    [0xff,0,0,0,...u16(0),...u16(1)],
+    [0, ...cstr("\\\\HOST\\IPC$"), ...cstr("IPC")], 0, 1))!)!;
+  ok(ipc.tid === 0xfffe, `IPC$ tid=${ipc.tid}`);
+  // RAP NetShareEnum: TRANS over \PIPE\LANMAN
+  const rap = [...u16(0), ...cstr("WrLeh"), ...cstr("B13BWz"), ...u16(1), ...u16(4096)];
+  const wc = 14;
+  const bytesStart = 32 + 1 + wc * 2 + 2;
+  const name = cstr("\\PIPE\\LANMAN");
+  const paramOff = bytesStart + name.length;
+  const words = [
+    ...u16(rap.length), ...u16(0), ...u16(100), ...u16(4096),
+    0, 0, ...u16(0), ...u32(0), ...u16(0),
+    ...u16(rap.length), ...u16(paramOff),
+    ...u16(0), ...u16(0),
+    0, 0
+  ];
+  const reply = session.handle(smbReq(0x25, words, [...name, ...rap], ipc.tid, 1))!;
+  const dataStr = String.fromCharCode(...parseSmb(reply)!.bytes);
+  const userShare = path.basename(tmpRoot).replace(/[^A-Za-z0-9_$~!#%&'()@^`{}.-]/g, "")
+    .toUpperCase().slice(0, 12);
+  ok(dataStr.includes("TOOLS"), "TOOLS share listed");
+  ok(dataStr.includes(userShare), `user share "${userShare}" listed`);
 }
 
 // ─── Test 6: OPEN + READ + CLOSE ─────────────────────────────────────────────
@@ -243,21 +319,50 @@ console.log("\n[7] Error handling");
   ok(parsed.status !== 0, "lexical traversal (../) blocked");
 }
 {
-  // Virtual file: open and read _MAPZ.BAT
+  // Virtual file: connect to TOOLS share, open and read _MAPZ.BAT
+  const tcReq = smbReq(CMD_TREE_CONNECT_ANDX,
+    [0xff, 0, 0, 0, ...u16(0), ...u16(1)],
+    [0, ...cstr("\\\\192.168.86.1\\TOOLS"), ...cstr("?????")], 0, 1);
+  const tcParsed = parseSmb(session.handle(tcReq)!)!;
+  ok(tcParsed.tid === 2, `TOOLS share tid=${tcParsed.tid}`);
+
   const oReq = smbReq(CMD_OPEN_ANDX,
     [0xff,0,0,0,...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u16(1),...u32(0),...u32(0),...u32(0)],
-    [...cstr("\\_MAPZ.BAT")], 1, 1);
+    [...cstr("\\_MAPZ.BAT")], tcParsed.tid, 1);
   const oReply = session.handle(oReq)!;
   const oParsed = parseSmb(oReply)!;
   ok(oParsed.status === 0, "open virtual _MAPZ.BAT");
   const vfid = oParsed.words[4] | (oParsed.words[5] << 8);
   const rReq = smbReq(CMD_READ_ANDX,
-    [0xff,0,0,0,...u16(vfid),...u32(0),...u16(500),...u16(0),...u32(0),...u16(0)], [], 1, 1);
+    [0xff,0,0,0,...u16(vfid),...u32(0),...u16(500),...u16(0),...u32(0),...u16(0)], [], tcParsed.tid, 1);
   const rReply = session.handle(rReq)!;
   const rParsed = parseSmb(rReply)!;
   const len = rParsed.words[10] | (rParsed.words[11] << 8);
   const text = String.fromCharCode(...rParsed.bytes.slice(1, 1 + len));
   ok(text.includes("NET USE Z:"), `virtual read: ${JSON.stringify(text.slice(0, 40))}`);
+
+  // SEEK to end → file size, then core READ (0x0a). This is the exact path
+  // Win95+Notepad take under NT LM 0.12 with Capabilities=0.
+  const oReq2 = smbReq(CMD_OPEN_ANDX,
+    [0xff,0,0,0,...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u16(1),...u32(0),...u32(0),...u32(0)],
+    [...cstr("\\README.TXT")], tcParsed.tid, 1);
+  const oP2 = parseSmb(session.handle(oReq2)!)!;
+  const fid2 = oP2.words[4] | (oP2.words[5] << 8);
+  ok(oP2.status === 0 && fid2 > 0, `open README.TXT fid=${fid2}`);
+
+  const sP = parseSmb(session.handle(smbReq(0x12,
+    [...u16(fid2), ...u16(2), ...u32(0)], [], tcParsed.tid, 1))!)!;
+  const seekPos = sP.words[0] | (sP.words[1] << 8) | (sP.words[2] << 16) | (sP.words[3] << 24);
+  ok(sP.status === 0 && seekPos > 100, `SEEK end → size=${seekPos}`);
+
+  const rP = parseSmb(session.handle(smbReq(0x0a,
+    [...u16(fid2), ...u16(seekPos), ...u32(0), ...u16(seekPos)], [], tcParsed.tid, 1))!)!;
+  ok(rP.status === 0, "core READ status OK");
+  // bytes: 0x01 + len(2) + data
+  const dlen = rP.bytes[1] | (rP.bytes[2] << 8);
+  const body = String.fromCharCode(...rP.bytes.slice(3, 3 + dlen));
+  ok(dlen === seekPos, `core READ returned ${dlen} bytes`);
+  ok(body.includes("windows95 tools"), `README content: ${JSON.stringify(body.slice(0, 30))}`);
 }
 {
   // symlink escape: link inside share → file outside share

@@ -45,6 +45,13 @@ export class Writer {
     this.chunks.push(0, 0);
     return this;
   }
+  patch32(at: number, v: number) {
+    this.chunks[at] = v & 0xff;
+    this.chunks[at+1] = (v >>> 8) & 0xff;
+    this.chunks[at+2] = (v >>> 16) & 0xff;
+    this.chunks[at+3] = (v >>> 24) & 0xff;
+    return this;
+  }
   get length() { return this.chunks.length; }
   build() { return new Uint8Array(this.chunks); }
 }
