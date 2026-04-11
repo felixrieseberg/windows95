@@ -3,16 +3,10 @@ import * as path from "path";
 import { app } from "electron";
 
 export interface Settings {
-  isFileServerEnabled: boolean;
-  isFileServerShowingHiddenFiles: boolean;
-  isFileServerShowingSystemHiddenFiles: boolean;
   smbSharePath: string;
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  isFileServerEnabled: true,
-  isFileServerShowingHiddenFiles: false,
-  isFileServerShowingSystemHiddenFiles: false,
   smbSharePath: app.getPath("downloads"),
 };
 
@@ -57,11 +51,6 @@ class SettingsManager {
 
   set<K extends keyof Settings>(key: K, value: Settings[K]): void {
     this.data[key] = value;
-    this.save();
-  }
-
-  delete(key: keyof Settings): void {
-    delete this.data[key];
     this.save();
   }
 

@@ -44,8 +44,9 @@ interface OpenFile {
 }
 
 interface DirEntry {
-  name: string;       // real filename (long)
+  name: string;       // display name (long, sanitized for Win95)
   sfn: string;        // 8.3 name shown to the client
+  attr: number;       // DOS attribute word
   stat: { isDirectory(): boolean; size: number; mtime: Date };
 }
 
@@ -54,8 +55,25 @@ interface SearchState {
   idx: number;
 }
 
+const ATTR_HIDDEN = 0x02;
+const ATTR_SYSTEM = 0x04;
 const ATTR_DIRECTORY = 0x10;
 const ATTR_ARCHIVE = 0x20;
+
+// Host-side junk that shouldn't clutter the guest's view. Marked H+S so
+// Explorer hides it by default but "View → Show all files" still works.
+const SYSTEM_JUNK = new Set([
+  ".ds_store", ".localized", ".trashes", ".fseventsd", ".spotlight-v100",
+  ".documentrevisions-v100", ".temporaryitems", ".volumeicon.icns",
+  "desktop.ini", "thumbs.db", "ehthumbs.db",
+]);
+
+function hostAttrs(realName: string, isDir: boolean): number {
+  let a = isDir ? ATTR_DIRECTORY : ATTR_ARCHIVE;
+  if (SYSTEM_JUNK.has(realName.toLowerCase())) a |= ATTR_HIDDEN | ATTR_SYSTEM;
+  else if (realName.startsWith(".")) a |= ATTR_HIDDEN;
+  return a;
+}
 
 // Tree IDs. TID routes every file op: SHARE = the user's mounted folder,
 // TOOLS = a purely synthetic share holding _MAPZ.BAT and friends so they
@@ -140,7 +158,7 @@ export class SmbSession {
     const now = new Date();
     const stat = (size: number) => ({ isDirectory: () => false, size, mtime: now });
     return Array.from(this.virtuals, ([name, bytes]) =>
-      ({ name, sfn: name, stat: stat(bytes.length) }));
+      ({ name, sfn: name, attr: ATTR_ARCHIVE, stat: stat(bytes.length) }));
   }
 
   /**
@@ -155,6 +173,7 @@ export class SmbSession {
     this.sfnMaps.set(hostDir, sfnMap);
 
     const entries: DirEntry[] = [];
+    const aliases: [string, string][] = [];
     for (const [sfn, real] of sfnMap) {
       try {
         // The long name we send is single-byte OEM. Anything outside that
@@ -162,11 +181,13 @@ export class SmbSession {
         // Windows-illegal char and wedge Explorer's icon renderer. Sanitize
         // for display and add the sanitized form to the lookup map so OPEN
         // on the displayed name still finds the real file.
-        const name = oemSafe(real);
-        if (name !== real) sfnMap.set(name.toUpperCase(), real);
-        entries.push({ name, sfn, stat: fs.statSync(path.join(hostDir, real)) });
+        const name = displayName(real);
+        if (name !== real) aliases.push([name.toUpperCase(), real]);
+        const stat = fs.statSync(path.join(hostDir, real));
+        entries.push({ name, sfn, attr: hostAttrs(real, stat.isDirectory()), stat });
       } catch { /* raced — skip */ }
     }
+    for (const [k, v] of aliases) sfnMap.set(k, v);
     return entries;
   }
 
@@ -446,9 +467,8 @@ export class SmbSession {
                       new Uint8Array(0), new Uint8Array(0));
     }
     const st = fs.statSync(hostPath);
-    const attrs = st.isDirectory() ? ATTR_DIRECTORY : ATTR_ARCHIVE;
     const words = new Writer()
-      .u16(attrs)
+      .u16(hostAttrs(path.basename(hostPath), st.isDirectory()))
       .u32(unixToSmbTime(st.mtime))
       .u32(Math.min(st.size, 0xffffffff))
       .zero(10) // reserved
@@ -508,13 +528,13 @@ export class SmbSession {
       const fid = this.nextFid++;
       this.fids.set(fid, { hostPath: `<virtual>${smbPath}`, fd: -1, size: vbytes.length, isDir: false, virtual: vbytes });
       log(`open "${smbPath}" → virtual (${vbytes.length} bytes)`);
-      return this.buildOpenReply(req, cmd, fid, false, vbytes.length, new Date());
+      return this.buildOpenReply(req, cmd, fid, ATTR_ARCHIVE, vbytes.length, new Date());
     }
     if (req.tid === TID_TOOLS) {
       if (isRootPath(smbPath)) {
         const fid = this.nextFid++;
         this.fids.set(fid, { hostPath: "<tools>", fd: -1, size: 0, isDir: true });
-        return this.buildOpenReply(req, cmd, fid, true, 0, new Date());
+        return this.buildOpenReply(req, cmd, fid, ATTR_DIRECTORY, 0, new Date());
       }
       return buildSmb(req, cmd, dosError(ERRDOS, ERR_BADFILE),
                       new Uint8Array(0), new Uint8Array(0));
@@ -531,17 +551,18 @@ export class SmbSession {
     const isDir = st.isDirectory();
     const fd = isDir ? -1 : fs.openSync(hostPath, "r");
     this.fids.set(fid, { hostPath, fd, size: st.size, isDir });
-    return this.buildOpenReply(req, cmd, fid, isDir, st.size, st.mtime);
+    return this.buildOpenReply(req, cmd, fid,
+      hostAttrs(path.basename(hostPath), isDir), st.size, st.mtime);
   }
 
-  private buildOpenReply(req: SmbHeader, cmd: number, fid: number, isDir: boolean, size: number, mtime: Date): Uint8Array {
-
+  private buildOpenReply(req: SmbHeader, cmd: number, fid: number, attrs: number, size: number, mtime: Date): Uint8Array {
+    const isDir = (attrs & ATTR_DIRECTORY) !== 0;
     const sz = Math.min(size, 0xffffffff);
     if (cmd === CMD_OPEN_ANDX) {
       const words = new Writer()
         .bytes(andxNone())
         .u16(fid)
-        .u16(isDir ? ATTR_DIRECTORY : ATTR_ARCHIVE)
+        .u16(attrs)
         .u32(unixToSmbTime(mtime))
         .u32(sz)
         .u16(0)      // GrantedAccess: read
@@ -564,7 +585,7 @@ export class SmbSession {
       .u64(0)      // LastAccessTime
       .u64(0)      // LastWriteTime
       .u64(0)      // ChangeTime
-      .u32(isDir ? ATTR_DIRECTORY : ATTR_ARCHIVE) // ExtFileAttributes
+      .u32(attrs)  // ExtFileAttributes
       .u64(sz)     // AllocationSize
       .u64(sz)     // EndOfFile
       .u16(0)      // FileType: disk
@@ -740,8 +761,8 @@ export class SmbSession {
       // probe and must return exactly the matching file or nothing.
       if (/[*?]/.test(namePart)) {
         entries.unshift(
-          { name: "..", sfn: "..", stat: dotStat },
-          { name: ".", sfn: ".", stat: dotStat },
+          { name: "..", sfn: "..", attr: ATTR_DIRECTORY, stat: dotStat },
+          { name: ".", sfn: ".", attr: ATTR_DIRECTORY, stat: dotStat },
         );
       }
       sid = this.nextSid++;
@@ -773,7 +794,7 @@ export class SmbSession {
       out.u8(sid & 0xff).u8(sid >> 8).u8(nextIdx & 0xff).u8(nextIdx >> 8);
       out.zero(21 - 4);
       // Attrs
-      out.u8(e.stat.isDirectory() ? ATTR_DIRECTORY : ATTR_ARCHIVE);
+      out.u8(e.attr);
       // Time/Date
       const dt = unixToDosDateTime(e.stat.mtime);
       out.u16(dt.time).u16(dt.date);
@@ -880,8 +901,8 @@ export class SmbSession {
     const entries = all.filter(e => matcher(e.sfn) || matcher(e.name));
     if (/[*?]/.test(namePart)) {
       entries.unshift(
-        { name: "..", sfn: "..", stat: dotStat },
-        { name: ".", sfn: ".", stat: dotStat },
+        { name: "..", sfn: "..", attr: ATTR_DIRECTORY, stat: dotStat },
+        { name: ".", sfn: ".", attr: ATTR_DIRECTORY, stat: dotStat },
       );
     }
 
@@ -942,7 +963,7 @@ export class SmbSession {
         data.u64(ft.lo, ft.hi);      // ChangeTime
         data.u64(sz);                // EndOfFile
         data.u64(sz);                // AllocationSize
-        data.u32(e.stat.isDirectory() ? ATTR_DIRECTORY : ATTR_ARCHIVE);
+        data.u32(e.attr);
         // Samba (win9x-tested) writes FileName null-terminated AND counts the
         // null in FileNameLength; vredir copies the resume name as a C string
         // from LastNameOffset, so an unterminated name reads past the buffer.
@@ -982,7 +1003,7 @@ export class SmbSession {
         data.u16(dosDate.date).u16(dosDate.time);
         data.u32(sz);
         data.u32(sz);
-        data.u16(e.stat.isDirectory() ? ATTR_DIRECTORY : ATTR_ARCHIVE);
+        data.u16(e.attr);
         data.u8(e.name.length);
         lastNameOffset = data.length - entryStart;
         data.cstr(e.name);
@@ -1084,7 +1105,7 @@ export class SmbSession {
       .u16(dosDate.date).u16(dosDate.time)
       .u16(dosDate.date).u16(dosDate.time)
       .u32(sz).u32(sz)
-      .u16(st.isDirectory() ? ATTR_DIRECTORY : ATTR_ARCHIVE)
+      .u16(hostAttrs(path.basename(hostPath), st.isDirectory()))
       .build();
     const replyParams = new Writer().u16(0).build(); // EaErrorOffset
     return this.trans2Reply(req, replyParams, data);
@@ -1249,17 +1270,33 @@ export class SmbSession {
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
-/** Map a host filename to something Win95 can display: single-byte, no
- *  Windows-reserved chars, no controls. Multi-code-unit chars collapse to one
- *  '_' so the visible length matches what a user would expect. */
-function oemSafe(name: string): string {
-  const bad = /[<>:"/\\|?*\x00-\x1f]/;
+// DOS device names. Win95 maps these regardless of extension or directory,
+// so a host file called "con.txt" or "AUX" opens the device and hangs the
+// redirector. Guarded in both the long name and the generated 8.3 name.
+const DOS_RESERVED = /^(CON|PRN|AUX|NUL|CLOCK\$|COM[1-9]|LPT[1-9])$/i;
+
+/** Map a host filename to something Win95 can safely display and round-trip. */
+function displayName(real: string): string {
+  // Per-char: single-byte only, no Windows-reserved chars, no controls
+  // (including DEL/C1). Multi-code-unit chars collapse to one '_'.
+  const bad = /[<>:"/\\|?*\x00-\x1f\x7f-\x9f]/;
   let out = "";
-  for (const ch of name) {  // iterates code points, so 🎨 is one step
+  for (const ch of real) {  // iterates code points, so 🎨 is one step
     const c = ch.codePointAt(0)!;
     out += c > 0xff || bad.test(ch) ? "_" : ch;
   }
-  return out;
+  // Win95 silently strips trailing dots/spaces, so "foo." would alias "foo".
+  // Replace the trailing run so the name stays distinct and length-stable.
+  out = out.replace(/[. ]+$/, m => "_".repeat(m.length));
+  // Reserved device basenames get a suffix so the guest never sees a bare CON.
+  // Win95 tests the component before the *first* dot and ignores trailing
+  // spaces there, so "nul.tar.gz" and "con .txt" both need guarding.
+  const dot = out.indexOf(".");
+  const base = dot < 0 ? out : out.slice(0, dot);
+  if (DOS_RESERVED.test(base.replace(/ +$/, ""))) {
+    out = base + "_" + (dot < 0 ? "" : out.slice(dot));
+  }
+  return out || "_";
 }
 
 function isRootPath(smbPath: string): boolean {
@@ -1365,10 +1402,12 @@ function clean83(s: string): string {
 /** True if the name already fits 8.3 with no lossy transformation. */
 function fits83(name: string): boolean {
   if (name === "." || name === "..") return true;
+  if (/[. ]$/.test(name)) return false;
   const dot = name.lastIndexOf(".");
   const base = dot > 0 ? name.slice(0, dot) : name;
   const ext = dot > 0 ? name.slice(dot + 1) : "";
   return base.length > 0 && base.length <= 8 && ext.length <= 3 &&
+         !DOS_RESERVED.test(base) &&
          clean83(base).length === base.length &&
          clean83(ext).length === ext.length;
 }
@@ -1399,7 +1438,7 @@ function buildSfnMap(names: string[]): Map<string, string> {
     const extRaw = dot > 0 ? real.slice(dot + 1) : "";
     const ext = clean83(extRaw).slice(0, 3);
     let base = clean83(baseRaw);
-    if (base.length === 0) base = "_";
+    if (base.length === 0 || DOS_RESERVED.test(base)) base += "_";
 
     // Windows uses 6 chars + ~N for N<10, then 5+~NN, etc. Good enough.
     for (let n = 1; ; n++) {
