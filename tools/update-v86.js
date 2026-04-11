@@ -126,9 +126,9 @@ function sanity_check() {
     [/this\.master\.features_reg=\(this\.master\.features_reg/.test(js),
      'libv86.js ide.js did not get the shared-register fix — is the windows95-base branch still in sync?'],
 
-    // Export pattern still shims the way parcel-build expects
+    // Export pattern still shims the way vite-build expects
     [js.includes('module.exports') && js.includes('window'),
-     'libv86.js export pattern changed — check the runtime shim in parcel-build.js'],
+     'libv86.js export pattern changed — check the runtime shim in vite-build.js'],
 
     // SMB integration needs the tcp-connection bus event (new API path in index.ts)
     [js.includes('tcp-connection'),
