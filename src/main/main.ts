@@ -8,7 +8,7 @@ import { getOrCreateWindow } from "./windows";
 import { setupMenu } from "./menu";
 import { setupIpcListeners } from "./ipc";
 import { setupSession } from "./session";
-import { setupFileServer } from './fileserver/fileserver';
+import { setupFileServer } from "./fileserver/fileserver";
 
 /**
  * Handle the app's "ready" event. This is essentially

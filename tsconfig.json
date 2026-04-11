@@ -20,13 +20,13 @@
     "noEmitHelpers": false,
     "module": "commonjs",
     "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
     "pretty": true,
     "target": "es2023",
     "jsx": "react",
     "typeRoots": [
       "./node_modules/@types"
-    ],
-    "baseUrl": "."
+    ]
   },
   "include": [
     "src/**/*"

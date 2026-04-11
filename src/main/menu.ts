@@ -64,7 +64,7 @@ async function createMenu({ isRunning } = { isRunning: false }) {
             }
           })(),
           click: function (_item, focusedWindow) {
-            if (focusedWindow) {
+            if (focusedWindow instanceof BrowserWindow) {
               focusedWindow.webContents.toggleDevTools();
             }
           },
@@ -166,12 +166,13 @@ async function createMenu({ isRunning } = { isRunning: false }) {
           label: "Reset",
           click: async () => {
             const result = await dialog.showMessageBox({
-              type: 'warning',
-              buttons: ['Reset', 'Cancel'],
+              type: "warning",
+              buttons: ["Reset", "Cancel"],
               defaultId: 1,
-              title: 'Reset Machine',
-              message: 'Are you sure you want to reset the machine?',
-              detail: 'This will delete the machine state, including all changes you have made.',
+              title: "Reset Machine",
+              message: "Are you sure you want to reset the machine?",
+              detail:
+                "This will delete the machine state, including all changes you have made.",
             });
 
             if (result.response === 0) {

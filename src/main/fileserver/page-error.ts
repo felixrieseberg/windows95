@@ -1,7 +1,10 @@
 import { getEncoding } from "./encoding";
 import { MY_COMPUTER_INTERCEPT } from "./fileserver";
 
-export function generateErrorPage(errorMessage: string, requestedPath: string): string {
+export function generateErrorPage(
+  errorMessage: string,
+  requestedPath: string,
+): string {
   return `
     <html>
     <head>

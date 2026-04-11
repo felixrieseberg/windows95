@@ -1,8 +1,8 @@
 diff --git a/node_modules/@electron/packager/dist/win32.js b/node_modules/@electron/packager/dist/win32.js
-index 5399b3e..f3b6e88 100644
+index d318f6c..bfde740 100644
 --- a/node_modules/@electron/packager/dist/win32.js
 +++ b/node_modules/@electron/packager/dist/win32.js
-@@ -57,7 +57,26 @@ class WindowsApp extends platform_1.App {
+@@ -65,7 +65,26 @@ class WindowsApp extends platform_1.App {
              resOpts.iconPath = icon;
          }
          (0, common_1.debug)(`Running resedit with the options ${JSON.stringify(resOpts)}`);

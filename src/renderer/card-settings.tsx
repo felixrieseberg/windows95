@@ -75,7 +75,7 @@ export class CardSettings extends React.Component<
           "iso" format.
         </p>
         <p id="floppy-path">
-          {cdrom ? `Inserted CD: ${cdrom?.path}` : `No CD mounted`}
+          {cdrom ? `Inserted CD: ${cdrom?.name}` : `No CD mounted`}
         </p>
         <button
           className="btn"

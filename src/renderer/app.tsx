@@ -18,9 +18,9 @@ export class App {
    * Initial setup call, loading Monaco and kicking off the React
    * render process.
    */
-  public async setup(): Promise<void | Element> {
+  public async setup(): Promise<void> {
     const React = await import("react");
-    const { render } = await import("react-dom");
+    const { createRoot } = await import("react-dom/client");
     const { Emulator } = await import("./emulator");
 
     const className = `${process.platform}`;
@@ -30,9 +30,8 @@ export class App {
       </div>
     );
 
-    const rendered = render(app, document.getElementById("app"));
-
-    return rendered;
+    const root = createRoot(document.getElementById("app")!);
+    root.render(app);
   }
 }
 

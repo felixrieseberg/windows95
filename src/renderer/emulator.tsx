@@ -207,7 +207,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       <>
         {card}
         <StartMenu
-          navigate={(target) => this.setState({ currentUiCard: target as "start" | "settings" })}
+          navigate={(target) =>
+            this.setState({ currentUiCard: target as "start" | "settings" })
+          }
         />
       </>
     );
@@ -281,7 +283,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       vga_memory_size: 64 * 1024 * 1024,
       screen: {
         container: document.getElementById("emulator"),
-        scale: 0
+        scale: 0,
       },
       preserve_mac_from_state_image: true,
       net_device: {
@@ -402,7 +404,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     try {
       const newState = await emulator.save_state();
       await fs.promises.writeFile(statePath, Buffer.from(newState), {
-        flush: true
+        flush: true,
       });
     } catch (error) {
       console.warn(`saveState: Could not save state`, error);
@@ -524,7 +526,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     const canvas = document.getElementById("emulator-canvas");
 
     if (canvas instanceof HTMLCanvasElement) {
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       ctx?.clearRect(0, 0, canvas.width, canvas.height);
     }
   }

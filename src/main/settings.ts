@@ -1,6 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { app } from 'electron';
+import * as fs from "fs";
+import * as path from "path";
+import { app } from "electron";
 
 export interface Settings {
   isFileServerEnabled: boolean;
@@ -19,14 +19,14 @@ class SettingsManager {
   private data: Settings;
 
   constructor() {
-    this.filePath = path.join(app.getPath('userData'), 'settings.json');
+    this.filePath = path.join(app.getPath("userData"), "settings.json");
     this.data = this.load();
   }
 
   private load(): Settings {
     try {
       if (fs.existsSync(this.filePath)) {
-        const fileContent = fs.readFileSync(this.filePath, 'utf8');
+        const fileContent = fs.readFileSync(this.filePath, "utf8");
         const parsed = JSON.parse(fileContent);
 
         return {
@@ -35,7 +35,7 @@ class SettingsManager {
         };
       }
     } catch (error) {
-      console.error('Error loading settings:', error);
+      console.error("Error loading settings:", error);
     }
 
     return DEFAULT_SETTINGS;
@@ -45,7 +45,7 @@ class SettingsManager {
     try {
       fs.writeFileSync(this.filePath, JSON.stringify(this.data, null, 2));
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error("Error saving settings:", error);
     }
   }
 
