@@ -1,7 +1,7 @@
 /* tslint:disable */
 
-const { compileParcel } = require('./parcel-build')
+const { compileVite } = require('./vite-build')
 
 module.exports = async () => {
-  await Promise.all([compileParcel()])
+  await compileVite()
 }
