@@ -6,8 +6,11 @@ interface CardSettingsProps {
   bootFromScratch: () => void;
   setFloppy: (file: File) => void;
   setCdrom: (cdrom: File) => void;
+  setSmbSharePath: (path: string) => void;
+  pickFolder: () => Promise<string | null>;
   floppy?: File;
   cdrom?: File;
+  smbSharePath: string;
 }
 
 interface CardSettingsState {
@@ -44,6 +47,8 @@ export class CardSettings extends React.Component<
             {this.renderCdrom()}
             <hr />
             {this.renderFloppy()}
+            <hr />
+            {this.renderSmbShare()}
             <hr />
             {this.renderState()}
           </div>
@@ -85,6 +90,34 @@ export class CardSettings extends React.Component<
         >
           <img src="../../static/select-cdrom.png" />
           <span>Mount CD</span>
+        </button>
+      </fieldset>
+    );
+  }
+
+  public renderSmbShare() {
+    const { smbSharePath } = this.props;
+
+    return (
+      <fieldset>
+        <legend>Network Share</legend>
+        <p>
+          A folder on your computer is exposed inside Windows 95 as a
+          network drive. From inside Windows, open Start → Run and type{" "}
+          <code>\\HOST\HOST</code> to browse it, or use Map Network Drive to
+          give it a drive letter.
+        </p>
+        <p>
+          Shared folder: <code>{smbSharePath}</code>
+        </p>
+        <button
+          className="btn"
+          onClick={async () => {
+            const picked = await this.props.pickFolder();
+            if (picked) this.props.setSmbSharePath(picked);
+          }}
+        >
+          <span>Choose folder</span>
         </button>
       </fieldset>
     );

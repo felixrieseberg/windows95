@@ -6,12 +6,14 @@ export interface Settings {
   isFileServerEnabled: boolean;
   isFileServerShowingHiddenFiles: boolean;
   isFileServerShowingSystemHiddenFiles: boolean;
+  smbSharePath: string;
 }
 
 const DEFAULT_SETTINGS: Settings = {
   isFileServerEnabled: true,
   isFileServerShowingHiddenFiles: false,
   isFileServerShowingSystemHiddenFiles: false,
+  smbSharePath: app.getPath("downloads"),
 };
 
 class SettingsManager {
@@ -53,7 +55,7 @@ class SettingsManager {
     return this.data[key];
   }
 
-  set(key: keyof Settings, value: any): void {
+  set<K extends keyof Settings>(key: K, value: Settings[K]): void {
     this.data[key] = value;
     this.save();
   }

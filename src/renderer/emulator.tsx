@@ -12,6 +12,14 @@ import { EmulatorInfo } from "./emulator-info";
 import { getStatePath } from "./utils/get-state-path";
 import { Win95Window } from "./app";
 import { resetState } from "./utils/reset-state";
+import { setupSmbShare } from "./smb";
+import { startProbe } from "./debug-harness";
+
+const PROBE = process.env.WIN95_PROBE === "1";
+const PROBE_OPTS: Record<string, unknown> = (() => {
+  try { return JSON.parse(process.env.WIN95_PROBE_OPTS || "{}"); }
+  catch { return {}; }
+})();
 
 declare let window: Win95Window;
 
@@ -21,6 +29,7 @@ export interface EmulatorState {
   scale: number;
   floppyFile?: File;
   cdromFile?: File;
+  smbSharePath: string;
   isBootingFresh: boolean;
   isCursorCaptured: boolean;
   isInfoDisplayed: boolean;
@@ -41,11 +50,12 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.bootFromScratch = this.bootFromScratch.bind(this);
 
     this.state = {
-      isBootingFresh: false,
+      isBootingFresh: PROBE,
       isCursorCaptured: false,
       isRunning: false,
       currentUiCard: "start",
       isInfoDisplayed: true,
+      smbSharePath: "",
       // We can start pretty large
       // If it's too large, it'll just grow until it hits borders
       scale: 2,
@@ -54,6 +64,16 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.setupInputListeners();
     this.setupIpcListeners();
     this.setupUnloadListeners();
+
+    ipcRenderer.invoke(IPC_COMMANDS.GET_SMB_SHARE_PATH).then((p: string) => {
+      this.setState({ smbSharePath: p });
+    });
+
+    if (PROBE) {
+      // Skip the start card; boot fresh immediately. The 100ms delay
+      // lets React mount the #emulator div first.
+      setTimeout(() => this.bootFromScratch(), 100);
+    }
   }
 
   /**
@@ -194,9 +214,15 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         <CardSettings
           setFloppy={(floppyFile) => this.setState({ floppyFile })}
           setCdrom={(cdromFile) => this.setState({ cdromFile })}
+          setSmbSharePath={(smbSharePath) => {
+            this.setState({ smbSharePath });
+            ipcRenderer.invoke(IPC_COMMANDS.SET_SMB_SHARE_PATH, smbSharePath);
+          }}
+          pickFolder={() => ipcRenderer.invoke(IPC_COMMANDS.PICK_FOLDER)}
           bootFromScratch={this.bootFromScratch}
           floppy={floppyFile}
           cdrom={cdromFile}
+          smbSharePath={this.state.smbSharePath}
         />
       );
     } else {
@@ -316,9 +342,25 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       boot_order: 0x132,
     };
 
+    // PROBE_OPTS lets the outer harness override options without rebuilding
+    // (e.g. WIN95_PROBE_OPTS='{"acpi":false,"disable_jit":true}')
+    Object.assign(options, PROBE_OPTS);
+
     console.log(`🚜 Starting emulator with options`, options);
 
     window["emulator"] = new V86(options);
+
+    // Serve a host folder over SMB on port 139. Read-only, traversal/symlink
+    // guarded. In Win95: Start → Run → \\HOST\HOST. The env var wins so the
+    // probe harness can point at a fixture dir without touching settings.
+    const smbRoot = process.env.WIN95_SMB_SHARE || this.state.smbSharePath;
+    if (smbRoot) {
+      setupSmbShare(window["emulator"], smbRoot);
+    }
+
+    if (PROBE) {
+      startProbe(window["emulator"]);
+    }
 
     // New v86 instance
     this.setState({

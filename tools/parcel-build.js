@@ -10,11 +10,16 @@ const fs = require('fs')
 const LIBV86_SHIM = `<script src="libv86.js"></script>
 <script>if (typeof module !== "undefined" && module.exports && module.exports.V86) window.V86 = module.exports.V86;</script>`
 
-// v86's node-path file loader uses `await import("node:fs/promises")`, but
-// dynamic import of node: URLs doesn't work in an Electron renderer — only
-// require() does. The string literal is stable across Closure builds.
-const V86_FS_IMPORT = 'await import("node:fs/promises")'
-const V86_FS_REQUIRE = 'require("fs").promises'
+// v86's node-path file loader used `await import("node:...")` until d4c5fa86
+// switched it to require(). Dynamic import of node: URLs doesn't work in an
+// Electron renderer — only require() does. The literals are stable across
+// Closure builds; if they're absent the build is post-d4c5fa86 and already
+// uses require, so a no-op is correct.
+const V86_NODE_IMPORTS = [
+  ['await import("node:fs/promises")', 'require("fs").promises'],
+  ['await import("node:"+"fs/promises")', 'require("fs").promises'],
+  ['await import("node:crypto")', 'require("crypto")'],
+];
 
 async function copyLib() {
   const target = path.join(__dirname, '../dist/static')
@@ -24,12 +29,16 @@ async function copyLib() {
   await fs.promises.cp(lib, target, { recursive: true });
 
   const libv86path = path.join(target, 'libv86.js')
-  const libv86 = fs.readFileSync(libv86path, 'utf-8')
-  const patched = libv86.split(V86_FS_IMPORT).join(V86_FS_REQUIRE)
-  if (patched === libv86) {
-    throw new Error(`libv86.js patch failed: \`${V86_FS_IMPORT}\` not found. Check src/lib.js in copy/v86.`)
+  let libv86 = fs.readFileSync(libv86path, 'utf-8')
+  let patchCount = 0;
+  for (const [from, to] of V86_NODE_IMPORTS) {
+    const next = libv86.split(from).join(to);
+    if (next !== libv86) { patchCount++; libv86 = next; }
   }
-  fs.writeFileSync(libv86path, patched)
+  if (patchCount > 0) {
+    fs.writeFileSync(libv86path, libv86)
+    console.log(`libv86: ${patchCount} dynamic-import → require`)
+  }
 
   const indexContents = fs.readFileSync(index, 'utf-8');
   const replacedContents = indexContents.replace('<!-- libv86 -->', LIBV86_SHIM)
