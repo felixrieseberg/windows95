@@ -4,8 +4,8 @@
 
 import * as fs from "fs";
 
-const STATUS_FILE = "/tmp/win95-probe.json";
-const SCREEN_FILE = "/tmp/win95-screen.png";
+const STATUS_FILE = process.env.WIN95_PROBE_STATUS || "/tmp/win95-probe.json";
+const SCREEN_FILE = process.env.WIN95_PROBE_SCREEN || "/tmp/win95-screen.png";
 const TICK_MS = 5000;
 
 interface ProbeStatus {

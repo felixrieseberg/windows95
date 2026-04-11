@@ -16,12 +16,24 @@ a host folder as a network drive. Read-only. ~1500 lines.
 
 ## Protocol gotchas (learned the hard way)
 
-### NEGOTIATE: don't pick NT LM 0.12 unless you implement the NT response
+### NEGOTIATE: NT LM 0.12 is the only path to long filenames
 Win95 offers `["PC NETWORK PROGRAM 1.0", "MICROSOFT NETWORKS 3.0", "DOS LM1.2X002",
-"DOS LANMAN2.1", "Windows for Workgroups 3.1a", "NT LM 0.12"]`. We send the
-13-word LANMAN-style negotiate response. If you pick `NT LM 0.12` and send 13
-words, Win95 silently drops the connection — it expects the 17-word NT response
-with capability flags. Pick `DOS LANMAN2.1` instead.
+"DOS LANMAN2.1", "Windows for Workgroups 3.1a", "NT LM 0.12"]`. We pick
+`NT LM 0.12` and send the 17-word NT response (Capabilities=0 — no UNICODE, no
+NT_STATUS, no NT_FIND, so the rest of the protocol stays OEM/DOS-error). On any
+LANMAN dialect Win95's redirector lists directories via `CMD_SEARCH` (0x81) whose
+13-byte name field hard-caps at 8.3; under NT LM 0.12 it switches to
+`TRANS2/FIND_FIRST2` and asks for level `0x104` (FILE_BOTH_DIRECTORY_INFO)
+**regardless** of CAP_NT_FIND. We implement that level — the 94-byte fixed prefix
+plus OEM long name, ShortName always UTF-16LE per spec. The 13-word LANMAN
+response is kept as a fallback for clients that don't offer NT.
+
+### Shares
+Two disk shares plus IPC$. The user share is named after `path.basename()` of the
+mounted folder (sanitized, ≤12 chars). `TOOLS` is purely synthetic — `_MAPZ.BAT`,
+`README.TXT` — so the user's listing isn't cluttered. `treeConnect` routes by
+share name to a TID; every path-resolving handler branches on TID so the TOOLS
+tree never touches the host fs.
 
 ### SEARCH (0x81): single-file probes vs wildcard listings
 `SEARCH "\FOO.TXT"` is a stat probe — Win95 wants exactly one entry back. If you
@@ -85,7 +97,7 @@ Clean API. The new code keeps both paths; the bus event is a no-op on old builds
 - Share path validated in main-process IPC (`realpathSync` + `isDirectory()`).
 
 ## Tests
-`test-standalone.ts` — 35 protocol tests, full round-trips with real file I/O.
-Run: `npx tsc --ignoreConfig --module commonjs --target es2020 --esModuleInterop
---moduleResolution bundler --outDir /tmp/smb-test --skipLibCheck
-src/renderer/smb/*.ts && node /tmp/smb-test/test-standalone.js`
+`test-standalone.ts` — 48 protocol tests, full round-trips with real file I/O.
+Run: `npx ts-node --skip-project --transpile-only --compiler-options
+'{"module":"commonjs","moduleResolution":"bundler","ignoreDeprecations":"6.0"}'
+src/renderer/smb/test-standalone.ts`

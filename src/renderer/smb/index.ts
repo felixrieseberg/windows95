@@ -12,10 +12,10 @@ import * as os from "os";
 import * as path from "path";
 import { NetBIOSFramer, nbPositiveResponse, nbWrap } from "./netbios";
 import { setupNbns } from "./nbns";
-import { SmbSession } from "./server";
+import { SmbSession, shareNameFor, TOOLS_SHARE } from "./server";
 
 // SPIKE diagnostics: tee everything to a file so we can debug without DevTools
-const LOG_FILE = path.join(os.tmpdir(), "windows95-smb.log");
+const LOG_FILE = process.env.WIN95_SMB_LOG || path.join(os.tmpdir(), "windows95-smb.log");
 try { fs.writeFileSync(LOG_FILE, `--- ${new Date().toISOString()} ---\n`); } catch {}
 const origLog = console.log;
 console.log = (...args: unknown[]) => {
@@ -57,7 +57,8 @@ interface V86 {
 const log = (...a: unknown[]) => console.log("[smb]", ...a);
 
 export function setupSmbShare(emulator: V86, hostPath: string) {
-  log(`serving ${hostPath} on \\\\HOST\\host (port 139)`);
+  log(`serving ${hostPath} on \\\\HOST\\${shareNameFor(hostPath)} ` +
+      `(+ \\\\HOST\\${TOOLS_SHARE}) port 139`);
 
   // SPIKE diagnostic: count every ethernet frame so we know if the NIC is
   // emitting anything at all (DHCP, ARP, anything). Logged on a timer so

@@ -16,7 +16,9 @@ export const CMD_TREE_DISCONNECT = 0x71;
 export const CMD_LOGOFF_ANDX = 0x74;
 export const CMD_NT_CREATE_ANDX = 0xa2;
 export const CMD_OPEN_ANDX = 0x2d;
+export const CMD_READ = 0x0a;
 export const CMD_READ_ANDX = 0x2e;
+export const CMD_SEEK = 0x12;
 export const CMD_CLOSE = 0x04;
 export const CMD_TRANSACTION = 0x25;
 export const CMD_TRANSACTION2 = 0x32;
@@ -30,6 +32,7 @@ export const CMD_SEARCH = 0x81;
 // TRANS2 subcommands
 export const TRANS2_FIND_FIRST2 = 0x01;
 export const TRANS2_FIND_NEXT2 = 0x02;
+export const TRANS2_QUERY_FS_INFO = 0x03;
 export const TRANS2_QUERY_PATH_INFO = 0x05;
 export const TRANS2_QUERY_FILE_INFO = 0x07;
 
@@ -142,6 +145,8 @@ export const cmdName: Record<number, string> = {
   [CMD_NT_CREATE_ANDX]: "NT_CREATE",
   [CMD_OPEN_ANDX]: "OPEN",
   [CMD_READ_ANDX]: "READ",
+  [CMD_READ]: "READ",
+  [CMD_SEEK]: "SEEK",
   [CMD_CLOSE]: "CLOSE",
   [CMD_TRANSACTION]: "TRANS(RAP)",
   [CMD_TRANSACTION2]: "TRANS2",
