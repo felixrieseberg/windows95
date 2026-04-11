@@ -61,6 +61,12 @@ export function main() {
     return;
   }
 
+  if (isDevMode()) {
+    // Renderer DevTools Protocol — connect Chrome to chrome://inspect
+    // or attach a debugger to localhost:9222
+    app.commandLine.appendSwitch("remote-debugging-port", "9222");
+  }
+
   // Set the app's name
   app.setName("windows95");
 

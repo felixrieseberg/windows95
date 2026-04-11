@@ -4,27 +4,35 @@ const Bundler = require('parcel-bundler')
 const path = require('path')
 const fs = require('fs')
 
+// libv86 checks `typeof module.exports` before `typeof window` when deciding
+// where to export V86. In an Electron renderer with nodeIntegration both exist,
+// so it ends up on module.exports instead of window. This shim copies it over.
+const LIBV86_SHIM = `<script src="libv86.js"></script>
+<script>if (typeof module !== "undefined" && module.exports && module.exports.V86) window.V86 = module.exports.V86;</script>`
+
+// v86's node-path file loader uses `await import("node:fs/promises")`, but
+// dynamic import of node: URLs doesn't work in an Electron renderer — only
+// require() does. The string literal is stable across Closure builds.
+const V86_FS_IMPORT = 'await import("node:fs/promises")'
+const V86_FS_REQUIRE = 'require("fs").promises'
+
 async function copyLib() {
   const target = path.join(__dirname, '../dist/static')
   const lib = path.join(__dirname, '../src/renderer/lib')
   const index = path.join(target, 'index.html')
 
-  // Copy in lib
   await fs.promises.cp(lib, target, { recursive: true });
 
-  // Patch so that fs.read is used
   const libv86path = path.join(target, 'libv86.js')
   const libv86 = fs.readFileSync(libv86path, 'utf-8')
+  const patched = libv86.split(V86_FS_IMPORT).join(V86_FS_REQUIRE)
+  if (patched === libv86) {
+    throw new Error(`libv86.js patch failed: \`${V86_FS_IMPORT}\` not found. Check src/lib.js in copy/v86.`)
+  }
+  fs.writeFileSync(libv86path, patched)
 
-  let patchedLibv86 = libv86.replace('k.load_file="undefined"===typeof XMLHttpRequest?pa:qa', 'k.load_file=pa')
-  patchedLibv86 = patchedLibv86.replace('H.exportSymbol=function(a,b){"undefined"!==typeof module&&"undefined"!==typeof module.exports?module.exports[a]=b:"undefined"!==typeof window?window[a]=b:"function"===typeof importScripts&&(self[a]=b)}', 'H.exportSymbol=function(a,b){"undefined"!==typeof window?window[a]=b:"undefined"!==typeof module&&"undefined"!==typeof module.exports?module.exports[a]=b:"function"===typeof importScripts&&(self[a]=b)}')
-  patchedLibv86 = patchedLibv86.replace('this.fetch=fetch;', 'this.fetch=(...args)=>fetch(...args);')
-
-  fs.writeFileSync(libv86path, patchedLibv86)
-
-  // Overwrite
   const indexContents = fs.readFileSync(index, 'utf-8');
-  const replacedContents = indexContents.replace('<!-- libv86 -->', '<script src="libv86.js"></script>')
+  const replacedContents = indexContents.replace('<!-- libv86 -->', LIBV86_SHIM)
   fs.writeFileSync(index, replacedContents)
 }
 
