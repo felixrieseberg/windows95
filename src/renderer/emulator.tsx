@@ -21,8 +21,11 @@ import { startProbe } from "./debug-harness";
 
 const PROBE = process.env.WIN95_PROBE === "1";
 const PROBE_OPTS: Record<string, unknown> = (() => {
-  try { return JSON.parse(process.env.WIN95_PROBE_OPTS || "{}"); }
-  catch { return {}; }
+  try {
+    return JSON.parse(process.env.WIN95_PROBE_OPTS || "{}");
+  } catch {
+    return {};
+  }
 })();
 
 declare let window: Win95Window;
@@ -196,6 +199,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     ipcRenderer.on(IPC_COMMANDS.MACHINE_STOP, this.stopEmulator);
     ipcRenderer.on(IPC_COMMANDS.MACHINE_RESET, this.resetEmulator);
     ipcRenderer.on(IPC_COMMANDS.MACHINE_START, this.startEmulator);
+    ipcRenderer.on(
+      IPC_COMMANDS.MACHINE_BOOT_FROM_SCRATCH,
+      this.bootFromScratch,
+    );
     ipcRenderer.on(IPC_COMMANDS.MACHINE_RESTART, this.restartEmulator);
 
     ipcRenderer.on(IPC_COMMANDS.TOGGLE_INFO, () => {

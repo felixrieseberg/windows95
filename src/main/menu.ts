@@ -158,6 +158,11 @@ async function createMenu({ isRunning } = { isRunning: false }) {
               click: () => send(IPC_COMMANDS.MACHINE_START),
             },
         {
+          label: "Boot from scratch",
+          click: () => send(IPC_COMMANDS.MACHINE_BOOT_FROM_SCRATCH),
+          enabled: !isRunning,
+        },
+        {
           label: "Restart",
           click: () => send(IPC_COMMANDS.MACHINE_RESTART),
           enabled: isRunning,
