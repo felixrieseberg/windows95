@@ -6,7 +6,6 @@ import { ipcRenderer, shell, webUtils } from "electron";
 import { CONSTANTS, IPC_COMMANDS } from "../constants";
 import { getDiskImageSize } from "../utils/disk-image-size";
 import { CardStart } from "./card-start";
-import { StartMenu } from "./start-menu";
 import { CardSettings } from "./card-settings";
 import { EmulatorInfo } from "./emulator-info";
 import { getStatePath } from "./utils/get-state-path";
@@ -217,6 +216,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       return null;
     }
 
+    const navigate = (target: string) =>
+      this.setState({ currentUiCard: target as "start" | "settings" });
+
     let card;
 
     if (currentUiCard === "settings") {
@@ -233,22 +235,16 @@ export class Emulator extends React.Component<{}, EmulatorState> {
           floppy={floppyFile}
           cdrom={cdromFile}
           smbSharePath={this.state.smbSharePath}
+          navigate={navigate}
         />
       );
     } else {
-      card = <CardStart startEmulator={this.startEmulator} />;
+      card = (
+        <CardStart startEmulator={this.startEmulator} navigate={navigate} />
+      );
     }
 
-    return (
-      <>
-        {card}
-        <StartMenu
-          navigate={(target) =>
-            this.setState({ currentUiCard: target as "start" | "settings" })
-          }
-        />
-      </>
-    );
+    return <section>{card}</section>;
   }
 
   /**
