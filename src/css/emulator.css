@@ -13,6 +13,13 @@
     display: none;
     margin: auto;
   }
+
+  /* Guest absolute-mouse driver active: hide the host cursor over the VM so
+     only the Windows 95 cursor shows. Has to beat `* { cursor: default }`. */
+  &.seamless-mouse,
+  &.seamless-mouse * {
+    cursor: none;
+  }
 }
 
 .paused {

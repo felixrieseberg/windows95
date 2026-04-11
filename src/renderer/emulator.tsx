@@ -36,6 +36,7 @@ export interface EmulatorState {
   smbSharePath: string;
   isBootingFresh: boolean;
   isCursorCaptured: boolean;
+  hasAbsoluteMouse: boolean;
   isInfoDisplayed: boolean;
   isRunning: boolean;
   infoBarSettings: InfoBarSettings;
@@ -44,6 +45,9 @@ export interface EmulatorState {
 export class Emulator extends React.Component<{}, EmulatorState> {
   private isQuitting = false;
   private isResetting = false;
+  // Mirrors state.hasAbsoluteMouse but updated synchronously — setState is
+  // batched, and the lock/unlock decisions can't wait for a render.
+  private absoluteMouse = false;
 
   constructor(props: {}) {
     super(props);
@@ -57,6 +61,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.state = {
       isBootingFresh: PROBE,
       isCursorCaptured: false,
+      hasAbsoluteMouse: false,
       isRunning: false,
       currentUiCard: "start",
       isInfoDisplayed: true,
@@ -105,21 +110,24 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     // Click
     document.addEventListener("click", () => {
-      const { isRunning } = this.state;
-
-      if (isRunning) {
+      if (this.state.isRunning && !this.absoluteMouse) {
         this.lockMouse();
       }
     });
 
     // Only forward mouse input to the VM while the pointer is actually
-    // captured. Browsers can release pointer lock on their own (Esc, focus
-    // loss), so we sync v86's mouse status off the real lock state instead of
+    // captured (or while the guest's absolute-pointer driver is active —
+    // VBMOUSE/vmwmouse via the VMware backdoor — in which case the guest
+    // cursor tracks the host cursor 1:1 and we don't need pointer lock at
+    // all). Browsers can release pointer lock on their own (Esc, focus loss),
+    // so we sync v86's mouse status off the real lock state instead of
     // assuming our lock/unlock calls succeeded.
     document.addEventListener("pointerlockchange", () => {
       const isCursorCaptured = !!document.pointerLockElement;
       this.setState({ isCursorCaptured });
-      this.state.emulator?.mouse_set_status(isCursorCaptured);
+      this.state.emulator?.mouse_set_status(
+        isCursorCaptured || this.absoluteMouse,
+      );
     });
   }
 
@@ -267,7 +275,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       <>
         {this.renderInfo()}
         {this.renderUI()}
-        <div id="emulator">
+        <div
+          id="emulator"
+          className={this.state.hasAbsoluteMouse ? "seamless-mouse" : undefined}
+        >
           <div id="emulator-text-screen"></div>
           <canvas id="emulator-canvas"></canvas>
         </div>
@@ -371,7 +382,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     // probe harness can point at a fixture dir without touching settings.
     const smbRoot = process.env.WIN95_SMB_SHARE || this.state.smbSharePath;
     if (smbRoot) {
-      setupSmbShare(window["emulator"], smbRoot);
+      setupSmbShare(window["emulator"], smbRoot, CONSTANTS.TOOLS_PATH);
     }
 
     if (PROBE) {
@@ -379,9 +390,17 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     }
 
     // New v86 instance
-    // Mouse stays disabled until the pointerlockchange listener confirms the
-    // cursor is actually captured.
+    // Mouse stays disabled until either the pointer is captured or the guest's
+    // VMware-backdoor mouse driver requests absolute mode.
     window["emulator"].mouse_set_status(false);
+    window["emulator"].add_listener("vmware-absolute-mouse", (on: boolean) => {
+      this.absoluteMouse = on;
+      this.setState({ hasAbsoluteMouse: on });
+      window["emulator"].mouse_set_status(on || !!document.pointerLockElement);
+      if (on && document.pointerLockElement) {
+        this.unlockMouse();
+      }
+    });
     this.setState({
       emulator: window["emulator"],
       isRunning: true,
@@ -397,7 +416,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         this.restoreState();
       }
 
-      this.lockMouse();
       this.state.emulator.run();
       this.state.emulator.screen_set_scale(this.state.scale);
     }, 500);

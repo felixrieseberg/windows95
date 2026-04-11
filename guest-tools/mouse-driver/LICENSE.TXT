@@ -1,0 +1,6 @@
+VBMouse - DOS/Windows absolute mouse driver
+Copyright (C) 2022 Javier S. Pedro
+Licensed under the GNU General Public License, version 2 or later.
+
+Source: https://git.javispedro.com/cgit/vbados.git/
+Binaries extracted from https://depot.javispedro.com/vbox/vbados/vbados.flp
