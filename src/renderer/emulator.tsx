@@ -105,6 +105,16 @@ export class Emulator extends React.Component<{}, EmulatorState> {
         this.lockMouse();
       }
     });
+
+    // Only forward mouse input to the VM while the pointer is actually
+    // captured. Browsers can release pointer lock on their own (Esc, focus
+    // loss), so we sync v86's mouse status off the real lock state instead of
+    // assuming our lock/unlock calls succeeded.
+    document.addEventListener("pointerlockchange", () => {
+      const isCursorCaptured = !!document.pointerLockElement;
+      this.setState({ isCursorCaptured });
+      this.state.emulator?.mouse_set_status(isCursorCaptured);
+    });
   }
 
   /**
@@ -363,6 +373,9 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     }
 
     // New v86 instance
+    // Mouse stays disabled until the pointerlockchange listener confirms the
+    // cursor is actually captured.
+    window["emulator"].mouse_set_status(false);
     this.setState({
       emulator: window["emulator"],
       isRunning: true,
@@ -503,14 +516,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   }
 
   private unlockMouse() {
-    const { emulator } = this.state;
-
-    this.setState({ isCursorCaptured: false });
-
-    if (emulator) {
-      emulator.mouse_set_status(false);
-    }
-
     document.exitPointerLock();
   }
 
@@ -518,8 +523,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     const { emulator } = this.state;
 
     if (emulator) {
-      this.setState({ isCursorCaptured: true });
-      emulator.mouse_set_status(true);
       emulator.lock_mouse();
     } else {
       console.warn(
