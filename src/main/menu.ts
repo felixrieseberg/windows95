@@ -125,29 +125,6 @@ async function createMenu({ isRunning } = { isRunning: false }) {
     {
       label: "Machine",
       submenu: [
-        {
-          label: "Send Ctrl+Alt+Del",
-          click: () => send(IPC_COMMANDS.MACHINE_CTRL_ALT_DEL),
-          enabled: isRunning,
-        },
-        {
-          label: "Send Alt+F4",
-          click: () => send(IPC_COMMANDS.MACHINE_ALT_F4),
-          enabled: isRunning,
-        },
-        {
-          label: "Send Alt+Enter",
-          click: () => send(IPC_COMMANDS.MACHINE_ALT_ENTER),
-          enabled: isRunning,
-        },
-        {
-          label: "Send Esc",
-          click: () => send(IPC_COMMANDS.MACHINE_ESC),
-          enabled: isRunning,
-        },
-        {
-          type: "separator",
-        },
         isRunning
           ? {
               label: "Stop",
@@ -184,6 +161,29 @@ async function createMenu({ isRunning } = { isRunning: false }) {
               send(IPC_COMMANDS.MACHINE_RESET);
             }
           },
+          enabled: isRunning,
+        },
+        {
+          type: "separator",
+        },
+        {
+          label: "Send Ctrl+Alt+Del",
+          click: () => send(IPC_COMMANDS.MACHINE_CTRL_ALT_DEL),
+          enabled: isRunning,
+        },
+        {
+          label: "Send Alt+F4",
+          click: () => send(IPC_COMMANDS.MACHINE_ALT_F4),
+          enabled: isRunning,
+        },
+        {
+          label: "Send Alt+Enter",
+          click: () => send(IPC_COMMANDS.MACHINE_ALT_ENTER),
+          enabled: isRunning,
+        },
+        {
+          label: "Send Esc",
+          click: () => send(IPC_COMMANDS.MACHINE_ESC),
           enabled: isRunning,
         },
         {
