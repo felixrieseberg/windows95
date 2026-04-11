@@ -158,7 +158,7 @@ async function createMenu({ isRunning } = { isRunning: false }) {
               click: () => send(IPC_COMMANDS.MACHINE_START),
             },
         {
-          label: "Boot from scratch",
+          label: "Start without state",
           click: () => send(IPC_COMMANDS.MACHINE_BOOT_FROM_SCRATCH),
           enabled: !isRunning,
         },
