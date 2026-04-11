@@ -25,6 +25,28 @@
   max-height: 18px;
   top: 0;
   transition: transform 0.12s ease-out;
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  .lz {
+    opacity: 0.3;
+  }
+
+  a.toggle {
+    display: inline-block;
+    width: 4ch;
+    text-align: center;
+  }
+
+  .spark {
+    vertical-align: -2px;
+    margin-right: 4px;
+
+    polyline {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1;
+    }
+  }
 
   &.hidden {
     transform: translateX(-50%) translateY(-100%);
