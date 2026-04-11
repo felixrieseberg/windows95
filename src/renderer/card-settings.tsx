@@ -5,12 +5,10 @@ import { resetState } from "./utils/reset-state";
 interface CardSettingsProps {
   bootFromScratch: () => void;
   setFloppy: (file: File) => void;
-  setCdrom: (cdrom: File) => void;
   setSmbSharePath: (path: string) => void;
   pickFolder: () => Promise<string | null>;
-  navigate: (to: string) => void;
+  navigate: (to: "start" | "settings") => void;
   floppy?: File;
-  cdrom?: File;
   smbSharePath: string;
 }
 
@@ -29,7 +27,6 @@ export class CardSettings extends React.Component<
     super(props);
 
     this.onChangeFloppy = this.onChangeFloppy.bind(this);
-    this.onChangeCdrom = this.onChangeCdrom.bind(this);
     this.onResetState = this.onResetState.bind(this);
 
     this.state = {
@@ -203,19 +200,6 @@ export class CardSettings extends React.Component<
       this.props.setFloppy(floppyFile);
     } else {
       console.log(`Floppy: Input changed but no file selected`);
-    }
-  }
-
-  private onChangeCdrom(event: React.ChangeEvent<HTMLInputElement>) {
-    const cdromFile =
-      event.target.files && event.target.files.length > 0
-        ? event.target.files[0]
-        : null;
-
-    if (cdromFile) {
-      this.props.setCdrom(cdromFile);
-    } else {
-      console.log(`Cdrom: Input changed but no file selected`);
     }
   }
 

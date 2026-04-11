@@ -2,7 +2,7 @@ import * as React from "react";
 
 export interface CardStartProps {
   startEmulator: () => void;
-  navigate: (to: string) => void;
+  navigate: (to: "start" | "settings") => void;
 }
 
 const TIPS = [
