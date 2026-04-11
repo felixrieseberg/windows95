@@ -8,6 +8,11 @@ import { getDiskImageSize } from "../utils/disk-image-size";
 import { CardStart } from "./card-start";
 import { CardSettings } from "./card-settings";
 import { EmulatorInfo } from "./emulator-info";
+import {
+  InfoBarSettings,
+  loadInfoBarSettings,
+  saveInfoBarSettings,
+} from "./info-bar-settings";
 import { getStatePath } from "./utils/get-state-path";
 import { Win95Window } from "./app";
 import { resetState } from "./utils/reset-state";
@@ -33,6 +38,7 @@ export interface EmulatorState {
   isCursorCaptured: boolean;
   isInfoDisplayed: boolean;
   isRunning: boolean;
+  infoBarSettings: InfoBarSettings;
 }
 
 export class Emulator extends React.Component<{}, EmulatorState> {
@@ -55,6 +61,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       currentUiCard: "start",
       isInfoDisplayed: true,
       smbSharePath: "",
+      infoBarSettings: loadInfoBarSettings(),
       // We can start pretty large
       // If it's too large, it'll just grow until it hits borders
       scale: 2,
@@ -235,6 +242,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
           floppy={floppyFile}
           cdrom={cdromFile}
           smbSharePath={this.state.smbSharePath}
+          infoBarSettings={this.state.infoBarSettings}
+          setInfoBarSettings={(infoBarSettings) => {
+            this.setState({ infoBarSettings });
+            saveInfoBarSettings(infoBarSettings);
+          }}
           navigate={navigate}
         />
       );
@@ -270,6 +282,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     return (
       <EmulatorInfo
         emulator={this.state.emulator}
+        settings={this.state.infoBarSettings}
         hidden={!this.state.isInfoDisplayed}
         toggleInfo={() => {
           this.setState({ isInfoDisplayed: !this.state.isInfoDisplayed });

@@ -1,9 +1,11 @@
 import * as React from "react";
+import { InfoBarSettings } from "./info-bar-settings";
 
 interface EmulatorInfoProps {
   toggleInfo: () => void;
   emulator: any;
   hidden: boolean;
+  settings: InfoBarSettings;
 }
 
 interface EmulatorInfoState {
@@ -14,7 +16,6 @@ interface EmulatorInfoState {
   netTx: number;
   lastCounter: number;
   lastTick: number;
-  full: boolean;
   history: {
     cpu: number[];
     diskRead: number[];
@@ -68,7 +69,6 @@ export class EmulatorInfo extends React.Component<
       netTx: 0,
       lastCounter: 0,
       lastTick: 0,
-      full: false,
       history: {
         cpu: new Array(HISTORY_LEN).fill(0),
         diskRead: new Array(HISTORY_LEN).fill(0),
@@ -80,27 +80,36 @@ export class EmulatorInfo extends React.Component<
   }
 
   public render() {
-    const { cpu, diskRead, diskWrite, netRx, netTx, full, history } = this.state;
-    const { hidden, toggleInfo } = this.props;
+    const { cpu, diskRead, diskWrite, netRx, netTx, history } = this.state;
+    const { hidden, toggleInfo, settings } = this.props;
+    const { showCpu, showDisk, showNet, showSparklines: spark } = settings;
 
     return (
       <>
         <div id="status-hotzone" />
         <div id="status" className={hidden ? "hidden" : ""}>
-          CPU: {full && <Sparkline data={history.cpu} />}
-          {this.pad(Math.min(cpu, 999), 3)}M/s | Disk:{" "}
-          {full && <Sparkline data={history.diskRead} />}R {this.rate(diskRead)}{" "}
-          {full && <Sparkline data={history.diskWrite} />}W {this.rate(diskWrite)}{" "}
-          | Net: {full && <Sparkline data={history.netRx} />}↓{this.rate(netRx)}{" "}
-          {full && <Sparkline data={history.netTx} />}↑{this.rate(netTx)} |{" "}
-          <a
-            href="#"
-            className="toggle"
-            onClick={() => this.setState({ full: !full })}
-          >
-            {full ? "Mini" : "Full"}
-          </a>{" "}
-          |{" "}
+          {showCpu && (
+            <>
+              CPU: {spark && <Sparkline data={history.cpu} />}
+              {this.fmt(cpu, ["M", "G"])}/s |{" "}
+            </>
+          )}
+          {showDisk && (
+            <>
+              Disk: {spark && <Sparkline data={history.diskRead} />}R{" "}
+              {this.fmt(diskRead, ["B", "K", "M", "G"])}/s{" "}
+              {spark && <Sparkline data={history.diskWrite} />}W{" "}
+              {this.fmt(diskWrite, ["B", "K", "M", "G"])}/s |{" "}
+            </>
+          )}
+          {showNet && (
+            <>
+              Net: {spark && <Sparkline data={history.netRx} />}↓
+              {this.fmt(netRx, ["B", "K", "M", "G"])}/s{" "}
+              {spark && <Sparkline data={history.netTx} />}↑
+              {this.fmt(netTx, ["B", "K", "M", "G"])}/s |{" "}
+            </>
+          )}
           <a href="#" className="toggle" onClick={toggleInfo}>
             {hidden ? "Pin" : "Hide"}
           </a>
@@ -195,33 +204,19 @@ export class EmulatorInfo extends React.Component<
   }
 
   /**
-   * Format bytes/sec into a compact human string.
+   * Format a value as "N.NU" by walking the unit ladder until it fits in
+   * one digit before the decimal. Always exactly 4 chars (e.g. "0.0B",
+   * "3.2K", "9.9G") so the bar width never changes.
    */
-  private pad(n: number, width: number) {
-    const s = String(n);
-    const zeros = Math.max(0, width - s.length);
-    return (
-      <>
-        {zeros > 0 && <span className="lz">{"0".repeat(zeros)}</span>}
-        {s}
-      </>
-    );
-  }
-
-  private rate(bytesPerSec: number) {
-    const units = ["B", "K", "M", "G"];
-    let v = Math.max(0, bytesPerSec);
+  private fmt(value: number, units: string[]) {
+    let v = Math.max(0, value);
     let u = 0;
-    while (v >= 100 && u < units.length - 1) {
-      v /= 1024;
+    while (v >= 10 && u < units.length - 1) {
+      v /= 1000;
       u++;
     }
-    return (
-      <>
-        {this.pad(Math.min(99, Math.round(v)), 2)}
-        {units[u]}/s
-      </>
-    );
+    if (v >= 9.95) v = 9.9;
+    return `${v.toFixed(1)}${units[u]}`;
   }
 
   /**
