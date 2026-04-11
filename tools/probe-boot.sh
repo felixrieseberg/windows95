@@ -20,10 +20,10 @@ rm -f "$STATUS" "$DONE" "$SCREEN"
 pkill -f "windows95/node_modules/electron" 2>/dev/null || true
 sleep 1
 
-# build (parcel only — forge's generateAssets does this too but we want
+# build (vite only — forge's generateAssets does this too but we want
 # direct control without the forge startup overhead)
-rm -rf dist .cache
-node tools/parcel-build.js > /tmp/win95-build.log 2>&1
+rm -rf dist
+node tools/vite-build.js > /tmp/win95-build.log 2>&1
 if [ $? -ne 0 ]; then
   echo "BUILD FAILED"
   tail -20 /tmp/win95-build.log

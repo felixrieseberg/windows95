@@ -1,3 +1,6 @@
+import "../css/vendor/98.css";
+import "../css/root.css";
+
 export interface Win95Window extends Window {
   emulator: any;
   win95: {
