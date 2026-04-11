@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { resetState } from "./utils/reset-state";
+import { InfoBarSettings } from "./info-bar-settings";
 
 // v86's IDE CD-ROM path is currently broken; flip this once it works again.
 const CDROM_ENABLED = false;
@@ -15,9 +16,11 @@ interface CardSettingsProps {
   floppy?: File;
   cdrom?: File;
   smbSharePath: string;
+  infoBarSettings: InfoBarSettings;
+  setInfoBarSettings: (s: InfoBarSettings) => void;
 }
 
-type Tab = "floppy" | "cdrom" | "network" | "state";
+type Tab = "floppy" | "cdrom" | "network" | "interface" | "state";
 
 interface CardSettingsState {
   tab: Tab;
@@ -61,6 +64,7 @@ export class CardSettings extends React.Component<
             {this.renderTab("floppy", "Floppy Drive")}
             {CDROM_ENABLED && this.renderTab("cdrom", "CD-ROM")}
             {this.renderTab("network", "Network Share")}
+            {this.renderTab("interface", "Interface")}
             {this.renderTab("state", "Machine State")}
           </menu>
           <div className="window settings-panel" role="tabpanel">
@@ -68,6 +72,7 @@ export class CardSettings extends React.Component<
               {tab === "floppy" && this.renderFloppy()}
               {tab === "cdrom" && this.renderCdrom()}
               {tab === "network" && this.renderSmbShare()}
+              {tab === "interface" && this.renderInterface()}
               {tab === "state" && this.renderState()}
             </div>
           </div>
@@ -210,6 +215,42 @@ export class CardSettings extends React.Component<
             Choose folder...
           </button>
         </div>
+      </fieldset>
+    );
+  }
+
+  private renderInterface() {
+    const { infoBarSettings, setInfoBarSettings } = this.props;
+
+    const checkbox = (key: keyof InfoBarSettings, label: string) => (
+      <div className="field-row">
+        <input
+          id={`ibs-${key}`}
+          type="checkbox"
+          checked={infoBarSettings[key]}
+          onChange={(e) =>
+            setInfoBarSettings({ ...infoBarSettings, [key]: e.target.checked })
+          }
+        />
+        <label htmlFor={`ibs-${key}`}>{label}</label>
+      </div>
+    );
+
+    return (
+      <fieldset>
+        <legend>Info bar</legend>
+        <div className="settings-row">
+          <img className="settings-icon" src="../../static/settings.png" />
+          <p>
+            The bar at the top of the emulator shows live machine stats. Choose
+            which metrics to display and whether to draw sparkline graphs next
+            to them.
+          </p>
+        </div>
+        {checkbox("showCpu", "Show CPU speed")}
+        {checkbox("showDisk", "Show disk throughput")}
+        {checkbox("showNet", "Show network throughput")}
+        {checkbox("showSparklines", "Show sparklines")}
       </fieldset>
     );
   }

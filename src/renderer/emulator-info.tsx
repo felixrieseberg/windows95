@@ -1,9 +1,11 @@
 import * as React from "react";
+import { InfoBarSettings } from "./info-bar-settings";
 
 interface EmulatorInfoProps {
   toggleInfo: () => void;
   emulator: any;
   hidden: boolean;
+  settings: InfoBarSettings;
 }
 
 interface EmulatorInfoState {
@@ -14,6 +16,30 @@ interface EmulatorInfoState {
   netTx: number;
   lastCounter: number;
   lastTick: number;
+  history: {
+    cpu: number[];
+    diskRead: number[];
+    diskWrite: number[];
+    netRx: number[];
+    netTx: number[];
+  };
+}
+
+const HISTORY_LEN = 30;
+
+function Sparkline({ data }: { data: number[] }) {
+  const w = 20;
+  const h = 12;
+  const max = Math.max(1, ...data);
+  const step = data.length > 1 ? w / (data.length - 1) : 0;
+  const points = data
+    .map((v, i) => `${i * step},${h - (v / max) * h}`)
+    .join(" ");
+  return (
+    <svg className="spark" width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <polyline points={points} />
+    </svg>
+  );
 }
 
 export class EmulatorInfo extends React.Component<
@@ -43,22 +69,48 @@ export class EmulatorInfo extends React.Component<
       netTx: 0,
       lastCounter: 0,
       lastTick: 0,
+      history: {
+        cpu: new Array(HISTORY_LEN).fill(0),
+        diskRead: new Array(HISTORY_LEN).fill(0),
+        diskWrite: new Array(HISTORY_LEN).fill(0),
+        netRx: new Array(HISTORY_LEN).fill(0),
+        netTx: new Array(HISTORY_LEN).fill(0),
+      },
     };
   }
 
   public render() {
-    const { cpu, diskRead, diskWrite, netRx, netTx } = this.state;
-    const { hidden, toggleInfo } = this.props;
+    const { cpu, diskRead, diskWrite, netRx, netTx, history } = this.state;
+    const { hidden, toggleInfo, settings } = this.props;
+    const { showCpu, showDisk, showNet, showSparklines: spark } = settings;
 
     return (
       <>
         <div id="status-hotzone" />
         <div id="status" className={hidden ? "hidden" : ""}>
-          CPU: <span>{cpu}M/s</span> | Disk:{" "}
-          <span>R {this.rate(diskRead)}</span>{" "}
-          <span>W {this.rate(diskWrite)}</span> | Net:{" "}
-          <span>↓{this.rate(netRx)}</span> <span>↑{this.rate(netTx)}</span> |{" "}
-          <a href="#" onClick={toggleInfo}>
+          {showCpu && (
+            <>
+              CPU: {spark && <Sparkline data={history.cpu} />}
+              {this.fmt(cpu, ["M", "G"])}/s |{" "}
+            </>
+          )}
+          {showDisk && (
+            <>
+              Disk: {spark && <Sparkline data={history.diskRead} />}R{" "}
+              {this.fmt(diskRead, ["B", "K", "M", "G"])}/s{" "}
+              {spark && <Sparkline data={history.diskWrite} />}W{" "}
+              {this.fmt(diskWrite, ["B", "K", "M", "G"])}/s |{" "}
+            </>
+          )}
+          {showNet && (
+            <>
+              Net: {spark && <Sparkline data={history.netRx} />}↓
+              {this.fmt(netRx, ["B", "K", "M", "G"])}/s{" "}
+              {spark && <Sparkline data={history.netTx} />}↑
+              {this.fmt(netTx, ["B", "K", "M", "G"])}/s |{" "}
+            </>
+          )}
+          <a href="#" className="toggle" onClick={toggleInfo}>
             {hidden ? "Pin" : "Hide"}
           </a>
         </div>
@@ -152,13 +204,19 @@ export class EmulatorInfo extends React.Component<
   }
 
   /**
-   * Format bytes/sec into a compact human string.
+   * Format a value as "N.NU" by walking the unit ladder until it fits in
+   * one digit before the decimal. Always exactly 4 chars (e.g. "0.0B",
+   * "3.2K", "9.9G") so the bar width never changes.
    */
-  private rate(bytesPerSec: number) {
-    if (bytesPerSec <= 0) return "0";
-    if (bytesPerSec < 1024) return `${bytesPerSec}B/s`;
-    if (bytesPerSec < 1024 * 1024) return `${Math.round(bytesPerSec / 1024)}K/s`;
-    return `${(bytesPerSec / 1024 / 1024).toFixed(1)}M/s`;
+  private fmt(value: number, units: string[]) {
+    let v = Math.max(0, value);
+    let u = 0;
+    while (v >= 10 && u < units.length - 1) {
+      v /= 1000;
+      u++;
+    }
+    if (v >= 9.95) v = 9.9;
+    return `${v.toFixed(1)}${units[u]}`;
   }
 
   /**
@@ -173,15 +231,31 @@ export class EmulatorInfo extends React.Component<
     const deltaTime = now - lastTick;
     const deltaSec = deltaTime / 1000;
 
-    this.setState({
+    const cpu = Math.round(ips / deltaTime / 1000);
+    const diskRead = Math.round(this.diskReadBytes / deltaSec);
+    const diskWrite = Math.round(this.diskWriteBytes / deltaSec);
+    const netRx = Math.round(this.netRxBytes / deltaSec);
+    const netTx = Math.round(this.netTxBytes / deltaSec);
+
+    const push = (arr: number[], v: number) =>
+      [...arr, v].slice(-HISTORY_LEN);
+
+    this.setState((s) => ({
       lastTick: now,
       lastCounter: instructionCounter,
-      cpu: Math.round(ips / deltaTime / 1000),
-      diskRead: Math.round(this.diskReadBytes / deltaSec),
-      diskWrite: Math.round(this.diskWriteBytes / deltaSec),
-      netRx: Math.round(this.netRxBytes / deltaSec),
-      netTx: Math.round(this.netTxBytes / deltaSec),
-    });
+      cpu,
+      diskRead,
+      diskWrite,
+      netRx,
+      netTx,
+      history: {
+        cpu: push(s.history.cpu, cpu),
+        diskRead: push(s.history.diskRead, diskRead),
+        diskWrite: push(s.history.diskWrite, diskWrite),
+        netRx: push(s.history.netRx, netRx),
+        netTx: push(s.history.netTx, netTx),
+      },
+    }));
 
     this.diskReadBytes = 0;
     this.diskWriteBytes = 0;
