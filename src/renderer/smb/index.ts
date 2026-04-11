@@ -148,6 +148,10 @@ export function setupSmbShare(emulator: V86, hostPath: string) {
     const orig = adapter.on_tcp_connection.bind(adapter);
     adapter.on_tcp_connection = function (packet: any, tuple: string): boolean {
       if (packet.tcp.dport !== 139) return orig(packet, tuple);
+      // New v86 fires the tcp-connection bus event BEFORE this callback;
+      // if our bus handler already accepted the conn, it's in tcp_conn —
+      // claim it so the original (which would otherwise RST) doesn't run.
+      if (adapter.tcp_conn[tuple]) return true;
 
       const adapterAny = adapter as any;
       adapterAny.receive = () => {};

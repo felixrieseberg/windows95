@@ -2,18 +2,25 @@ import * as React from "react";
 
 import { resetState } from "./utils/reset-state";
 
+// v86's IDE CD-ROM path is currently broken; flip this once it works again.
+const CDROM_ENABLED = false;
+
 interface CardSettingsProps {
   bootFromScratch: () => void;
   setFloppy: (file: File) => void;
-  setCdrom: (cdrom: File) => void;
+  setCdrom: (file: File) => void;
   setSmbSharePath: (path: string) => void;
   pickFolder: () => Promise<string | null>;
+  navigate: (to: "start" | "settings") => void;
   floppy?: File;
   cdrom?: File;
   smbSharePath: string;
 }
 
+type Tab = "floppy" | "cdrom" | "network" | "state";
+
 interface CardSettingsState {
+  tab: Tab;
   isStateReset: boolean;
 }
 
@@ -29,187 +36,210 @@ export class CardSettings extends React.Component<
     this.onResetState = this.onResetState.bind(this);
 
     this.state = {
+      tab: "floppy",
       isStateReset: false,
     };
   }
 
   public render() {
+    const { tab } = this.state;
+
     return (
-      <section>
-        <div className="card settings">
-          <div className="card-header">
-            <h2 className="card-title">
-              <img src="../../static/settings.png" />
-              Settings
-            </h2>
-          </div>
-          <div className="card-body">
-            {this.renderCdrom()}
-            <hr />
-            {this.renderFloppy()}
-            <hr />
-            {this.renderSmbShare()}
-            <hr />
-            {this.renderState()}
+      <div className="window settings-window">
+        <div className="title-bar">
+          <div className="title-bar-text">windows95 Properties</div>
+          <div className="title-bar-controls">
+            <button aria-label="Help" disabled />
+            <button
+              aria-label="Close"
+              onClick={() => this.props.navigate("start")}
+            />
           </div>
         </div>
-      </section>
+        <div className="window-body">
+          <menu role="tablist">
+            {this.renderTab("floppy", "Floppy Drive")}
+            {CDROM_ENABLED && this.renderTab("cdrom", "CD-ROM")}
+            {this.renderTab("network", "Network Share")}
+            {this.renderTab("state", "Machine State")}
+          </menu>
+          <div className="window settings-panel" role="tabpanel">
+            <div className="window-body">
+              {tab === "floppy" && this.renderFloppy()}
+              {tab === "cdrom" && this.renderCdrom()}
+              {tab === "network" && this.renderSmbShare()}
+              {tab === "state" && this.renderState()}
+            </div>
+          </div>
+          <div className="settings-footer">
+            <button
+              className="default"
+              onClick={() => this.props.navigate("start")}
+            >
+              OK
+            </button>
+            <button onClick={() => this.props.navigate("start")}>Cancel</button>
+          </div>
+        </div>
+      </div>
     );
   }
 
-  public renderCdrom() {
-    // CD is currently not working, so.. let's return nothing.
-    return null;
-
-    const { cdrom } = this.props;
-
+  private renderTab(id: Tab, label: string) {
     return (
-      <fieldset>
-        <legend>
-          <img src="../../static/cdrom.png" />
-          CD-ROM
-        </legend>
-        <input
-          id="cdrom-input"
-          type="file"
-          onChange={this.onChangeCdrom}
-          style={{ display: "none" }}
-        />
-        <p>
-          windows95 comes with a virtual CD drive. It can mount images in the
-          "iso" format.
-        </p>
-        <p id="floppy-path">
-          {cdrom ? `Inserted CD: ${cdrom?.name}` : `No CD mounted`}
-        </p>
-        <button
-          className="btn"
-          onClick={() =>
-            (document.querySelector("#cdrom-input") as any).click()
-          }
-        >
-          <img src="../../static/select-cdrom.png" />
-          <span>Mount CD</span>
-        </button>
-      </fieldset>
+      <li
+        role="tab"
+        aria-selected={this.state.tab === id}
+        onClick={() => this.setState({ tab: id })}
+      >
+        <a href="#">{label}</a>
+      </li>
     );
   }
 
-  public renderSmbShare() {
-    const { smbSharePath } = this.props;
-
-    return (
-      <fieldset>
-        <legend>Network Share</legend>
-        <p>
-          A folder on your computer is exposed inside Windows 95 as a
-          network drive. From inside Windows, open Start → Run and type{" "}
-          <code>\\HOST\HOST</code> to browse it, or use Map Network Drive to
-          give it a drive letter.
-        </p>
-        <p>
-          Shared folder: <code>{smbSharePath}</code>
-        </p>
-        <button
-          className="btn"
-          onClick={async () => {
-            const picked = await this.props.pickFolder();
-            if (picked) this.props.setSmbSharePath(picked);
-          }}
-        >
-          <span>Choose folder</span>
-        </button>
-      </fieldset>
-    );
-  }
-
-  public renderFloppy() {
+  private renderFloppy() {
     const { floppy } = this.props;
 
     return (
       <fieldset>
-        <legend>
-          <img src="../../static/floppy.png" />
-          Floppy
-        </legend>
+        <legend>Drive A:</legend>
         <input
           id="floppy-input"
           type="file"
           onChange={this.onChangeFloppy}
           style={{ display: "none" }}
         />
-        <p>
-          windows95 comes with a virtual floppy drive. It can mount floppy disk
-          images in the "img" format.
-        </p>
-        <p>
-          Back in the 90s and before CD-ROMs became a popular, software was
-          typically distributed on floppy disks. Some developers have since
-          released their apps or games for free, usually on virtual floppy disks
-          using the "img" format.
-        </p>
-        <p>
-          Once you've mounted a disk image, you might have to boot your virtual
-          windows95 machine from scratch.
-        </p>
-        <p id="floppy-path">
-          {floppy
-            ? `Inserted Floppy Disk: ${floppy.name}`
-            : `No floppy mounted`}
-        </p>
-        <button
-          className="btn"
-          onClick={() =>
-            (document.querySelector("#floppy-input") as any).click()
-          }
-        >
-          <img src="../../static/select-floppy.png" />
-          <span>Mount floppy disk</span>
-        </button>
-      </fieldset>
-    );
-  }
-
-  public renderState() {
-    const { isStateReset } = this.state;
-    const { bootFromScratch } = this.props;
-
-    return (
-      <fieldset>
-        <legend>
-          <img src="../../static/reset.png" />
-          Reset machine state
-        </legend>
-        <div>
+        <div className="settings-row">
+          <img className="settings-icon" src="../../static/floppy.png" />
           <p>
-            windows95 stores changes to your machine (like saved files) in a
-            state file. If you encounter any trouble, you can reset your state
-            or boot Windows 95 from scratch.{" "}
-            <strong>All your changes will be lost.</strong>
+            windows95 ships with a virtual 3½" floppy drive. Mount an{" "}
+            <code>.img</code> disk image here, then boot the machine to read it
+            from inside Windows.
           </p>
+        </div>
+        <div className="field-row-stacked">
+          <label htmlFor="floppy-path">Mounted image</label>
+          <input
+            id="floppy-path"
+            type="text"
+            readOnly
+            value={floppy ? floppy.name : "(No disk in drive)"}
+          />
+        </div>
+        <div className="settings-buttons">
           <button
-            className="btn"
-            onClick={this.onResetState}
-            disabled={isStateReset}
-            style={{ marginRight: "5px" }}
+            onClick={() =>
+              (document.querySelector("#floppy-input") as any).click()
+            }
           >
-            <img src="../../static/reset-state.png" />
-            {isStateReset ? "State reset" : "Reset state"}
-          </button>
-          <button className="btn" onClick={bootFromScratch}>
-            <img src="../../static/boot-fresh.png" />
-            Boot from scratch
+            Mount image...
           </button>
         </div>
       </fieldset>
     );
   }
 
-  /**
-   * Handle a change in the floppy input
-   *
-   * @param event
-   */
+  private renderCdrom() {
+    const { cdrom } = this.props;
+
+    return (
+      <fieldset>
+        <legend>Drive D:</legend>
+        <input
+          id="cdrom-input"
+          type="file"
+          onChange={this.onChangeCdrom}
+          style={{ display: "none" }}
+        />
+        <div className="settings-row">
+          <img className="settings-icon" src="../../static/cdrom.png" />
+          <p>
+            windows95 ships with a virtual CD-ROM drive. Mount an{" "}
+            <code>.iso</code> image here, then boot the machine to read it from
+            inside Windows.
+          </p>
+        </div>
+        <div className="field-row-stacked">
+          <label htmlFor="cdrom-path">Mounted image</label>
+          <input
+            id="cdrom-path"
+            type="text"
+            readOnly
+            value={cdrom ? cdrom.name : "(No disc in drive)"}
+          />
+        </div>
+        <div className="settings-buttons">
+          <button
+            onClick={() =>
+              (document.querySelector("#cdrom-input") as any).click()
+            }
+          >
+            Mount image...
+          </button>
+        </div>
+      </fieldset>
+    );
+  }
+
+  private renderSmbShare() {
+    const { smbSharePath } = this.props;
+
+    return (
+      <fieldset>
+        <legend>\\HOST\HOST</legend>
+        <div className="settings-row">
+          <img className="settings-icon" src="../../static/show-disk-image.png" />
+          <p>
+            A folder on your computer is exposed inside Windows 95 as a network
+            drive. From inside Windows, open Start → Run and type{" "}
+            <code>\\HOST\HOST</code> — or use Map Network Drive to give it a
+            letter.
+          </p>
+        </div>
+        <div className="field-row-stacked">
+          <label htmlFor="smb-path">Shared folder</label>
+          <input id="smb-path" type="text" readOnly value={smbSharePath} />
+        </div>
+        <div className="settings-buttons">
+          <button
+            onClick={async () => {
+              const picked = await this.props.pickFolder();
+              if (picked) this.props.setSmbSharePath(picked);
+            }}
+          >
+            Choose folder...
+          </button>
+        </div>
+      </fieldset>
+    );
+  }
+
+  private renderState() {
+    const { isStateReset } = this.state;
+    const { bootFromScratch } = this.props;
+
+    return (
+      <fieldset>
+        <legend>Reset</legend>
+        <div className="settings-row">
+          <img className="settings-icon" src="../../static/reset.png" />
+          <p>
+            Changes to your machine (saved files, installed programs) are stored
+            in a state file. If something breaks, you can either discard that
+            state or boot a fresh copy of Windows from scratch.{" "}
+            <strong>All your changes will be lost.</strong>
+          </p>
+        </div>
+        <div className="settings-buttons">
+          <button onClick={this.onResetState} disabled={isStateReset}>
+            {isStateReset ? "State has been reset" : "Reset state"}
+          </button>
+          <button onClick={bootFromScratch}>Boot from scratch</button>
+        </div>
+      </fieldset>
+    );
+  }
+
   private onChangeFloppy(event: React.ChangeEvent<HTMLInputElement>) {
     const floppyFile =
       event.target.files && event.target.files.length > 0
@@ -223,27 +253,19 @@ export class CardSettings extends React.Component<
     }
   }
 
-  /**
-   * Handle a change in the cdrom input
-   *
-   * @param event
-   */
   private onChangeCdrom(event: React.ChangeEvent<HTMLInputElement>) {
-    const CdromFile =
+    const cdromFile =
       event.target.files && event.target.files.length > 0
         ? event.target.files[0]
         : null;
 
-    if (CdromFile) {
-      this.props.setCdrom(CdromFile);
+    if (cdromFile) {
+      this.props.setCdrom(cdromFile);
     } else {
       console.log(`Cdrom: Input changed but no file selected`);
     }
   }
 
-  /**
-   * Handle the state reset
-   */
   private async onResetState() {
     await resetState();
     this.setState({ isStateReset: true });

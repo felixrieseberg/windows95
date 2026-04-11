@@ -1,117 +1,77 @@
 @import "./status.less";
 @import "./emulator.less";
 @import "./info.less";
-@import "./settings.less";
 @import "./start.less";
+@import "./settings.less";
 
-/* GENERAL RESETS */
+// 98.css uses the actual MS Sans Serif bitmap font and pixel-exact bevels.
+// Everything below is layout — the chrome comes from 98.css.
 
-html, body {
+@win-teal: #008080;
+@win-silver: silver;
+@win-font: "Pixelated MS Sans Serif", Arial, sans-serif;
+
+* {
+  user-select: none;
+  cursor: default;
+}
+
+html,
+body {
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 body {
   background: #000;
-}
-
-body.paused > #emulator {
-  display: none;
+  font-family: @win-font;
+  -webkit-font-smoothing: none;
+  image-rendering: pixelated;
 }
 
 body.paused {
-  background: #008080;
-  font-family: Courier;
+  background: @win-teal;
+
+  > #emulator {
+    display: none;
+  }
 }
 
-#buttons {
-  user-select: none;
+button:not(:disabled),
+li[role="tab"],
+.title-bar-controls button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:focus {
+  outline: none;
+}
+
+// 98.css renders button text via text-shadow (color: transparent) so the
+// bitmap font stays crisp; <img> children need their own alignment.
+button img {
+  height: 16px;
+  width: 16px;
+  margin-right: 4px;
+  vertical-align: -3px;
+}
+
+p {
+  font-family: @win-font;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+code {
+  font-family: "Courier New", monospace;
+  font-size: 11px;
 }
 
 section {
-  display: flex;
   position: absolute;
-  width: 100vw;
-  height: 100vh;
+  inset: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.card {
-  width: 75%;
-  max-width: 700px;
-  min-width: 400px;
-
-  .card-title {
-    img {
-      margin-right: 5px;
-    }
-  }
-}
-
-.nav-link > img,
-.btn > img {
-  height: 24px;
-  margin-right: 4px;
-}
-
-.windows95 {
-  * {
-    user-select: none;
-  }
-
-  *:focus {
-    outline: none;
-  }
-
-  nav .nav-link,
-  nav .nav-logo {
-    height: 37px;
-    display: flex;
-  }
-
-  nav .nav-logo img {
-    margin-left: 2px;
-    max-height: 20px;
-  }
-
-  nav .nav-logo > span {
-    position: absolute;
-    top: 9px;
-    left: 37px;
-    font-weight: bold;
-  }
-
-  .btn {
-    height: 40px;
-    padding-top: 3px;
-  }
-
-  .btn:focus {
-    border-color: #fff #000 #000 #fff;
-    outline: 5px auto -webkit-focus-ring-color;
-  }
-
-  .btn.active:before,
-  .btn:focus:before,
-  button.active:before,
-  button:focus:before,
-  input[type=submit].active:before,
-  input[type=submit]:focus:before {
-    border-color: #dedede grey grey #dedede;
-  }
-
-  .card {
-    // Fix link colors
-    .link, .link:active, .link:link, .link:visited, a, a:active, a:link, a:visited {
-      color: #008080;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-
-    // Ensure a-elements in fieldsets receive click events
-    fieldset:before {
-      pointer-events: none;
-    }
-  }
 }

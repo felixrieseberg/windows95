@@ -1,9 +1,99 @@
-#section-start {
+// "Welcome to Windows" splash — modelled on the real first-boot dialog.
+
+.welcome {
+  width: 540px;
+}
+
+.welcome-body {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin: 4px;
+  min-height: 250px;
+}
+
+.welcome-stripe {
+  width: 26px;
+  background: linear-gradient(180deg, #000 0%, navy 60%, #1084d0 100%);
+  position: relative;
+  flex-shrink: 0;
+
+  span {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%) rotate(180deg);
+    writing-mode: vertical-rl;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+}
+
+.welcome-main {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 8px 4px;
+}
 
-  > small {
-    margin-top: 25px;
-    font-size: .8rem;
+.welcome-title {
+  font-family: "Times New Roman", serif;
+  -webkit-font-smoothing: antialiased;
+  font-weight: 400;
+  font-size: 24px;
+  margin: 0 0 14px;
+  color: #000;
+
+  span {
+    font-weight: 700;
+  }
+
+  small {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    vertical-align: baseline;
+    margin-left: 1px;
+  }
+}
+
+.welcome-tip {
+  flex: 1;
+  background: #ffffe1;
+  box-shadow: inset -1px -1px #fff, inset 1px 1px grey, inset -2px -2px #dfdfdf,
+    inset 2px 2px #0a0a0a;
+  padding: 12px 14px;
+
+  .welcome-tip-header {
+    border-bottom: 1px solid grey;
+    box-shadow: 0 1px 0 #fff;
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.welcome-actions {
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 4px;
+  flex-shrink: 0;
+
+  button {
+    width: 100%;
+    height: 24px;
+  }
+
+  .welcome-spacer {
+    flex: 1;
   }
 }
