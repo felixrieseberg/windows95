@@ -41,7 +41,7 @@
 
   input[type="text"] {
     width: 100%;
-    font-family: @win-font;
+    font-family: var(--win-font);
   }
 
   input[type="text"]:read-only {

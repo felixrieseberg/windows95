@@ -10,7 +10,6 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "prettier --write src/**/*.{ts,tsx} && npm run check-links",
-    "less": "node ./tools/lessc.js",
     "tsc": "tsc -p tsconfig.json --noEmit",
     "check-links": "node tools/check-links.js",
     "postinstall": "patch-package"
@@ -40,7 +39,6 @@
     "@types/react-dom": "^19.2.3",
     "dotenv": "^17.3.1",
     "electron": "41.2.0",
-    "less": "^4.6.4",
     "parcel-bundler": "^1.12.5",
     "patch-package": "^8.0.1",
     "prettier": "^3.8.1",
