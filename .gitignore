@@ -15,5 +15,6 @@ trusted-signing-metadata.json
 .env
 electron-windows-sign.log
 .npmrc
+guest-tools/agent/W95TOOLS.EXE
 /.claude/scheduled_tasks.lock
 /.claude/worktrees/
