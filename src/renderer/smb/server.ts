@@ -373,7 +373,8 @@ export class SmbSession {
 
     // Path is \\SERVER\SHARE — route by the share segment. Unknown names fall
     // through to the user share so a stale `net use` (e.g. from before the
-    // user re-pointed the mounted folder) still connects to *something*.
+    // user re-pointed the mounted folder) still connects to *something*, and
+    // so W95TOOLS.EXE can hard-code \\HOST\HOST when it auto-maps Z:.
     const share = reqPath.split(/[\\\/]/).pop()?.toUpperCase() ?? "";
     const isIpc = share === "IPC$";
     this.tid = isIpc ? TID_IPC : share === TOOLS_SHARE ? TID_TOOLS : TID_SHARE;
