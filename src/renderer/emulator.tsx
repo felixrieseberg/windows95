@@ -314,7 +314,8 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   /**
    * Boot the emulator without restoring state
    */
-  public bootFromScratch() {
+  public async bootFromScratch() {
+    await this.stopEmulator();
     this.setState({ isBootingFresh: true });
     this.startEmulator();
   }
