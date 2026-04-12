@@ -23,7 +23,7 @@ fallbacks, no fetching from copy.sh.
 ## The fork branch
 
 v86 should be checked out on **`felixrieseberg/v86:windows95-base`**.
-That branch merges three feature branches, each upstreamable on its own:
+That branch merges four feature branches, each upstreamable on its own:
 
 - **`electron-renderer-fs-loader`** (PR #1540) — `src/lib.js` uses
   `require("fs")` instead of `await import("node:fs/promises")`. Dynamic
@@ -40,6 +40,13 @@ That branch merges three feature branches, each upstreamable on its own:
   (VBADOS VBMOUSE) can read absolute cursor position and track the host
   cursor 1:1 without pointer lock. Consumes the `mouse-absolute` bus
   event that `MouseAdapter` already emits.
+- **`vga-defer-vbe-disable-v86`** — `src/vga.js` defers `dispi[4]=0`
+  written from V86 mode until a legacy attribute-mode write reaches the
+  hardware. Win9x's VDD virtualises ports 3B0–3DF for a windowed DOS VM
+  but not 1CE/1CF, so vgabios's VBE-disable leaks through while the rest
+  of its mode-set is captured into the VM's virtual register file —
+  without this the screen turns to planar garbage the moment you open a
+  DOS box.
 
 ## Prerequisites
 

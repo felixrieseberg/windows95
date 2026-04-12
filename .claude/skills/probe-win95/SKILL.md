@@ -37,7 +37,13 @@ WIN95_SMB_SHARE="$HOME/Downloads" \
 ```
 
 `WIN95_PROBE_SCRIPT='HOST/HOST'` types `\\HOST\HOST` into Start → Run on
-desktop. `/` → `\` substitution (env var / shell quoting, pragmatism). The
+desktop. `WIN95_PROBE_DOSBOX=1` instead opens `command`, types `dir`,
+and (with `WIN95_PROBE_DOSBOX_ALTENTER=1`) toggles fullscreen — this is
+the regression scenario for the windowed-DOS-box VBE leak.
+`WIN95_PROBE_VGATRACE=1` wraps the VGA I/O ports at the `io.ports[]`
+layer and writes `[port, op, value, "eip VMPE cplN"]` tuples to
+`/tmp/win95-vgatrace.json` every tick (heavy — can hit 1M entries during
+boot). `/` → `\` substitution (env var / shell quoting, pragmatism). The
 harness drives it via XT scancodes — Win95 doesn't have Win+R (Win98+
 only), so the sequence is Esc, Esc, Ctrl+Esc, R, backslashes + text,
 Enter.
