@@ -1,7 +1,8 @@
 /*
  * W95TOOLS — guest-side integration agent for the windows95 emulator.
  *
- * Currently: bidirectional text clipboard. Talks to the emulator over the
+ * Currently: bidirectional text clipboard, and auto-mapping the host's
+ * SMB share to Z: at login. Talks to the emulator over the
  * legacy VMware backdoor (port 0x5658; implemented in v86's vmware.js).
  * Joins the Win32 clipboard-viewer chain so guest copies are pushed
  * immediately, and polls the backdoor on a timer so host copies show up
@@ -29,6 +30,17 @@
 #define POLL_MS     250
 #define MAX_CLIP    0xFFFF
 
+#define TIMER_CLIP  1
+#define TIMER_MAP   2
+#define MAP_TRIES   5
+#define MAP_DELAY   3000
+
+/* The host SMB server routes any share name other than TOOLS/IPC$ to the
+ * user's folder, so a fixed UNC works regardless of which directory they
+ * picked. */
+#define MAP_DRIVE   "Z:"
+#define MAP_UNC     "\\\\HOST\\HOST"
+
 extern unsigned long bd(unsigned long cmd, unsigned long arg);
 #pragma aux bd =            \
     "mov eax, 564D5868h"    \
@@ -49,6 +61,27 @@ extern unsigned long bd_ebx(unsigned long cmd, unsigned long arg);
 
 static HWND g_next;
 static int  g_ignore;
+static int  g_map_tries;
+
+/* Map \\HOST to Z:. Loaded lazily so we don't grow a link-time dep on MPR;
+ * if the call fails (no share configured, network not up yet) the caller
+ * retries a few times on a timer and then gives up silently. */
+static int map_host_drive(void)
+{
+    typedef DWORD (APIENTRY *WNetAddConn)(LPCSTR, LPCSTR, LPCSTR);
+    static WNetAddConn fn;
+    DWORD rc;
+
+    if (!fn) {
+        HMODULE mpr = LoadLibrary("MPR.DLL");
+        if (!mpr) return 1;
+        fn = (WNetAddConn)GetProcAddress(mpr, "WNetAddConnectionA");
+        if (!fn) return 1;
+    }
+    if (GetDriveType(MAP_DRIVE "\\") > 1) return 1;   /* letter taken */
+    rc = fn(MAP_UNC, 0, MAP_DRIVE);
+    return rc == NO_ERROR;
+}
 
 static void push_to_host(HWND hwnd)
 {
@@ -114,7 +147,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     switch (msg) {
     case WM_CREATE:
         g_next = SetClipboardViewer(hwnd);
-        SetTimer(hwnd, 1, POLL_MS, 0);
+        SetTimer(hwnd, TIMER_CLIP, POLL_MS, 0);
+        SetTimer(hwnd, TIMER_MAP, 1, 0);
         return 0;
 
     case WM_DRAWCLIPBOARD:
@@ -129,12 +163,19 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         return 0;
 
     case WM_TIMER:
+        if (wp == TIMER_MAP) {
+            if (map_host_drive() || ++g_map_tries >= MAP_TRIES)
+                KillTimer(hwnd, TIMER_MAP);
+            else
+                SetTimer(hwnd, TIMER_MAP, MAP_DELAY, 0);
+            return 0;
+        }
         pull_from_host(hwnd);
         return 0;
 
     case WM_DESTROY:
         ChangeClipboardChain(hwnd, g_next);
-        KillTimer(hwnd, 1);
+        KillTimer(hwnd, TIMER_CLIP);
         PostQuitMessage(0);
         return 0;
     }

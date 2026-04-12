@@ -25,11 +25,13 @@ Install inside the guest:
 ## agent/ — W95TOOLS guest agent
 
 `W95TOOLS.EXE` is a hidden-window agent that talks to the emulator over
-the VMware backdoor (port 0x5658). Currently it does one thing: bridges
-Windows 95's `CF_TEXT` clipboard to the host (legacy backdoor commands
-6–9; host side is `src/renderer/clipboard.ts`, which polls Electron's
-clipboard). It's also where time sync, host-initiated shutdown, and a
-tray icon will live when those land.
+the VMware backdoor (port 0x5658). Currently it bridges Windows 95's
+`CF_TEXT` clipboard to the host (legacy backdoor commands 6–9; host side
+is `src/renderer/clipboard.ts`, which polls Electron's clipboard) and
+auto-maps `\\HOST\HOST` to `Z:` at login via `WNetAddConnection`, so the
+shared folder shows up as a drive without a trip through Start → Run.
+It's also where time sync, host-initiated shutdown, and a tray icon will
+live when those land.
 
 Install inside the guest:
 
