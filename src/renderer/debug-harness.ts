@@ -183,7 +183,10 @@ export function startProbe(emulator: any) {
   const scriptCmd = process.env.WIN95_PROBE_SCRIPT;
   // WIN95_PROBE_RUN='telnet 1.2.3.4 7777' → literal text into Start→Run,
   // Enter, then optional WIN95_PROBE_RUN_AFTER keystrokes after _RUN_WAIT ms.
+  // WIN95_PROBE_RUN2 fires a second Start→Run sequence after _RUN2_WAIT ms,
+  // for two-process scenarios (e.g., background ping + telnet).
   const runCmd = process.env.WIN95_PROBE_RUN;
+  const runCmd2 = process.env.WIN95_PROBE_RUN2;
   const runAfter = process.env.WIN95_PROBE_RUN_AFTER;
   // WIN95_PROBE_DOSBOX=1 → after desktop, open COMMAND.COM, type `dir`,
   // optionally Alt+Enter to fullscreen. Regression test for the windowed
@@ -272,6 +275,19 @@ export function startProbe(emulator: any) {
             { type: "text", text: runCmd },
             { type: "wait", ms: 400 },
             { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
+            ...(runCmd2 ? [
+              { type: "wait", ms: Number(process.env.WIN95_PROBE_RUN2_WAIT) || 3000 },
+              { type: "chord", keys: [
+                { dn: SC.CTRL_DN, up: SC.CTRL_UP },
+                { dn: SC.ESC_DN, up: SC.ESC_UP },
+              ]},
+              { type: "wait", ms: 1200 },
+              { type: "keys", dn: SC.R_DN, up: SC.R_UP },
+              { type: "wait", ms: 1000 },
+              { type: "text", text: runCmd2 },
+              { type: "wait", ms: 400 },
+              { type: "keys", dn: SC.ENTER_DN, up: SC.ENTER_UP },
+            ] : []),
             ...(runAfter ? [
               { type: "wait", ms: Number(process.env.WIN95_PROBE_RUN_WAIT) || 6000 },
               { type: "text", text: runAfter },

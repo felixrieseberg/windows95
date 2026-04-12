@@ -45,6 +45,13 @@ const log = (...a: unknown[]) => {
 // Ports already claimed by other in-process handlers.
 const RESERVED_PORTS = new Set([80, 139]);
 
+// WIN95_TCP_TEST_PORT=<n> short-circuits that port to an in-process fake
+// upstream that writes a banner asynchronously (i.e., from outside a CPU
+// tick) and then echoes everything back. Lets the probe harness exercise
+// the recv() path deterministically without a real network endpoint.
+const TEST_PORT = Number(process.env.WIN95_TCP_TEST_PORT) || 0;
+const TEST_BANNER_BYTES = Number(process.env.WIN95_TCP_TEST_BYTES) || 3000;
+
 // Destinations we never relay to. The emulated LAN (192.168.86/87) has nothing
 // real behind it; loopback and link-local would let guest software poke at the
 // host's own services or cloud-metadata endpoints. The rest of RFC1918 is left
@@ -70,6 +77,34 @@ export function setupTcpRelay(emulator: V86) {
     // Must accept synchronously or v86 RSTs the SYN right after dispatch.
     conn.accept();
     log(`→ ${ip}:${port} (${conn.tuple})`);
+
+    if (TEST_PORT && port === TEST_PORT) {
+      const mode = process.env.WIN95_TCP_TEST_MODE || "banner";
+      const banner = Buffer.alloc(TEST_BANNER_BYTES, 0x41);
+      banner.write(`HELLO from tcp-relay test, ${TEST_BANNER_BYTES}B\r\n`);
+      let n = 0;
+      conn.on("data", (d) => {
+        if (d.length === 0) return;
+        n += d.length;
+        log(`test ← guest ${d.length}B (total ${n})`);
+        if (mode === "after-data" && n >= 1) {
+          setTimeout(() => {
+            log(`test → guest ${banner.length}B banner (async, after-data)`);
+            conn.write(banner);
+          }, 10);
+        }
+      });
+      if (mode === "banner")
+        setTimeout(
+          () => {
+            log(`test → guest ${banner.length}B banner (async)`);
+            conn.write(banner);
+          },
+          Number(process.env.WIN95_TCP_TEST_DELAY) || 50,
+        );
+      conn.on_shutdown = conn.on_close = () => log("test guest closed");
+      return;
+    }
 
     let connected = false;
     let pending: Buffer[] | null = [];
