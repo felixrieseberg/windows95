@@ -137,7 +137,6 @@ async function createMenu({ isRunning } = { isRunning: false }) {
         {
           label: "Start without state",
           click: () => send(IPC_COMMANDS.MACHINE_BOOT_FROM_SCRATCH),
-          enabled: !isRunning,
         },
         {
           label: "Restart",
