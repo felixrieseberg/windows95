@@ -20,6 +20,7 @@ import { setupSmbShare } from "./smb";
 import { setupTcpRelay } from "./net/tcp-relay";
 import { setupDnsShim } from "./net/dns-shim";
 import { startProbe } from "./debug-harness";
+import { SyncFileBuffer } from "./sync-file-buffer";
 
 const PROBE = process.env.WIN95_PROBE === "1";
 const PROBE_OPTS: Record<string, unknown> = (() => {
@@ -335,9 +336,11 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   private async startEmulator() {
     document.body.classList.remove("paused");
 
-    const cdromPath = this.state.cdromFile
-      ? webUtils.getPathForFile(this.state.cdromFile)
-      : null;
+    const cdromPath =
+      process.env.WIN95_PROBE_CDROM ||
+      (this.state.cdromFile
+        ? webUtils.getPathForFile(this.state.cdromFile)
+        : null);
 
     const options = {
       wasm_path: path.join(__dirname, "build/v86.wasm"),
@@ -371,13 +374,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
             buffer: this.state.floppyFile,
           }
         : undefined,
-      cdrom: cdromPath
-        ? {
-            url: cdromPath,
-            async: true,
-            size: await getDiskImageSize(cdromPath),
-          }
-        : undefined,
+      cdrom: cdromPath ? new SyncFileBuffer(cdromPath) : undefined,
       boot_order: 0x132,
     };
 

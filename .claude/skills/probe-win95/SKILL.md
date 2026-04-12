@@ -40,6 +40,9 @@ WIN95_SMB_SHARE="$HOME/Downloads" \
 desktop. `WIN95_PROBE_DOSBOX=1` instead opens `command`, types `dir`,
 and (with `WIN95_PROBE_DOSBOX_ALTENTER=1`) toggles fullscreen — this is
 the regression scenario for the windowed-DOS-box VBE leak.
+`WIN95_PROBE_CDROM=/path/to.iso` mounts an ISO on the secondary-IDE
+ATAPI drive (bypasses the settings UI). `WIN95_PROBE_CDTRACE=1` logs
+every secondary-channel ATA/ATAPI command to `/tmp/win95-cdtrace.log`.
 `WIN95_PROBE_VGATRACE=1` wraps the VGA I/O ports at the `io.ports[]`
 layer and writes `[port, op, value, "eip VMPE cplN"]` tuples to
 `/tmp/win95-vgatrace.json` every tick (heavy — can hit 1M entries during

@@ -3,8 +3,7 @@ import * as React from "react";
 import { resetState } from "./utils/reset-state";
 import { InfoBarSettings } from "./info-bar-settings";
 
-// v86's IDE CD-ROM path is currently broken; flip this once it works again.
-const CDROM_ENABLED = false;
+const CDROM_ENABLED = true;
 
 interface CardSettingsProps {
   bootFromScratch: () => void;
