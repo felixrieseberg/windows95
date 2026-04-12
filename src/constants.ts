@@ -2,6 +2,16 @@ import * as path from "path";
 
 const IMAGES_PATH = path.join(__dirname, "../../images");
 
+// Bump when a release ships a v86/hardware/disk-image change that can't load
+// older state-vN.bin snapshots. The app will detect an orphaned older state
+// and offer to export the user's old C:\ as a mountable .img.
+//
+// That export splices the state's dirty-block overlay onto the *current*
+// windows95.img — which only works while the partition table and FAT geometry
+// stay constant across releases. If you ever resize the disk or reformat with
+// different cluster params, the recovered .img won't mount.
+export const STATE_VERSION = 4;
+
 export const CONSTANTS = {
   IMAGES_PATH,
   IMAGE_PATH: path.join(IMAGES_PATH, "windows95.img"),
@@ -32,6 +42,8 @@ export const IPC_COMMANDS = {
   // Else
   APP_QUIT: "APP_QUIT",
   GET_STATE_PATH: "GET_STATE_PATH",
+  GET_LEGACY_STATE_PATH: "GET_LEGACY_STATE_PATH",
+  GET_DOWNLOADS_PATH: "GET_DOWNLOADS_PATH",
   GET_SMB_SHARE_PATH: "GET_SMB_SHARE_PATH",
   SET_SMB_SHARE_PATH: "SET_SMB_SHARE_PATH",
   PICK_FOLDER: "PICK_FOLDER",

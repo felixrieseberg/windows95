@@ -237,8 +237,7 @@ export class EmulatorInfo extends React.Component<
     const netRx = Math.round(this.netRxBytes / deltaSec);
     const netTx = Math.round(this.netTxBytes / deltaSec);
 
-    const push = (arr: number[], v: number) =>
-      [...arr, v].slice(-HISTORY_LEN);
+    const push = (arr: number[], v: number) => [...arr, v].slice(-HISTORY_LEN);
 
     this.setState((s) => ({
       lastTick: now,

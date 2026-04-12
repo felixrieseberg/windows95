@@ -192,7 +192,10 @@ export class CardSettings extends React.Component<
       <fieldset>
         <legend>Drive Z:</legend>
         <div className="settings-row">
-          <img className="settings-icon" src="../../static/show-disk-image.png" />
+          <img
+            className="settings-icon"
+            src="../../static/show-disk-image.png"
+          />
           <p>
             A folder on your computer is mounted inside Windows 95 as drive{" "}
             <code>Z:</code>. Open My Computer inside Windows to find it.
