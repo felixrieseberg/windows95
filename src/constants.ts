@@ -10,7 +10,7 @@ const IMAGES_PATH = path.join(__dirname, "../../images");
 // windows95.img — which only works while the partition table and FAT geometry
 // stay constant across releases. If you ever resize the disk or reformat with
 // different cluster params, the recovered .img won't mount.
-export const STATE_VERSION = 4;
+export const STATE_VERSION = 5;
 
 export const CONSTANTS = {
   IMAGES_PATH,
