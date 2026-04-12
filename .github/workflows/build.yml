@@ -81,7 +81,11 @@ jobs:
         run: npm ci
       - name: Diagnose deb maker
         if: matrix.os == 'ubuntu-latest'
-        run: node -e "try{require('electron-installer-debian');console.log('deb installer OK')}catch(e){console.error(e)}"
+        run: |
+          node -e "const r=require('module').createRequire(require.resolve('@electron-forge/maker-base/package.json'));try{r('electron-installer-debian');console.log('OK from maker-base')}catch(e){console.error('FAIL from maker-base:',e)}"
+          node -e "const {MakerDeb}=require('@electron-forge/maker-deb');const m=new MakerDeb({});console.log('isSupported:',m.isSupportedOnCurrentPlatform());try{m.ensureExternalBinariesExist();console.log('binaries OK')}catch(e){console.error('binaries:',e.message)}"
+          ls -la node_modules/electron-installer-debian/ || echo "NOT INSTALLED"
+          which dpkg fakeroot || echo "missing binaries"
       - name: Make
         if: startsWith(github.ref, 'refs/tags/')
         run: npm run make -- --arch=${{ matrix.arch }}

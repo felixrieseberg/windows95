@@ -4,8 +4,6 @@ const package = require('./package.json');
 
 require('dotenv').config()
 
-process.env.TEMP = process.env.TMP = `C:\\Users\\FelixRieseberg\\AppData\\Local\\Temp`
-
 const FLAGS = {
   SIGNTOOL_PATH: process.env.SIGNTOOL_PATH,
   AZURE_CODE_SIGNING_DLIB: process.env.AZURE_CODE_SIGNING_DLIB || path.join(__dirname, 'Microsoft.Trusted.Signing.Client.1.0.60/bin/x64/Azure.CodeSigning.Dlib.dll'),
