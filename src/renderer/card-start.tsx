@@ -8,7 +8,7 @@ export interface CardStartProps {
 const TIPS = [
   "Press the Escape key at any time to release or recapture your mouse cursor.",
   "You can mount a floppy image from Settings before booting to install vintage software.",
-  "Map a host folder as a network drive: open Start → Run inside Windows and type \\\\HOST.",
+  "A folder from your real computer is mounted as drive Z: — open My Computer inside Windows to find it.",
   "Your machine state is saved automatically when you quit. Reset it from Settings if things get weird.",
   "Use the Machine menu in the menubar to send Ctrl+Alt+Del and other special key combos.",
 ];

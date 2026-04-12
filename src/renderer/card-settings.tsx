@@ -62,7 +62,7 @@ export class CardSettings extends React.Component<
           <menu role="tablist">
             {this.renderTab("floppy", "Floppy Drive")}
             {CDROM_ENABLED && this.renderTab("cdrom", "CD-ROM")}
-            {this.renderTab("network", "Network Share")}
+            {this.renderTab("network", "Shared Folder")}
             {this.renderTab("interface", "Interface")}
             {this.renderTab("state", "Machine State")}
           </menu>
@@ -190,14 +190,12 @@ export class CardSettings extends React.Component<
 
     return (
       <fieldset>
-        <legend>\\HOST\HOST</legend>
+        <legend>Drive Z:</legend>
         <div className="settings-row">
           <img className="settings-icon" src="../../static/show-disk-image.png" />
           <p>
-            A folder on your computer is exposed inside Windows 95 as a network
-            drive. From inside Windows, open Start → Run and type{" "}
-            <code>\\HOST\HOST</code> — or use Map Network Drive to give it a
-            letter.
+            A folder on your computer is mounted inside Windows 95 as drive{" "}
+            <code>Z:</code>. Open My Computer inside Windows to find it.
           </p>
         </div>
         <div className="field-row-stacked">

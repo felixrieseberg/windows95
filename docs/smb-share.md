@@ -6,12 +6,10 @@ Windows 95 can mount a host folder as a network drive. The server lives in
 
 ## Inside Win95
 
-- **Browse:** Start → Run → `\\HOST\HOST`
-- **Map a letter:** in Explorer, Tools → Map Network Drive → `Z:` →
-  `\\HOST\HOST` → ☑ Reconnect at logon
-- **Batch shortcut:** the share root exposes a virtual `_MAPZ.BAT` that runs
-  `NET USE Z: \\HOST\HOST`. Double-click once, or copy it to
-  `C:\WINDOWS\STARTM~1\PROGRAMS\STARTUP` to reconnect every boot.
+Open **My Computer** → **Z:**. The `W95TOOLS.EXE` guest agent auto-maps
+`\\HOST\HOST` to `Z:` at login, so the share is available as a drive letter
+out of the box. If the agent isn't running, the underlying UNC path still
+works via Start → Run → `\\HOST\HOST`.
 
 NetBIOS over TCP/IP must be enabled (Control Panel → Network → TCP/IP
 properties → NetBIOS tab). This is baked into the default state image.
