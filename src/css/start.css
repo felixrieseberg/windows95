@@ -80,6 +80,24 @@
   }
 }
 
+.welcome-warn {
+  background: #fff;
+
+  p {
+    margin: 0 0 8px;
+  }
+
+  .welcome-warn-buttons {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+
+    button {
+      height: 24px;
+    }
+  }
+}
+
 .welcome-actions {
   width: 130px;
   display: flex;

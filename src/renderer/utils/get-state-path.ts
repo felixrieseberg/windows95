@@ -11,3 +11,7 @@ export async function getStatePath(): Promise<string> {
   const statePath = await ipcRenderer.invoke(IPC_COMMANDS.GET_STATE_PATH);
   return (_statePath = statePath);
 }
+
+export function getLegacyStatePath(): Promise<string | null> {
+  return ipcRenderer.invoke(IPC_COMMANDS.GET_LEGACY_STATE_PATH);
+}

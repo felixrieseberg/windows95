@@ -3,6 +3,13 @@ import * as React from "react";
 export interface CardStartProps {
   startEmulator: () => void;
   navigate: (to: "start" | "settings") => void;
+  legacyStatePath: string | null;
+  legacyRecovered: { dir: string; files: number } | null;
+  legacyRecoverBusy: boolean;
+  legacyRecoverError: string | null;
+  recoverLegacy: () => void;
+  showRecovered: () => void;
+  discardLegacy: () => void;
 }
 
 const TIPS = [
@@ -37,12 +44,9 @@ export class CardStart extends React.Component<CardStartProps> {
               <small>95</small>
             </h1>
 
-            <div className="welcome-tip">
-              <div className="welcome-tip-header">
-                <strong>Did you know...</strong>
-              </div>
-              <p>{this.tip}</p>
-            </div>
+            {this.props.legacyStatePath
+              ? this.renderLegacyNotice()
+              : this.renderTip()}
           </div>
           <div className="welcome-actions">
             <button
@@ -58,6 +62,104 @@ export class CardStart extends React.Component<CardStartProps> {
             <div className="welcome-spacer" />
             <button disabled>What's New</button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  private renderTip() {
+    return (
+      <div className="welcome-tip">
+        <div className="welcome-tip-header">
+          <strong>Did you know...</strong>
+        </div>
+        <p>{this.tip}</p>
+      </div>
+    );
+  }
+
+  private renderLegacyNotice() {
+    const { legacyRecovered, legacyRecoverBusy, legacyRecoverError } =
+      this.props;
+
+    if (legacyRecoverError) {
+      return (
+        <div className="welcome-tip welcome-warn">
+          <div className="welcome-tip-header">
+            <strong>Recovery failed</strong>
+          </div>
+          <p>
+            The old snapshot's format isn't compatible with the bundled
+            emulator, so files couldn't be extracted automatically. The snapshot
+            has been kept on disk.
+          </p>
+          <p>
+            <code>{legacyRecoverError}</code>
+          </p>
+          <div className="welcome-warn-buttons">
+            <button onClick={this.props.discardLegacy}>
+              Discard old snapshot
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (legacyRecovered) {
+      return (
+        <div className="welcome-tip welcome-warn">
+          <div className="welcome-tip-header">
+            <strong>Old C:\ recovered</strong>
+          </div>
+          <p>
+            {legacyRecovered.files} file
+            {legacyRecovered.files === 1 ? "" : "s"} you created or modified
+            have been copied out as ordinary files. Starting Windows here will
+            be a fresh machine.
+          </p>
+          <p>
+            <code>{legacyRecovered.dir}</code>
+          </p>
+          <div className="welcome-warn-buttons">
+            <button className="default" onClick={this.props.showRecovered}>
+              Open folder
+            </button>
+            <button onClick={this.props.discardLegacy}>
+              Discard old snapshot
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="welcome-tip welcome-warn">
+        <div className="welcome-tip-header">
+          <strong>Your saved machine is from an older version</strong>
+        </div>
+        <p>
+          This release ships a new disk image and machine configuration. Files
+          you saved to <code>C:\</code> live only in the old snapshot.
+        </p>
+        <p>
+          Recovery copies anything you created or modified out to an ordinary
+          folder on this computer — no booting, no disk images. Pre-installed
+          programs are skipped.
+        </p>
+        <div className="welcome-warn-buttons">
+          <button
+            className="default"
+            disabled={legacyRecoverBusy}
+            onClick={this.props.recoverLegacy}
+          >
+            {legacyRecoverBusy ? "Recovering…" : "Recover old C:\\ drive…"}
+          </button>
+          <button
+            disabled={legacyRecoverBusy}
+            onClick={this.props.discardLegacy}
+          >
+            Discard it
+          </button>
         </div>
       </div>
     );

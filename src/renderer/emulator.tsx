@@ -13,7 +13,8 @@ import {
   loadInfoBarSettings,
   saveInfoBarSettings,
 } from "./info-bar-settings";
-import { getStatePath } from "./utils/get-state-path";
+import { getStatePath, getLegacyStatePath } from "./utils/get-state-path";
+import { recoverLegacyDisk } from "./utils/recover-legacy-disk";
 import { Win95Window } from "./app";
 import { resetState } from "./utils/reset-state";
 import { setupSmbShare } from "./smb";
@@ -48,6 +49,10 @@ export interface EmulatorState {
   isInfoDisplayed: boolean;
   isRunning: boolean;
   infoBarSettings: InfoBarSettings;
+  legacyStatePath: string | null;
+  legacyRecovered: { dir: string; files: number } | null;
+  legacyRecoverBusy: boolean;
+  legacyRecoverError: string | null;
 }
 
 export class Emulator extends React.Component<{}, EmulatorState> {
@@ -71,6 +76,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       isCursorCaptured: false,
       hasAbsoluteMouse: false,
       isRunning: false,
+      legacyStatePath: null,
+      legacyRecovered: null,
+      legacyRecoverBusy: false,
+      legacyRecoverError: null,
       currentUiCard: "start",
       isInfoDisplayed: true,
       smbSharePath: "",
@@ -87,6 +96,8 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     ipcRenderer.invoke(IPC_COMMANDS.GET_SMB_SHARE_PATH).then((p: string) => {
       this.setState({ smbSharePath: p });
     });
+
+    getLegacyStatePath().then((p) => this.setState({ legacyStatePath: p }));
 
     if (PROBE) {
       // Skip the start card; boot fresh immediately. The 100ms delay
@@ -272,7 +283,46 @@ export class Emulator extends React.Component<{}, EmulatorState> {
       );
     } else {
       card = (
-        <CardStart startEmulator={this.startEmulator} navigate={navigate} />
+        <CardStart
+          startEmulator={this.startEmulator}
+          navigate={navigate}
+          legacyStatePath={this.state.legacyStatePath}
+          legacyRecovered={this.state.legacyRecovered}
+          legacyRecoverBusy={this.state.legacyRecoverBusy}
+          legacyRecoverError={this.state.legacyRecoverError}
+          recoverLegacy={async () => {
+            const p = this.state.legacyStatePath;
+            if (!p) return;
+            this.setState({
+              legacyRecoverBusy: true,
+              legacyRecoverError: null,
+            });
+            try {
+              const downloads =
+                process.env.WIN95_RECOVER_DIR ||
+                (await ipcRenderer.invoke(IPC_COMMANDS.GET_DOWNLOADS_PATH));
+              const outDir = path.join(downloads, "Recovered C Drive");
+              const out = await recoverLegacyDisk(p, outDir);
+              this.setState({ legacyRecovered: out });
+            } catch (e) {
+              console.error("recoverLegacy:", e);
+              this.setState({
+                legacyRecoverError: e instanceof Error ? e.message : String(e),
+              });
+            } finally {
+              this.setState({ legacyRecoverBusy: false });
+            }
+          }}
+          showRecovered={() =>
+            this.state.legacyRecovered &&
+            shell.openPath(this.state.legacyRecovered.dir)
+          }
+          discardLegacy={async () => {
+            const p = this.state.legacyStatePath;
+            if (p) await fs.promises.unlink(p).catch(() => {});
+            this.setState({ legacyStatePath: null });
+          }}
+        />
       );
     }
 
@@ -517,36 +567,36 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   /**
    * Restores state to the emulator.
    */
-  private async restoreState() {
+  private async restoreState(): Promise<boolean> {
     const { emulator, isBootingFresh } = this.state;
     const state = await this.getState();
 
     if (isBootingFresh) {
       console.log(`restoreState: Booting fresh, not restoring.`);
-      return;
+      return true;
     } else if (!state) {
       console.log(`restoreState: No state present, not restoring.`);
-      return;
+      return false;
     } else if (!emulator) {
       console.log(`restoreState: No emulator present`);
-      return;
+      return false;
     }
 
     try {
       await this.state.emulator.restore_state(state);
+      return true;
     } catch (error) {
       console.log(
         `restoreState: Could not read state file. Maybe none exists?`,
         error,
       );
+      return false;
     }
   }
 
   /**
    * Returns the current machine's state - either what
    * we have saved or alternatively the default state.
-   *
-   * @returns {ArrayBuffer}
    */
   private async getState(): Promise<ArrayBuffer | null> {
     const expectedStatePath = await getStatePath();

@@ -2,12 +2,31 @@ import { ipcMain, app, dialog, BrowserWindow } from "electron";
 import * as path from "path";
 import * as fs from "fs";
 
-import { IPC_COMMANDS } from "../constants";
+import { IPC_COMMANDS, STATE_VERSION } from "../constants";
 import { settings } from "./settings";
+
+const statePathFor = (v: number) =>
+  path.join(app.getPath("userData"), `state-v${v}.bin`);
 
 export function setupIpcListeners() {
   ipcMain.handle(IPC_COMMANDS.GET_STATE_PATH, () => {
-    return path.join(app.getPath("userData"), "state-v4.bin");
+    return statePathFor(STATE_VERSION);
+  });
+
+  ipcMain.handle(IPC_COMMANDS.GET_LEGACY_STATE_PATH, () => {
+    // If the user already has a current-version state, there's nothing to
+    // rescue — either they've migrated or never had an older one.
+    if (fs.existsSync(statePathFor(STATE_VERSION))) return null;
+    // v2/v3 predate the overlay-rescue machinery and aren't worth supporting.
+    for (let v = STATE_VERSION - 1; v >= 4; v--) {
+      const p = statePathFor(v);
+      if (fs.existsSync(p)) return p;
+    }
+    return null;
+  });
+
+  ipcMain.handle(IPC_COMMANDS.GET_DOWNLOADS_PATH, () => {
+    return app.getPath("downloads");
   });
 
   ipcMain.handle(IPC_COMMANDS.APP_QUIT, () => {
