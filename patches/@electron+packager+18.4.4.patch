@@ -13,8 +13,8 @@ index d318f6c..bfde740 100644
 +        // await (0, resedit_1.resedit)(this.electronBinaryPath, resOpts);
 +
 +        const { spawnSync } = require('child_process');
-+        const resEditProcess = spawnSync('node', [
-+        'C:\\Users\\FelixRieseberg\\Code\\windows95\\tools\\resedit.js',
++        const resEditProcess = spawnSync(process.execPath, [
++        require('path').resolve(process.cwd(), 'tools', 'resedit.js'),
 +        this.electronBinaryPath
 +        ], {
 +        stdio: 'inherit'
