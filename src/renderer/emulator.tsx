@@ -435,7 +435,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     // wait time (lol)
     setTimeout(async () => {
       if (!this.state.isBootingFresh) {
-        this.restoreState();
+        await this.restoreState();
       }
 
       this.state.emulator.run();
