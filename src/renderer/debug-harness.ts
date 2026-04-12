@@ -39,6 +39,41 @@ const SC = {
   ALT_DN: [0x38], ALT_UP: [0xb8],
 };
 
+// WIN95_PROBE_CDTRACE=1 → wrap secondary-IDE ata_command/atapi_handle and
+// log every command so we can see whether Win95's ESDI_506/CDVSD stack ever
+// talks to the drive (and which ATAPI CDBs it sends).
+const CDTRACE_FILE = process.env.WIN95_PROBE_CDTRACE_FILE || "/tmp/win95-cdtrace.log";
+let cdTraceArmed = false;
+
+function armCdTrace(emulator: any) {
+  const dev = emulator.v86?.cpu?.devices;
+  if (!dev || cdTraceArmed) return;
+  cdTraceArmed = true;
+  const sec = dev.ide?.secondary;
+  fs.writeFileSync(CDTRACE_FILE,
+    `[probe] cd buffer=${!!dev.cdrom?.buffer} bytes=${dev.cdrom?.buffer?.byteLength} is_atapi=${sec?.master?.is_atapi}\n`);
+  const t0 = Date.now();
+  const log = (s: string) => fs.appendFileSync(CDTRACE_FILE, `[${((Date.now()-t0)/1000).toFixed(2)}s] ${s}\n`);
+  const proto = Object.getPrototypeOf(sec?.master || {});
+  for (const m of ["ata_command", "atapi_handle"]) {
+    const orig = proto?.[m];
+    if (typeof orig !== "function") continue;
+    proto[m] = function (this: any, ...a: any[]) {
+      if (this === sec?.master || this === sec?.slave) {
+        const who = this === sec.master ? "sm" : "ss";
+        if (m === "ata_command") log(`${who} ata   cmd=0x${(a[0] ?? 0).toString(16)}`);
+        else {
+          const d = this.data || [];
+          const cdb = Array.from(d.slice?.(0, 12) || []).map((b: any) => b.toString(16).padStart(2, "0")).join(" ");
+          log(`${who} atapi cmd=0x${(d[0] ?? 0).toString(16)} cdb=[${cdb}]`);
+        }
+      }
+      return orig.apply(this, a);
+    };
+  }
+  console.log("[probe] cd trace armed");
+}
+
 // WIN95_PROBE_VGATRACE=1 → wrap VGA I/O ports at the io.ports[] layer (the
 // VGAScreen.portXXX_write methods are captured by-value at registration time,
 // so monkey-patching them on the instance is a no-op for most ports). Each
@@ -155,17 +190,22 @@ export function startProbe(emulator: any) {
   // DOS box clobbering VBE (felixrieseberg/v86 vga-defer-vbe-disable-v86).
   const dosBox = process.env.WIN95_PROBE_DOSBOX === "1";
   const wantVgaTrace = process.env.WIN95_PROBE_VGATRACE === "1";
+  const wantCdTrace = process.env.WIN95_PROBE_CDTRACE === "1";
   let scriptArmed = !!scriptCmd || !!runCmd || dosBox;
 
   const tick = () => {
     try {
       if (wantVgaTrace && !vgaTrace) armVgaTrace(emulator);
+      if (wantCdTrace && !cdTraceArmed) armCdTrace(emulator);
       const s = collectStatus(emulator);
       fs.writeFileSync(STATUS_FILE, JSON.stringify(s, null, 2));
 
       // Try to capture a screenshot — this can fail if the screen adapter
       // isn't ready yet, so we swallow that.
       try {
+        // rAF doesn't fire when the Electron window is occluded, so the
+        // screen adapter's render loop stalls. Pump one frame by hand.
+        try { emulator.screen_adapter?.update_screen?.(); } catch {}
         const img: HTMLImageElement = emulator.screen_make_screenshot();
         // The Image has a data: URL src; decode it to bytes
         if (img && img.src && img.src.startsWith("data:image/png;base64,")) {
