@@ -19,6 +19,7 @@ import { resetState } from "./utils/reset-state";
 import { setupSmbShare } from "./smb";
 import { setupTcpRelay } from "./net/tcp-relay";
 import { setupDnsShim } from "./net/dns-shim";
+import { setupClipboardSync } from "./clipboard";
 import { startProbe } from "./debug-harness";
 
 const PROBE = process.env.WIN95_PROBE === "1";
@@ -408,6 +409,10 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     if (PROBE) {
       startProbe(window["emulator"]);
     }
+
+    // Host ↔ guest text clipboard. The guest side is W95TOOLS.EXE on the
+    // TOOLS share; until that's running this is a no-op poller.
+    setupClipboardSync(window["emulator"]);
 
     // New v86 instance
     // Mouse stays disabled until either the pointer is captured or the guest's

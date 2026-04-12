@@ -21,3 +21,23 @@ Install inside the guest:
    absolute mouse driver**.
 3. Reboot. The app detects the driver and stops grabbing pointer lock;
    ESC still toggles lock for games that want raw relative input.
+
+## agent/ — W95TOOLS guest agent
+
+`W95TOOLS.EXE` is a hidden-window agent that talks to the emulator over
+the VMware backdoor (port 0x5658). Currently it does one thing: bridges
+Windows 95's `CF_TEXT` clipboard to the host (legacy backdoor commands
+6–9; host side is `src/renderer/clipboard.ts`, which polls Electron's
+clipboard). It's also where time sync, host-initiated shutdown, and a
+tray icon will live when those land.
+
+Install inside the guest:
+
+1. Copy `\\HOST\TOOLS\agent\W95TOOLS.EXE` to `C:\WINDOWS\`.
+2. Drop a shortcut to it in
+   `C:\WINDOWS\Start Menu\Programs\StartUp` so it runs on login.
+
+Copy text on either side and it appears on the other within ~250 ms.
+Text only; conversion is Windows-1252 ↔ UTF-8 with CRLF ↔ LF, capped at
+64 KB. Built from `w95tools.c` with Open Watcom v2 — `make -C
+guest-tools/agent` (needs Docker).

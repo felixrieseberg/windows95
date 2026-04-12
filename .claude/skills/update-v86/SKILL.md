@@ -35,11 +35,13 @@ That branch merges four feature branches, each upstreamable on its own:
   writes to target only `current_interface`, but per ATA spec they're
   channel-shared (one register file on the IDE cable; both drives latch
   the same value).
-- **`vmware-abspointer`** — `src/vmware.js` implements the VMware mouse
-  backdoor (port `0x5658`, GETVERSION + ABSPOINTER_*) so a guest driver
+- **`vmware-abspointer`** — `src/vmware.js` implements the VMware
+  backdoor (port `0x5658`): GETVERSION + ABSPOINTER_* so a guest driver
   (VBADOS VBMOUSE) can read absolute cursor position and track the host
-  cursor 1:1 without pointer lock. Consumes the `mouse-absolute` bus
-  event that `MouseAdapter` already emits.
+  cursor 1:1 without pointer lock, and the legacy text-clipboard commands
+  6–9 so `W95TOOLS.EXE` (guest-tools/agent) can sync `CF_TEXT` with
+  the host. Consumes `mouse-absolute` and `vmware-clipboard-host` bus
+  events; emits `vmware-absolute-mouse` and `vmware-clipboard-guest`.
 - **`vga-defer-vbe-disable-v86`** — `src/vga.js` defers `dispi[4]=0`
   written from V86 mode until a legacy attribute-mode write reaches the
   hardware. Win9x's VDD virtualises ports 3B0–3DF for a windowed DOS VM
