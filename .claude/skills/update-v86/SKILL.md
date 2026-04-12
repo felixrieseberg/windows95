@@ -23,7 +23,9 @@ fallbacks, no fetching from copy.sh.
 ## The fork branch
 
 v86 should be checked out on **`felixrieseberg/v86:windows95-base`**.
-That branch merges four feature branches, each upstreamable on its own:
+That branch merges the feature branches tracked in
+[`docs/v86-patches.md`](../../../docs/v86-patches.md) — keep that table
+in sync with this list. Each is upstreamable on its own:
 
 - **`electron-renderer-fs-loader`** (PR #1540) — `src/lib.js` uses
   `require("fs")` instead of `await import("node:fs/promises")`. Dynamic
@@ -42,6 +44,14 @@ That branch merges four feature branches, each upstreamable on its own:
   6–9 so `W95TOOLS.EXE` (guest-tools/agent) can sync `CF_TEXT` with
   the host. Consumes `mouse-absolute` and `vmware-clipboard-host` bus
   events; emits `vmware-absolute-mouse` and `vmware-clipboard-guest`.
+- **`fake-network-copy-tcp-addrs`** — `src/browser/fake_network.js`
+  copies the four address subarrays (`hsrc/hdest/psrc/pdest`) when a
+  `TCPConnection` is created from an inbound SYN. Upstream stores them
+  as zero-copy views into the NE2000 TX ring; once the guest's 12-slot
+  TX ring wraps (any concurrent traffic — SMB, NBNS, ping), `pump()`
+  builds segments with whatever IP now occupies that slot, the guest
+  RSTs them as belonging to no TCB, and `recv()` blocks forever.
+  Exercised by `tools/probe-tcp.sh`.
 - **`vga-defer-vbe-disable-v86`** — `src/vga.js` defers `dispi[4]=0`
   written from V86 mode until a legacy attribute-mode write reaches the
   hardware. Win9x's VDD virtualises ports 3B0–3DF for a windowed DOS VM

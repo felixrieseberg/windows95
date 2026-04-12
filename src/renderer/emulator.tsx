@@ -18,6 +18,7 @@ import { Win95Window } from "./app";
 import { resetState } from "./utils/reset-state";
 import { setupSmbShare } from "./smb";
 import { setupTcpRelay } from "./net/tcp-relay";
+import { setupTcpTrace } from "./net/tcp-trace";
 import { setupDnsShim } from "./net/dns-shim";
 import { setupClipboardSync } from "./clipboard";
 import { startProbe } from "./debug-harness";
@@ -394,6 +395,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     // Raw TCP egress for ports the fetch adapter ignores (everything but 80).
     setupTcpRelay(window["emulator"]);
+    setupTcpTrace(window["emulator"]);
 
     // Serve a host folder over SMB on port 139. Read-only, traversal/symlink
     // guarded. In Win95: Start → Run → \\HOST\HOST. The env var wins so the
