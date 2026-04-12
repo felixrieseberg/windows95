@@ -14,7 +14,7 @@ its row here, delete the feature branch, and rebase `windows95-base`.
 | VMware absolute-pointer backdoor | [`vmware-abspointer`](https://github.com/felixrieseberg/v86/tree/vmware-abspointer) | [copy/v86#1542](https://github.com/copy/v86/pull/1542) | ✅ | Port 0x5658 GETVERSION + ABSPOINTER_* so VBMOUSE can track the host cursor 1:1 without pointer lock. |
 | VMware text-clipboard backdoor | [`vmware-clipboard`](https://github.com/felixrieseberg/v86/tree/vmware-clipboard) | — *(stacked on #1542)* | ✅ | Legacy backdoor commands 6–9 so `W95TOOLS.EXE` can sync `CF_TEXT` with the host. |
 | Defer V86-mode VBE disable | [`vga-defer-vbe-disable-v86`](https://github.com/felixrieseberg/v86/tree/vga-defer-vbe-disable-v86) | [copy/v86#1543](https://github.com/copy/v86/pull/1543) | ✅ | Opening a windowed DOS box leaks vgabios's VBE-disable past Win9x's VDD and turns the screen to planar garbage. |
-| fake_network: copy TCP addrs | [`fake-network-copy-tcp-addrs`](https://github.com/felixrieseberg/v86/tree/fake-network-copy-tcp-addrs) | — *(desc: `tools/pr-fake-network-copy-tcp-addrs.md`)* | ✅ | `TCPConnection` routing fields alias the NE2000 TX ring; concurrent guest traffic retargets async replies and the guest RSTs them. |
+| fake_network: copy TCP addrs | [`fake-network-copy-tcp-addrs`](https://github.com/felixrieseberg/v86/tree/fake-network-copy-tcp-addrs) | — | ✅ | `TCPConnection` routing fields alias the NE2000 TX ring; concurrent guest traffic retargets async replies and the guest RSTs them. |
 
 ## Adding a fix
 
