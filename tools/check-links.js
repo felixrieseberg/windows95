@@ -11,6 +11,13 @@ async function main() {
   let failed = false
 
   for (const link of links) {
+    // Release download URLs are chicken-and-egg: README is updated to point at
+    // the new version before the release build that creates those assets has
+    // run (and lint gates that build). Skip them.
+    if (/\/releases\/download\//.test(link)) {
+      console.log(`⏭️  ${link} (release asset, skipped)`)
+      continue
+    }
     try {
       const response = await fetch(link, { method: 'HEAD' })
 
