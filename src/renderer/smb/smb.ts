@@ -17,6 +17,7 @@ export const CMD_LOGOFF_ANDX = 0x74;
 export const CMD_NT_CREATE_ANDX = 0xa2;
 export const CMD_OPEN_ANDX = 0x2d;
 export const CMD_READ = 0x0a;
+export const CMD_READ_RAW = 0x1a;
 export const CMD_READ_ANDX = 0x2e;
 export const CMD_SEEK = 0x12;
 export const CMD_CLOSE = 0x04;
@@ -145,6 +146,7 @@ export const cmdName: Record<number, string> = {
   [CMD_NT_CREATE_ANDX]: "NT_CREATE",
   [CMD_OPEN_ANDX]: "OPEN",
   [CMD_READ_ANDX]: "READ",
+  [CMD_READ_RAW]: "READ_RAW",
   [CMD_READ]: "READ",
   [CMD_SEEK]: "SEEK",
   [CMD_CLOSE]: "CLOSE",

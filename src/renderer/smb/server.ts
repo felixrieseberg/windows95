@@ -8,7 +8,7 @@ import {
   parseSmb, buildSmb, dosError, andxNone, cmdName, SmbHeader,
   CMD_NEGOTIATE, CMD_SESSION_SETUP_ANDX, CMD_TREE_CONNECT_ANDX,
   CMD_TREE_DISCONNECT, CMD_LOGOFF_ANDX, CMD_NT_CREATE_ANDX, CMD_OPEN_ANDX,
-  CMD_READ, CMD_READ_ANDX, CMD_SEEK, CMD_CLOSE, CMD_TRANSACTION, CMD_TRANSACTION2, CMD_ECHO,
+  CMD_READ, CMD_READ_RAW, CMD_READ_ANDX, CMD_SEEK, CMD_CLOSE, CMD_TRANSACTION, CMD_TRANSACTION2, CMD_ECHO,
   CMD_QUERY_INFORMATION, CMD_FIND_CLOSE2, CMD_CHECK_DIRECTORY, CMD_SEARCH,
   TRANS2_FIND_FIRST2, TRANS2_FIND_NEXT2, TRANS2_QUERY_FS_INFO, TRANS2_QUERY_PATH_INFO,
   ERRDOS, ERRSRV, ERR_BADFILE, ERR_BADPATH, ERR_BADFID, ERR_NOFILES, ERR_BADFUNC,
@@ -112,7 +112,7 @@ export class SmbSession {
   private readonly realRoot: string;
   private readonly toolsRoot?: string;
   public readonly shareName: string;
-  public capture = true;
+  public capture = !!process.env.WIN95_SMB_CAPTURE;
 
   // Synthetic files served at the share root. They show up in directory
   // listings and OPEN/READ work, but they don't exist on the host fs —
@@ -241,6 +241,10 @@ export class SmbSession {
         case CMD_NT_CREATE_ANDX:     return this.ntCreate(req);
         case CMD_OPEN_ANDX:          return this.openAndx(req);
         case CMD_READ:               return this.coreRead(req);
+        // READ_RAW reply has no SMB header — handle outside the generic
+        // catch so an fs error becomes a 0-byte frame, not garbage data.
+        case CMD_READ_RAW:
+          try { return this.readRaw(req); } catch { return new Uint8Array(0); }
         case CMD_READ_ANDX:          return this.read(req);
         case CMD_SEEK:               return this.seek(req);
         case CMD_CLOSE:              return this.close(req);
@@ -304,9 +308,9 @@ export class SmbSession {
         .u16(1)          // MaxMpxCount
         .u16(1)          // MaxNumberVcs
         .u32(16384)      // MaxBufferSize
-        .u32(0)          // MaxRawSize (no raw)
+        .u32(65535)      // MaxRawSize
         .u32(0)          // SessionKey
-        .u32(0)          // Capabilities
+        .u32(0x00000001) // Capabilities: CAP_RAW_MODE only
         .u64(0)          // SystemTime (FILETIME — Win95 ignores 0)
         .u16(0)          // ServerTimeZone
         .u8(0)           // ChallengeLength = 0
@@ -324,7 +328,7 @@ export class SmbSession {
       .u16(16384)      // MaxBufferSize
       .u16(1)          // MaxMpxCount
       .u16(1)          // MaxNumberVcs
-      .u16(0)          // RawMode (none)
+      .u16(0x0001)     // RawMode: read-raw supported
       .u32(0)          // SessionKey
       .u16(0)          // ServerTime (we cheat — Win95 doesn't care)
       .u16(0)          // ServerDate
@@ -670,14 +674,26 @@ export class SmbSession {
     return buildSmb(req, CMD_READ, 0, words, bytes);
   }
 
-  private readBytes(fid: number, offset: number, count: number): Uint8Array | null {
+  private readBytes(fid: number, offset: number, count: number, cap = 16384): Uint8Array | null {
     const file = this.fids.get(fid);
     if (!file || file.isDir) return null;
-    const want = Math.min(count, 16384, Math.max(0, file.size - offset));
+    const want = Math.min(count, cap, Math.max(0, file.size - offset));
     if (file.virtual) return file.virtual.slice(offset, offset + want);
     const buf = Buffer.alloc(want);
     const n = want > 0 ? fs.readSync(file.fd, buf, 0, want, offset) : 0;
     return buf.subarray(0, n);
+  }
+
+  // READ_RAW (0x1a): Win95's bulk-transfer path. The response is *not* an SMB
+  // message — just the raw file bytes inside a NetBIOS frame, length implied
+  // by the NB header. On error/EOF we send zero bytes and the client falls
+  // back to a normal READ to get the actual error code.
+  private readRaw(req: SmbHeader): Uint8Array {
+    const wr = new Reader(req.words);
+    const fid = wr.u16();
+    const offset = wr.u32();
+    const maxCount = wr.u16();
+    return this.readBytes(fid, offset, maxCount, 65535) ?? new Uint8Array(0);
   }
 
   // SEEK (0x12): legacy lseek. READ_ANDX carries an explicit offset so we
