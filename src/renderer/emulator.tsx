@@ -482,17 +482,16 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     ipcRenderer.send(IPC_COMMANDS.MACHINE_STARTED);
 
-    // Restore state. We can't do this right away
-    // and randomly chose 500ms as the appropriate
-    // wait time (lol)
-    setTimeout(async () => {
+    // Wait for v86 to finish loading wasm/bios/hda before restoring — calling
+    // restore_state on an uninitialized cpu throws and we'd silently cold-boot.
+    window["emulator"].add_listener("emulator-loaded", async () => {
       if (!this.state.isBootingFresh) {
         await this.restoreState();
       }
 
-      this.state.emulator.run();
-      this.state.emulator.screen_set_scale(this.state.scale);
-    }, 500);
+      window["emulator"].run();
+      window["emulator"].screen_set_scale(this.state.scale);
+    });
   }
 
   /**
