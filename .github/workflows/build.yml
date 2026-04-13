@@ -71,12 +71,16 @@ jobs:
         run: tools/download-disk.ps1
         if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
         env:
-          DISK_URL: ${{ secrets.DISK_URL }}
+          DISK_REPO: ${{ vars.DISK_REPO }}
+          DISK_TAG: ${{ vars.DISK_TAG }}
+          GH_TOKEN: ${{ secrets.IMAGES_REPO_TOKEN }}
       - name: Download disk image (sh)
         run: chmod +x tools/download-disk.sh && ./tools/download-disk.sh
         if: matrix.os != 'windows-latest' && startsWith(github.ref, 'refs/tags/')
         env:
-          DISK_URL: ${{ secrets.DISK_URL }}
+          DISK_REPO: ${{ vars.DISK_REPO }}
+          DISK_TAG: ${{ vars.DISK_TAG }}
+          GH_TOKEN: ${{ secrets.IMAGES_REPO_TOKEN }}
       - name: Install
         run: npm ci
       - name: Make
