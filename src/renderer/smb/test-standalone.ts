@@ -411,6 +411,17 @@ console.log("\n[7] Error handling");
   const body = String.fromCharCode(...rP.bytes.slice(3, 3 + dlen));
   ok(dlen === seekPos, `core READ returned ${dlen} bytes`);
   ok(body.includes("windows95 tools"), `README content: ${JSON.stringify(body.slice(0, 30))}`);
+
+  // READ_RAW (0x1a): response is raw bytes, no SMB header.
+  const raw = session.handle(smbReq(0x1a,
+    [...u16(fid2), ...u32(0), ...u16(65535), ...u16(0), ...u32(0), ...u16(0)],
+    [], tcParsed.tid, 1))!;
+  ok(raw.length === seekPos && raw[0] === 0x77 /* 'w' */,
+     `READ_RAW returned ${raw.length} raw bytes (no SMB header)`);
+  const rawBad = session.handle(smbReq(0x1a,
+    [...u16(0x7777), ...u32(0), ...u16(100), ...u16(0), ...u32(0), ...u16(0)],
+    [], tcParsed.tid, 1))!;
+  ok(rawBad.length === 0, "READ_RAW bad fid → 0-byte reply");
 }
 {
   // symlink escape: link inside share → file outside share
