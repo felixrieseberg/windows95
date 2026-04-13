@@ -15,17 +15,22 @@ const FLAGS = {
   APPLE_ID_PASSWORD: process.env.APPLE_ID_PASSWORD,
 }
 
-fs.writeFileSync(FLAGS.AZURE_METADATA_JSON, JSON.stringify({
-  Endpoint: process.env.AZURE_CODE_SIGNING_ENDPOINT || "https://wcus.codesigning.azure.net",
-  CodeSigningAccountName: process.env.AZURE_CODE_SIGNING_ACCOUNT_NAME,
-  CertificateProfileName: process.env.AZURE_CODE_SIGNING_CERTIFICATE_PROFILE_NAME,
-}, null, 2));
+let windowsSign;
+if (FLAGS.AZURE_TENANT_ID && FLAGS.SIGNTOOL_PATH) {
+  fs.writeFileSync(FLAGS.AZURE_METADATA_JSON, JSON.stringify({
+    Endpoint: process.env.AZURE_CODE_SIGNING_ENDPOINT || "https://wcus.codesigning.azure.net",
+    CodeSigningAccountName: process.env.AZURE_CODE_SIGNING_ACCOUNT_NAME,
+    CertificateProfileName: process.env.AZURE_CODE_SIGNING_CERTIFICATE_PROFILE_NAME,
+  }, null, 2));
 
-const windowsSign = {
-  signToolPath: FLAGS.SIGNTOOL_PATH,
-  signWithParams: `/v /dlib ${FLAGS.AZURE_CODE_SIGNING_DLIB} /dmdf ${FLAGS.AZURE_METADATA_JSON}`,
-  timestampServer: "http://timestamp.acs.microsoft.com",
-  hashes: ["sha256"],
+  windowsSign = {
+    signToolPath: FLAGS.SIGNTOOL_PATH,
+    signWithParams: `/v /dlib ${FLAGS.AZURE_CODE_SIGNING_DLIB} /dmdf ${FLAGS.AZURE_METADATA_JSON}`,
+    timestampServer: "http://timestamp.acs.microsoft.com",
+    hashes: ["sha256"],
+  };
+} else {
+  console.warn('AZURE_TENANT_ID / SIGNTOOL_PATH not set; Windows binaries will not be signed');
 }
 
 module.exports = {
