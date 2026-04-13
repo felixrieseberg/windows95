@@ -15,18 +15,18 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
     </td>
     <td>
       <span>32-bit</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-5.0.0-setup-ia32.exe">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-5.0.1-setup-ia32.exe">
         💿 Installer
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-win32-ia32-5.0.0.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-win32-ia32-5.0.1.zip">
         📦 Standalone Zip
       </a>
       <br />
       <span>64-bit</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-5.0.0-setup-x64.exe">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-5.0.1-setup-x64.exe">
         💿 Installer
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-win32-x64-5.0.0.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-win32-x64-5.0.1.zip">
         📦 Standalone Zip
       </a><br />
       <span>
@@ -41,11 +41,11 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
     </td>
     <td>
       <span>Apple Silicon Processor</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-darwin-arm64-5.0.0.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-darwin-arm64-5.0.1.zip">
         📦 Standalone Zip
       </a><br />
       <span>Intel Processor</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-darwin-x64-5.0.0.zip">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-darwin-x64-5.0.1.zip">
         📦 Standalone Zip
       </a>
       <span>
@@ -60,24 +60,24 @@ This is Windows 95, running in an [Electron](https://electronjs.org/) app. Yes, 
     </td>
     <td>
       <span>64-bit</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-5.0.0-1.x86_64.rpm">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-5.0.1-1.x86_64.rpm">
         💿 rpm
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95_5.0.0_amd64.deb">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95_5.0.1_amd64.deb">
         💿 deb
       </a><br />
       <span>ARM64</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-5.0.0-1.arm64.rpm">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-5.0.1-1.arm64.rpm">
         💿 rpm
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95_5.0.0_arm64.deb">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95_5.0.1_arm64.deb">
         💿 deb
       </a><br />
       <span>ARM</span>
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95-5.0.0-1.armv7hl.rpm">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95-5.0.1-1.armv7hl.rpm">
         💿 rpm
       </a> |
-      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.0/windows95_5.0.0_armhf.deb">
+      <a href="https://github.com/felixrieseberg/windows95/releases/download/v5.0.1/windows95_5.0.1_armhf.deb">
         💿 deb
       </a><br />
     </td>
