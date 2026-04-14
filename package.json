@@ -12,6 +12,8 @@
     "lint": "prettier --write src/**/*.{ts,tsx} && npm run check-links",
     "tsc": "tsc -p tsconfig.json --noEmit",
     "check-links": "node tools/check-links.js",
+    "qemu": "qemu-system-i386 -m 128 -drive file=images/windows95.img,format=raw -device sb16 -M pc,acpi=off,vmport=on -cpu pentium -netdev user,id=mynet0 -device ne2k_isa,netdev=mynet0,iobase=0x300,irq=10",
+    "qemu:cdrom": "npm run qemu -- -cdrom",
     "postinstall": "patch-package"
   },
   "keywords": [],
