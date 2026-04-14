@@ -670,7 +670,11 @@ export class SmbSession {
                       new Uint8Array(0), new Uint8Array(0));
     }
     const words = new Writer().u16(data.length).zero(8).build();
-    const bytes = new Writer().u8(0x01).u16(data.length).bytes(data).build();
+    const bytes = new Uint8Array(3 + data.length);
+    bytes[0] = 0x01;
+    bytes[1] = data.length & 0xff;
+    bytes[2] = (data.length >> 8) & 0xff;
+    bytes.set(data, 3);
     return buildSmb(req, CMD_READ, 0, words, bytes);
   }
 
