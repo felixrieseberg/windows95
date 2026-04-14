@@ -56,9 +56,16 @@ interface V86 {
 
 const log = (...a: unknown[]) => console.log("[smb]", ...a);
 
-export function setupSmbShare(emulator: V86, hostPath: string, toolsRoot?: string) {
-  log(`serving ${hostPath} on \\\\HOST\\${shareNameFor(hostPath)} ` +
-      `(+ \\\\HOST\\${TOOLS_SHARE}${toolsRoot ? ` ← ${toolsRoot}` : ""}) port 139`);
+export function setupSmbShare(emulator: V86, hostPath: string | null, toolsRoot?: string) {
+  // hostPath is read on every new TCP 139 connection, so the menu can re-aim
+  // the share at a different folder without restarting. Existing SmbSessions
+  // keep their old root until Win95 reconnects (close the Explorer window or
+  // `net use z: /delete` then re-map).
+  const announce = () => hostPath
+    ? log(`serving ${hostPath} on \\\\HOST\\${shareNameFor(hostPath)} ` +
+          `(+ \\\\HOST\\${TOOLS_SHARE}${toolsRoot ? ` ← ${toolsRoot}` : ""}) port 139`)
+    : log(`port 139 hooked, no host folder shared yet`);
+  announce();
 
   // SPIKE diagnostic: count every ethernet frame so we know if the NIC is
   // emitting anything at all (DHCP, ARP, anything). Logged on a timer so
@@ -100,6 +107,12 @@ export function setupSmbShare(emulator: V86, hostPath: string, toolsRoot?: strin
 
   const wireConn = (conn: TCPConnection) => {
     log(`← TCP SYN ${conn.tuple}`);
+    if (!hostPath) {
+      // No folder picked yet — caller declines the SYN so the guest sees a
+      // clean RST instead of a half-open NetBIOS session.
+      log("no share configured → RST");
+      return false;
+    }
     const framer = new NetBIOSFramer();
     const session = new SmbSession(hostPath, toolsRoot);
 
@@ -123,14 +136,14 @@ export function setupSmbShare(emulator: V86, hostPath: string, toolsRoot?: strin
     } else {
       (conn as any).on_data = handler;
     }
+    return true;
   };
 
   // New API: bus event (no-op on old v86 — event never fires)
   emulator.bus.register("tcp-connection", (c: unknown) => {
     const conn = c as TCPConnection;
     if (conn.sport !== 139) return;
-    wireConn(conn);
-    conn.accept();
+    if (wireConn(conn)) conn.accept();
   });
 
   // Old API: monkey-patch adapter.on_tcp_connection. The adapter is created
@@ -177,7 +190,7 @@ export function setupSmbShare(emulator: V86, hostPath: string, toolsRoot?: strin
       // "established" and we want a fresh handshake.
       conn.tuple = tuple;
       conn.state = "syn-received";
-      wireConn(conn);
+      if (!wireConn(conn)) return false;
       try {
         conn.accept(packet);
       } catch (e) {
@@ -195,4 +208,11 @@ export function setupSmbShare(emulator: V86, hostPath: string, toolsRoot?: strin
     const poll = setInterval(() => { if (tryHook()) clearInterval(poll); }, 100);
     setTimeout(() => clearInterval(poll), 10000);
   }
+
+  return {
+    setHostPath(p: string) {
+      hostPath = p;
+      announce();
+    },
+  };
 }

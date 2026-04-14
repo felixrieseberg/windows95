@@ -58,6 +58,7 @@ export interface EmulatorState {
 export class Emulator extends React.Component<{}, EmulatorState> {
   private isQuitting = false;
   private isResetting = false;
+  private smbShare?: ReturnType<typeof setupSmbShare>;
   // Mirrors state.hasAbsoluteMouse but updated synchronously — setState is
   // batched, and the lock/unlock decisions can't wait for a render.
   private absoluteMouse = false;
@@ -227,6 +228,48 @@ export class Emulator extends React.Component<{}, EmulatorState> {
 
     ipcRenderer.on(IPC_COMMANDS.SHOW_DISK_IMAGE, () => {
       this.showDiskImage();
+    });
+
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_SET_FLOPPY, (_e, p: string | null) => {
+      const emu = this.state.emulator;
+      if (!emu) return;
+      if (p) {
+        // Floppies are ≤2.88MB — load whole image into memory and hand v86 a
+        // plain ArrayBuffer so its SyncBuffer path is used.
+        const buf = fs.readFileSync(p);
+        const ab = buf.buffer.slice(
+          buf.byteOffset,
+          buf.byteOffset + buf.byteLength,
+        );
+        emu.set_fda({ buffer: ab });
+        console.log(`💾 floppy ← ${p}`);
+      } else {
+        emu.eject_fda();
+        console.log(`💾 floppy ejected`);
+      }
+    });
+
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_SET_CDROM, (_e, p: string | null) => {
+      const emu = this.state.emulator;
+      // The public emu.set_cdrom() routes through v86's async loaders, which
+      // re-introduce the ATAPI BSY race documented in sync-file-buffer.ts.
+      // Go straight to the device with our fs-backed synchronous buffer —
+      // same object the boot path hands to the `cdrom:` option.
+      const dev = emu?.v86?.cpu?.devices?.cdrom;
+      if (!dev) return;
+      if (p) {
+        dev.set_cdrom(new SyncFileBuffer(p));
+        console.log(`💿 cdrom ← ${p}`);
+      } else {
+        dev.eject();
+        console.log(`💿 cdrom ejected`);
+      }
+    });
+
+    ipcRenderer.on(IPC_COMMANDS.MACHINE_SET_SMB_SHARE, (_e, p: string) => {
+      this.smbShare?.setHostPath(p);
+      this.setState({ smbSharePath: p });
+      ipcRenderer.invoke(IPC_COMMANDS.SET_SMB_SHARE_PATH, p);
     });
 
     ipcRenderer.on(IPC_COMMANDS.ZOOM_IN, () => {
@@ -450,10 +493,15 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     // Serve a host folder over SMB on port 139. Read-only, traversal/symlink
     // guarded. In Win95: Start → Run → \\HOST\HOST. The env var wins so the
     // probe harness can point at a fixture dir without touching settings.
-    const smbRoot = process.env.WIN95_SMB_SHARE || this.state.smbSharePath;
-    if (smbRoot) {
-      setupSmbShare(window["emulator"], smbRoot, CONSTANTS.TOOLS_PATH);
-    }
+    // The hook is installed unconditionally so the Machine ▸ Change Shared
+    // Folder menu can point it at a directory later without a restart.
+    const smbRoot =
+      process.env.WIN95_SMB_SHARE || this.state.smbSharePath || null;
+    this.smbShare = setupSmbShare(
+      window["emulator"],
+      smbRoot,
+      CONSTANTS.TOOLS_PATH,
+    );
 
     if (PROBE) {
       startProbe(window["emulator"]);
