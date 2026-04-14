@@ -23,15 +23,32 @@ export async function setupMenu() {
   );
 }
 
-function send(cmd: string) {
+function send(cmd: string, ...args: unknown[]) {
   const windows = BrowserWindow.getAllWindows();
 
   if (windows[0]) {
     log(`Sending "${cmd}"`);
-    windows[0].webContents.send(cmd);
+    windows[0].webContents.send(cmd, ...args);
   } else {
     log(`Tried to send "${cmd}", but could not find window`);
   }
+}
+
+async function pickFile(filters: Electron.FileFilter[]) {
+  const win = BrowserWindow.getAllWindows()[0];
+  const result = await dialog.showOpenDialog(win, {
+    properties: ["openFile"],
+    filters,
+  });
+  return result.canceled ? null : result.filePaths[0];
+}
+
+async function pickFolder() {
+  const win = BrowserWindow.getAllWindows()[0];
+  const result = await dialog.showOpenDialog(win, {
+    properties: ["openDirectory"],
+  });
+  return result.canceled ? null : result.filePaths[0];
 }
 
 async function createMenu({ isRunning } = { isRunning: false }) {
@@ -184,6 +201,61 @@ async function createMenu({ isRunning } = { isRunning: false }) {
           label: "Send Esc",
           click: () => send(IPC_COMMANDS.MACHINE_ESC),
           enabled: isRunning,
+        },
+        {
+          type: "separator",
+        },
+        // Hot-swap removable media. v86 always instantiates the FDC and the
+        // ATAPI secondary-master, so insert/eject work even if nothing was
+        // mounted at boot. The pre-boot Settings card covers the !isRunning
+        // case, so these are runtime-only.
+        {
+          label: "Floppy Drive",
+          enabled: isRunning,
+          submenu: [
+            {
+              label: "Insert Disk Image…",
+              click: async () => {
+                const p = await pickFile([
+                  { name: "Floppy image", extensions: ["img", "ima", "vfd"] },
+                  { name: "All Files", extensions: ["*"] },
+                ]);
+                if (p) send(IPC_COMMANDS.MACHINE_SET_FLOPPY, p);
+              },
+            },
+            {
+              label: "Eject",
+              click: () => send(IPC_COMMANDS.MACHINE_SET_FLOPPY, null),
+            },
+          ],
+        },
+        {
+          label: "CD-ROM Drive",
+          enabled: isRunning,
+          submenu: [
+            {
+              label: "Insert Disc Image…",
+              click: async () => {
+                const p = await pickFile([
+                  { name: "ISO image", extensions: ["iso"] },
+                  { name: "All Files", extensions: ["*"] },
+                ]);
+                if (p) send(IPC_COMMANDS.MACHINE_SET_CDROM, p);
+              },
+            },
+            {
+              label: "Eject",
+              click: () => send(IPC_COMMANDS.MACHINE_SET_CDROM, null),
+            },
+          ],
+        },
+        {
+          label: "Change Shared Folder…",
+          enabled: isRunning,
+          click: async () => {
+            const p = await pickFolder();
+            if (p) send(IPC_COMMANDS.MACHINE_SET_SMB_SHARE, p);
+          },
         },
         {
           type: "separator",
