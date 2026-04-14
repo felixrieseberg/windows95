@@ -4,7 +4,7 @@
 // SMB1 message = 32-byte header + word block + byte block.
 // Header is at a fixed offset; word/byte blocks vary by command.
 
-import { Reader, Writer } from "./wire";
+import { Reader } from "./wire";
 
 export const SMB_MAGIC = [0xff, 0x53, 0x4d, 0x42]; // \xFF SMB
 
@@ -106,25 +106,28 @@ export function buildSmb(
   bytes: Uint8Array,
   overrides?: { tid?: number; uid?: number; flags2?: number }
 ): Uint8Array {
-  const w = new Writer();
-  w.bytes(SMB_MAGIC);
-  w.u8(cmd);
-  w.u32(status);
-  w.u8(FLAGS_REPLY | FLAGS_CASELESS | FLAGS_CANONICAL);
+  if (words.length % 2 !== 0) throw new Error("word block must be even");
+  // Hot path for READ replies (bytes can be ~16K) — assemble directly instead
+  // of pushing byte-by-byte through Writer.
+  const out = new Uint8Array(32 + 1 + words.length + 2 + bytes.length);
+  const v = new DataView(out.buffer);
+  out[0] = 0xff; out[1] = 0x53; out[2] = 0x4d; out[3] = 0x42;
+  out[4] = cmd;
+  v.setUint32(5, status, true);
+  out[9] = FLAGS_REPLY | FLAGS_CASELESS | FLAGS_CANONICAL;
   // mirror long-name capability so the client keeps sending long names; never
   // claim NT status or unicode (we reply in ASCII)
-  w.u16((overrides?.flags2 ?? req.flags2) & FLAGS2_LONG_NAMES);
-  w.zero(12);
-  w.u16(overrides?.tid ?? req.tid);
-  w.u16(req.pid);
-  w.u16(overrides?.uid ?? req.uid);
-  w.u16(req.mid);
-  if (words.length % 2 !== 0) throw new Error("word block must be even");
-  w.u8(words.length / 2);
-  w.bytes(words);
-  w.u16(bytes.length);
-  w.bytes(bytes);
-  return w.build();
+  v.setUint16(10, (overrides?.flags2 ?? req.flags2) & FLAGS2_LONG_NAMES, true);
+  // 12 bytes reserved already zero
+  v.setUint16(24, overrides?.tid ?? req.tid, true);
+  v.setUint16(26, req.pid, true);
+  v.setUint16(28, overrides?.uid ?? req.uid, true);
+  v.setUint16(30, req.mid, true);
+  out[32] = words.length / 2;
+  out.set(words, 33);
+  v.setUint16(33 + words.length, bytes.length, true);
+  out.set(bytes, 35 + words.length);
+  return out;
 }
 
 export function dosError(errClass: number, errCode: number): number {

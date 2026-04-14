@@ -8,26 +8,28 @@
 // Then inside Win95: Start → Run → \\192.168.86.1\host
 
 import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
 import { NetBIOSFramer, nbPositiveResponse, nbWrap } from "./netbios";
 import { setupNbns } from "./nbns";
 import { SmbSession, shareNameFor, TOOLS_SHARE } from "./server";
 
-// SPIKE diagnostics: tee everything to a file so we can debug without DevTools
-const LOG_FILE = process.env.WIN95_SMB_LOG || path.join(os.tmpdir(), "windows95-smb.log");
-try { fs.writeFileSync(LOG_FILE, `--- ${new Date().toISOString()} ---\n`); } catch {}
-const origLog = console.log;
-console.log = (...args: unknown[]) => {
-  origLog(...args);
-  const tag = String(args[0] ?? "");
-  if (tag === "[smb]" || tag === "[nbns]") {
-    try {
-      fs.appendFileSync(LOG_FILE, args.map(a =>
-        typeof a === "string" ? a : JSON.stringify(a)).join(" ") + "\n");
-    } catch {}
-  }
-};
+// Diagnostics tee — opt-in via WIN95_SMB_LOG. The console.log override and
+// per-frame counter below sit on the hot path; don't pay for them unless
+// someone is actually watching.
+const LOG_FILE = process.env.WIN95_SMB_LOG;
+if (LOG_FILE) {
+  try { fs.writeFileSync(LOG_FILE, `--- ${new Date().toISOString()} ---\n`); } catch {}
+  const origLog = console.log;
+  console.log = (...args: unknown[]) => {
+    origLog(...args);
+    const tag = String(args[0] ?? "");
+    if (tag === "[smb]" || tag === "[nbns]") {
+      try {
+        fs.appendFileSync(LOG_FILE, args.map(a =>
+          typeof a === "string" ? a : JSON.stringify(a)).join(" ") + "\n");
+      } catch {}
+    }
+  };
+}
 
 interface TCPConnection {
   sport: number;
@@ -67,29 +69,31 @@ export function setupSmbShare(emulator: V86, hostPath: string | null, toolsRoot?
     : log(`port 139 hooked, no host folder shared yet`);
   announce();
 
-  // SPIKE diagnostic: count every ethernet frame so we know if the NIC is
-  // emitting anything at all (DHCP, ARP, anything). Logged on a timer so
-  // we don't flood — and so the absence of a tick proves the bus is dead.
-  let frameStats = { total: 0, arp: 0, ip: 0, udp: 0, tcp: 0, other: 0 };
-  emulator.bus.register("net0-send", (raw: unknown) => {
-    const f = raw as Uint8Array;
-    frameStats.total++;
-    if (f.length < 14) { frameStats.other++; return; }
-    const et = (f[12] << 8) | f[13];
-    if (et === 0x0806) frameStats.arp++;
-    else if (et === 0x0800) {
-      frameStats.ip++;
-      const proto = f[14 + 9];
-      if (proto === 6) frameStats.tcp++;
-      else if (proto === 17) frameStats.udp++;
-    } else frameStats.other++;
-  });
-  setInterval(() => {
-    if (frameStats.total > 0) {
-      log("frames:", JSON.stringify(frameStats));
-      frameStats = { total: 0, arp: 0, ip: 0, udp: 0, tcp: 0, other: 0 };
-    }
-  }, 5000);
+  if (LOG_FILE) {
+    // Count every ethernet frame so we know if the NIC is emitting anything
+    // at all. Logged on a timer so the absence of a tick proves the bus is
+    // dead. Opt-in: this hook fires once per TX frame during a file copy.
+    let frameStats = { total: 0, arp: 0, ip: 0, udp: 0, tcp: 0, other: 0 };
+    emulator.bus.register("net0-send", (raw: unknown) => {
+      const f = raw as Uint8Array;
+      frameStats.total++;
+      if (f.length < 14) { frameStats.other++; return; }
+      const et = (f[12] << 8) | f[13];
+      if (et === 0x0806) frameStats.arp++;
+      else if (et === 0x0800) {
+        frameStats.ip++;
+        const proto = f[14 + 9];
+        if (proto === 6) frameStats.tcp++;
+        else if (proto === 17) frameStats.udp++;
+      } else frameStats.other++;
+    });
+    setInterval(() => {
+      if (frameStats.total > 0) {
+        log("frames:", JSON.stringify(frameStats));
+        frameStats = { total: 0, arp: 0, ip: 0, udp: 0, tcp: 0, other: 0 };
+      }
+    }, 5000);
+  }
 
   // Win95 won't even try TCP 139 until UDP 137 answers a Node Status query
   setupNbns(emulator as Parameters<typeof setupNbns>[0]);
@@ -135,6 +139,29 @@ export function setupSmbShare(emulator: V86, hostPath: string | null, toolsRoot?
       conn.on("data", handler);
     } else {
       (conn as any).on_data = handler;
+    }
+
+    // v86's TCP is stop-and-wait (one MSS, wait for ACK). The link is lossless
+    // and has no retransmit anyway, so keep a window in flight by sliding the
+    // ring-buffer view under the original pump(). 8×MSS cap ≈ NE2000 RX ring.
+    const c = conn as any, sb = c.send_buffer;
+    const mss: number = c.send_chunk_buf?.length ?? 1460;
+    const pump1 = Object.getPrototypeOf(c)?.pump;
+    if (pump1 && sb?.buffer) {
+      let hi: number | undefined;
+      c.pump = function () {
+        if (this.pending || !sb.length) return pump1.call(this);
+        const cap = sb.buffer.length, t0 = sb.tail, l0 = sb.length, s0 = this.seq;
+        const win = Math.max(mss, Math.min(this.winsize || 8192, 8 * mss));
+        let off = hi === undefined ? 0 : Math.max(0, Math.min(hi - s0, l0));
+        for (; off < l0 && off < win; off += Math.min(mss, l0 - off)) {
+          sb.tail = (t0 + off) % cap; sb.length = l0 - off;
+          this.seq = s0 + off; this.pending = false;
+          pump1.call(this);
+        }
+        hi = s0 + off;
+        sb.tail = t0; sb.length = l0; this.seq = s0; this.pending = true;
+      };
     }
     return true;
   };
