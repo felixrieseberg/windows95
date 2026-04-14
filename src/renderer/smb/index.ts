@@ -142,8 +142,10 @@ export function setupSmbShare(emulator: V86, hostPath: string | null, toolsRoot?
     }
 
     // v86's TCP is stop-and-wait (one MSS, wait for ACK). The link is lossless
-    // and has no retransmit anyway, so keep a window in flight by sliding the
-    // ring-buffer view under the original pump(). 8×MSS cap ≈ NE2000 RX ring.
+    // and has no retransmit anyway, so keep a small window in flight by sliding
+    // the ring-buffer view under the original pump(). The burst lands in the
+    // NE2000 RX ring before the guest CPU runs, so the cap is the ring (52–58
+    // pages for Win95's driver) — 4×MSS + our ACK ≈ 36 pages, 8 overflowed it.
     const c = conn as any, sb = c.send_buffer;
     const mss: number = c.send_chunk_buf?.length ?? 1460;
     const pump1 = Object.getPrototypeOf(c)?.pump;
@@ -152,7 +154,7 @@ export function setupSmbShare(emulator: V86, hostPath: string | null, toolsRoot?
       c.pump = function () {
         if (this.pending || !sb.length) return pump1.call(this);
         const cap = sb.buffer.length, t0 = sb.tail, l0 = sb.length, s0 = this.seq;
-        const win = Math.max(mss, Math.min(this.winsize || 8192, 8 * mss));
+        const win = 4 * mss;
         let off = hi === undefined ? 0 : Math.max(0, Math.min(hi - s0, l0));
         for (; off < l0 && off < win; off += Math.min(mss, l0 - off)) {
           sb.tail = (t0 + off) % cap; sb.length = l0 - off;
