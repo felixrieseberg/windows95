@@ -44,6 +44,11 @@ in sync with this list. Each is upstreamable on its own:
   6–9 so `W95TOOLS.EXE` (guest-tools/agent) can sync `CF_TEXT` with
   the host. Consumes `mouse-absolute` and `vmware-clipboard-host` bus
   events; emits `vmware-absolute-mouse` and `vmware-clipboard-guest`.
+- **`vmware-gettime`** *(stacked on the clipboard branch)* —
+  `src/vmware.js` adds backdoor command GETTIME (23): EAX = host UTC
+  seconds, EBX = microseconds, ECX = max time lag, EDX = host UTC offset
+  in minutes. `W95TOOLS.EXE` polls it and calls `SetLocalTime`, so a
+  resumed guest (which never re-reads the RTC) snaps back to host time.
 - **`fake-network-copy-tcp-addrs`** — `src/browser/fake_network.js`
   copies the four address subarrays (`hsrc/hdest/psrc/pdest`) when a
   `TCPConnection` is created from an inbound SYN. Upstream stores them

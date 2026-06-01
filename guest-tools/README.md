@@ -25,13 +25,23 @@ Install inside the guest:
 ## agent/ — W95TOOLS guest agent
 
 `W95TOOLS.EXE` is a hidden-window agent that talks to the emulator over
-the VMware backdoor (port 0x5658). Currently it bridges Windows 95's
-`CF_TEXT` clipboard to the host (legacy backdoor commands 6–9; host side
-is `src/renderer/clipboard.ts`, which polls Electron's clipboard) and
-auto-maps `\\HOST\HOST` to `Z:` at login via `WNetAddConnection`, so the
-shared folder shows up as a drive without a trip through Start → Run.
-It's also where time sync, host-initiated shutdown, and a tray icon will
-live when those land.
+the VMware backdoor (port 0x5658). Currently it:
+
+- bridges Windows 95's `CF_TEXT` clipboard to the host (legacy backdoor
+  commands 6–9; host side is `src/renderer/clipboard.ts`, which polls
+  Electron's clipboard),
+- auto-maps `\\HOST\HOST` to `Z:` at login via `WNetAddConnection`, so
+  the shared folder shows up as a drive without a trip through
+  Start → Run,
+- keeps the Windows clock set to the host's local time (backdoor
+  GETTIME, command 23). Windows only reads the RTC at boot, so without
+  this a resumed emulator session carries on with the clock from
+  whenever the state was saved. The agent checks every 5 seconds and
+  steps the clock whenever it's off by 2 seconds or more — covering
+  resume, slow-emulation drift, and the UTC-only RTC at boot.
+
+Host-initiated shutdown and a tray icon will live here too when those
+land.
 
 Install inside the guest:
 
@@ -43,3 +53,8 @@ Copy text on either side and it appears on the other within ~250 ms.
 Text only; conversion is Windows-1252 ↔ UTF-8 with CRLF ↔ LF, capped at
 64 KB. Built from `w95tools.c` with Open Watcom v2 — `make -C
 guest-tools/agent` (needs Docker).
+
+To update an already-installed agent: end the running `W95tools` task
+(Ctrl+Alt+Del → End Task) or reboot Windows, copy the new
+`\\HOST\TOOLS\agent\W95TOOLS.EXE` over `C:\WINDOWS\W95TOOLS.EXE`, and
+start it again (the StartUp shortcut also picks it up at next login).

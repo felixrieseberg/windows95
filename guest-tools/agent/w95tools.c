@@ -1,12 +1,19 @@
 /*
  * W95TOOLS — guest-side integration agent for the windows95 emulator.
  *
- * Currently: bidirectional text clipboard, and auto-mapping the host's
- * SMB share to Z: at login. Talks to the emulator over the
- * legacy VMware backdoor (port 0x5658; implemented in v86's vmware.js).
- * Joins the Win32 clipboard-viewer chain so guest copies are pushed
- * immediately, and polls the backdoor on a timer so host copies show up
- * within ~250 ms.
+ * Currently: bidirectional text clipboard, auto-mapping the host's
+ * SMB share to Z: at login, and keeping the guest clock in sync with the
+ * host. Talks to the emulator over the legacy VMware backdoor (port
+ * 0x5658; implemented in v86's vmware.js). Joins the Win32
+ * clipboard-viewer chain so guest copies are pushed immediately, and
+ * polls the backdoor on a timer so host copies show up within ~250 ms.
+ *
+ * Clock sync exists because Windows only reads the CMOS RTC at boot —
+ * resuming a saved emulator state leaves the clock wherever it was when
+ * the state was saved. Every TIME_MS we ask the host for its wall-clock
+ * time (backdoor GETTIME) and call SetLocalTime if we've drifted by more
+ * than TIME_SLACK_S, so a resumed machine snaps back within seconds and
+ * slow emulation drift never accumulates.
  *
  * Win9x runs ring-3 code with the I/O bitmap wide open, so a plain IN works
  * from a user process — no driver needed. On NT this would #GP; we don't run
@@ -26,14 +33,25 @@
 #define CMD_SETLEN  8
 #define CMD_SETDATA 9
 #define CMD_VERSION 10
+#define CMD_GETTIME 23
 
 #define POLL_MS     250
 #define MAX_CLIP    0xFFFF
 
 #define TIMER_CLIP  1
 #define TIMER_MAP   2
+#define TIMER_TIME  3
 #define MAP_TRIES   5
 #define MAP_DELAY   3000
+
+/* Check the clock every 5 s, step it when it's off by 2 s or more. The guest
+ * clock only ever jumps for real reasons (resumed state, slow emulation), so
+ * a tight threshold keeps the tray clock honest without constant churn. */
+#define TIME_MS      5000
+#define TIME_SLACK_S 2
+
+/* Seconds between the FILETIME epoch (1601-01-01) and the Unix epoch. */
+#define EPOCH_DAYS   134774
 
 /* The host SMB server routes any share name other than TOOLS/IPC$ to the
  * user's folder, so a fixed UNC works regardless of which directory they
@@ -59,6 +77,31 @@ extern unsigned long bd_ebx(unsigned long cmd, unsigned long arg);
     value [ebx]             \
     modify [eax edx];
 
+/* GETTIME clobbers every register the host hands data back in (EAX seconds,
+ * EBX microseconds, ECX max lag, EDX UTC offset), so it gets dedicated
+ * helpers with the full clobber list rather than reusing bd(). Two port
+ * reads per check is nothing at one check per 5 s. */
+extern unsigned long bd_time_secs(void);
+#pragma aux bd_time_secs =  \
+    "mov eax, 564D5868h"    \
+    "xor ebx, ebx"          \
+    "mov ecx, 17h"          \
+    "mov edx, 5658h"        \
+    "in  eax, dx"           \
+    value [eax]             \
+    modify [ebx ecx edx];
+
+extern unsigned long bd_time_gmtoff(void);
+#pragma aux bd_time_gmtoff = \
+    "mov eax, 564D5868h"    \
+    "xor ebx, ebx"          \
+    "mov ecx, 17h"          \
+    "mov edx, 5658h"        \
+    "in  eax, dx"           \
+    "mov eax, edx"          \
+    value [eax]             \
+    modify [ebx ecx edx];
+
 static HWND g_next;
 static int  g_ignore;
 static int  g_map_tries;
@@ -81,6 +124,42 @@ static int map_host_drive(void)
     if (GetDriveType(MAP_DRIVE "\\") > 1) return 1;   /* letter taken */
     rc = fn(MAP_UNC, 0, MAP_DRIVE);
     return rc == NO_ERROR;
+}
+
+/* Ask the host for its wall-clock time and step ours if we've drifted.
+ * GETTIME hands back UTC seconds plus the host's UTC offset in minutes, so
+ * the tray clock ends up matching the host clock regardless of what time
+ * zone this Windows thinks it's in. On a libv86 without the GETTIME command
+ * the read returns -1 and we just keep quietly retrying — the host build can
+ * change under a resumed guest, so don't give up for good. */
+static void sync_clock(void)
+{
+    unsigned long secs;
+    long gmtoff;
+    __int64 host, guest, delta;
+    SYSTEMTIME st;
+    FILETIME ft;
+
+    secs = bd_time_secs();
+    if (secs == 0 || secs == 0xFFFFFFFFUL) return;
+    gmtoff = (long)bd_time_gmtoff();
+
+    /* Host local time as a FILETIME (100 ns units since 1601-01-01). */
+    host = ((__int64)secs + (__int64)gmtoff * 60 +
+            (__int64)EPOCH_DAYS * 86400) * 10000000;
+
+    GetLocalTime(&st);
+    if (!SystemTimeToFileTime(&st, &ft)) return;
+    guest = ((__int64)ft.dwHighDateTime << 32) | ft.dwLowDateTime;
+
+    delta = host - guest;
+    if (delta < 0) delta = -delta;
+    if (delta < (__int64)TIME_SLACK_S * 10000000) return;
+
+    ft.dwLowDateTime  = (DWORD)host;
+    ft.dwHighDateTime = (DWORD)(host >> 32);
+    if (FileTimeToSystemTime(&ft, &st))
+        SetLocalTime(&st);
 }
 
 static void push_to_host(HWND hwnd)
@@ -149,6 +228,8 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         g_next = SetClipboardViewer(hwnd);
         SetTimer(hwnd, TIMER_CLIP, POLL_MS, 0);
         SetTimer(hwnd, TIMER_MAP, 1, 0);
+        SetTimer(hwnd, TIMER_TIME, TIME_MS, 0);
+        sync_clock();
         return 0;
 
     case WM_DRAWCLIPBOARD:
@@ -170,12 +251,17 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 SetTimer(hwnd, TIMER_MAP, MAP_DELAY, 0);
             return 0;
         }
+        if (wp == TIMER_TIME) {
+            sync_clock();
+            return 0;
+        }
         pull_from_host(hwnd);
         return 0;
 
     case WM_DESTROY:
         ChangeClipboardChain(hwnd, g_next);
         KillTimer(hwnd, TIMER_CLIP);
+        KillTimer(hwnd, TIMER_TIME);
         PostQuitMessage(0);
         return 0;
     }
