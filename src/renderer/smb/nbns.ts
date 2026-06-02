@@ -31,13 +31,20 @@ interface V86 {
 
 export function setupNbns(emulator: V86) {
   emulator.bus.register("net0-send", (frame: Uint8Array) => {
-    const r = parseUdp(frame);
-    if (!r || r.dport !== NBNS_PORT) return;
+    // Runs inside v86's do_tick() (NIC transmit → bus.send), which has no
+    // exception handling — an uncaught throw here would kill the emulator's
+    // tick chain and freeze the whole VM. Drop the frame instead.
+    try {
+      const r = parseUdp(frame);
+      if (!r || r.dport !== NBNS_PORT) return;
 
-    const reply = handleNbns(r.payload, emulator);
-    if (reply) {
-      const eth = buildUdpFrame(emulator, r, NBNS_PORT, r.sport, reply);
-      emulator.bus.send("net0-receive", eth);
+      const reply = handleNbns(r.payload, emulator);
+      if (reply) {
+        const eth = buildUdpFrame(emulator, r, NBNS_PORT, r.sport, reply);
+        emulator.bus.send("net0-receive", eth);
+      }
+    } catch (e) {
+      log("⚠ NBNS handler threw — dropping frame:", e);
     }
   });
   log(`listening on UDP 137 — answering as "${NB_NAME}"`);

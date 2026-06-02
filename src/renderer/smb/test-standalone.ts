@@ -464,6 +464,172 @@ console.log("\n[7] Error handling");
   ok(parsed.status === 0, "internal symlink allowed");
 }
 
+// ─── Test 8: stale share root ────────────────────────────────────────────────
+// Regression: settings.json can point at a directory that was deleted after
+// being saved. SmbSession is constructed inside v86's tcp-connection bus
+// callback (inside do_tick), so it must NEVER throw — a stale root has to
+// degrade to SMB errors on the user share while \\HOST\TOOLS keeps working.
+console.log("\n[8] Stale share root (directory never existed)");
+{
+  const ghostRoot = path.join(os.tmpdir(), `smbtest-ghost-${process.pid}`);
+  // (intentionally never created)
+
+  let stale: SmbSession | undefined;
+  let threw: unknown = null;
+  try {
+    stale = new SmbSession(ghostRoot);
+  } catch (e) {
+    threw = e;
+  }
+  ok(!threw, `constructor doesn't throw on missing root (got: ${threw})`);
+
+  if (stale) {
+    stale.capture = false;
+
+    // NEGOTIATE + SESSION_SETUP still work
+    const negBytes: number[] = [];
+    for (const d of ["LANMAN2.1", "NT LM 0.12"]) { negBytes.push(0x02); negBytes.push(...cstr(d)); }
+    const neg = parseSmb(stale.handle(smbReq(CMD_NEGOTIATE, [], negBytes))!)!;
+    ok(neg.status === 0, "NEGOTIATE OK");
+
+    const ssWords = [0xff, 0, 0, 0, ...u16(4096), ...u16(1), ...u16(0),
+                     ...u32(0), ...u16(0), ...u32(0)];
+    const ssBytes = [...cstr(""), ...cstr("GUEST"), ...cstr("WORKGROUP"),
+                     ...cstr("Windows 4.0"), ...cstr("Windows 4.0")];
+    const ss = parseSmb(stale.handle(smbReq(CMD_SESSION_SETUP_ANDX, ssWords, ssBytes))!)!;
+    ok(ss.status === 0, "SESSION_SETUP OK");
+
+    // TREE_CONNECT to the user share → SMB error (ERRSRV/ERRinvnetname), not a crash
+    const tcWords = [0xff, 0, 0, 0, ...u16(0), ...u16(1)];
+    const tc = parseSmb(stale.handle(smbReq(CMD_TREE_CONNECT_ANDX, tcWords,
+      [0, ...cstr("\\\\HOST\\HOST"), ...cstr("?????")], 0, 1))!)!;
+    ok(tc.status !== 0, `user share connect → status=0x${tc.status.toString(16)}`);
+    // DOS error: class=2 (ERRSRV), code=6 (ERRinvnetname)
+    ok((tc.status & 0xff) === 2 && (tc.status >> 16) === 6, "ERRSRV/ERRinvnetname");
+
+    // TOOLS still fully works: connect, open a virtual file, read it
+    const tcTools = parseSmb(stale.handle(smbReq(CMD_TREE_CONNECT_ANDX, tcWords,
+      [0, ...cstr("\\\\HOST\\TOOLS"), ...cstr("?????")], 0, 1))!)!;
+    ok(tcTools.status === 0 && tcTools.tid === 2, `TOOLS connect OK (tid=${tcTools.tid})`);
+
+    const oWords = [0xff, 0, 0, 0, ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+                    ...u32(0), ...u16(1), ...u32(0), ...u32(0), ...u32(0)];
+    const o = parseSmb(stale.handle(smbReq(CMD_OPEN_ANDX, oWords,
+      [...cstr("\\_MAPZ.BAT")], tcTools.tid, 1))!)!;
+    ok(o.status === 0, "open virtual _MAPZ.BAT on TOOLS OK");
+    const fid = o.words[4] | (o.words[5] << 8);
+    const r = parseSmb(stale.handle(smbReq(CMD_READ_ANDX,
+      [0xff, 0, 0, 0, ...u16(fid), ...u32(0), ...u16(500), ...u16(0), ...u32(0), ...u16(0)],
+      [], tcTools.tid, 1))!)!;
+    const rLen = r.words[10] | (r.words[11] << 8);
+    const rText = String.fromCharCode(...r.bytes.slice(1, 1 + rLen));
+    ok(rText.includes("NET USE Z:"), "read virtual _MAPZ.BAT on TOOLS OK");
+
+    // RAP NetShareEnum hides the dead user share but still lists TOOLS
+    const ipc = parseSmb(stale.handle(smbReq(CMD_TREE_CONNECT_ANDX, tcWords,
+      [0, ...cstr("\\\\HOST\\IPC$"), ...cstr("IPC")], 0, 1))!)!;
+    ok(ipc.status === 0 && ipc.tid === 0xfffe, "IPC$ connect OK");
+    const rap = [...u16(0), ...cstr("WrLeh"), ...cstr("B13BWz"), ...u16(1), ...u16(4096)];
+    const rapName = cstr("\\PIPE\\LANMAN");
+    const rapBytesStart = 32 + 1 + 14 * 2 + 2;
+    const rapWords = [
+      ...u16(rap.length), ...u16(0), ...u16(100), ...u16(4096),
+      0, 0, ...u16(0), ...u32(0), ...u16(0),
+      ...u16(rap.length), ...u16(rapBytesStart + rapName.length),
+      ...u16(0), ...u16(0),
+      0, 0,
+    ];
+    const enumReply = parseSmb(stale.handle(
+      smbReq(0x25, rapWords, [...rapName, ...rap], ipc.tid, 1))!)!;
+    const enumStr = String.fromCharCode(...enumReply.bytes);
+    ok(enumStr.includes("TOOLS"), "NetShareEnum still lists TOOLS");
+    // The ghost share would be named SMBTEST-GHOS… (basename, 12-char cap) —
+    // make sure it's hidden
+    ok(!enumStr.toUpperCase().includes("SMBTEST"), "NetShareEnum hides the dead user share");
+
+    stale.destroy();
+  }
+}
+
+// ─── Test 8b: no share configured at all ────────────────────────────────────
+console.log("\n[8b] No share configured (rootPath=null)");
+{
+  const noShare = new SmbSession(null);
+  noShare.capture = false;
+  const tcWords = [0xff, 0, 0, 0, ...u16(0), ...u16(1)];
+  const tc = parseSmb(noShare.handle(smbReq(CMD_TREE_CONNECT_ANDX, tcWords,
+    [0, ...cstr("\\\\HOST\\HOST"), ...cstr("?????")], 0, 1))!)!;
+  ok((tc.status & 0xff) === 2 && (tc.status >> 16) === 6,
+     "user share connect → ERRSRV/ERRinvnetname");
+  const tcTools = parseSmb(noShare.handle(smbReq(CMD_TREE_CONNECT_ANDX, tcWords,
+    [0, ...cstr("\\\\HOST\\TOOLS"), ...cstr("?????")], 0, 1))!)!;
+  ok(tcTools.status === 0 && tcTools.tid === 2, "TOOLS still connectable");
+  noShare.destroy();
+}
+
+// ─── Test 9: share root deleted mid-session ─────────────────────────────────
+console.log("\n[9] Share root deleted (and restored) mid-session");
+{
+  const findFirstReq = (tid: number, pattern: string): Uint8Array => {
+    const t2params = [...u16(0x16), ...u16(100), ...u16(0), ...u16(1),
+                      ...u32(0), ...cstr(pattern)];
+    const wc = 14 + 1;
+    const bytesStart = 32 + 1 + wc * 2 + 2;
+    const paramOff = bytesStart + 3;
+    const words = [
+      ...u16(t2params.length), ...u16(0), ...u16(100), ...u16(8000),
+      1, 0, ...u16(0), ...u32(0), ...u16(0),
+      ...u16(t2params.length), ...u16(paramOff),
+      ...u16(0), ...u16(0),
+      1, 0, ...u16(1),
+    ];
+    return smbReq(CMD_TRANSACTION2, words, [0, 0, 0, ...t2params], tid, 1);
+  };
+
+  const vanishRoot = fs.mkdtempSync(path.join(os.tmpdir(), "smbtest-vanish-"));
+  fs.writeFileSync(path.join(vanishRoot, "x.txt"), "x");
+  const s = new SmbSession(vanishRoot);
+  s.capture = false;
+
+  const tcWords = [0xff, 0, 0, 0, ...u16(0), ...u16(1)];
+  const tcBytes = [0, ...cstr("\\\\HOST\\HOST"), ...cstr("?????")];
+  const tc1 = parseSmb(s.handle(smbReq(CMD_TREE_CONNECT_ANDX, tcWords, tcBytes, 0, 1))!)!;
+  ok(tc1.status === 0, "tree connect OK while root exists");
+  const tid = tc1.tid;
+
+  // Delete the directory out from under the connected session
+  fs.rmSync(vanishRoot, { recursive: true });
+
+  let threw: unknown = null;
+  let listReply: Uint8Array | null = null;
+  try {
+    listReply = s.handle(findFirstReq(tid, "\\*"));
+  } catch (e) {
+    threw = e;
+  }
+  ok(!threw, `FIND_FIRST2 after deletion doesn't throw (got: ${threw})`);
+  ok(!!listReply && parseSmb(listReply)!.status !== 0,
+     "FIND_FIRST2 after deletion → SMB error");
+
+  // Reconnect attempt → refused with ERRinvnetname
+  const tc2 = parseSmb(s.handle(smbReq(CMD_TREE_CONNECT_ANDX, tcWords, tcBytes, 0, 1))!)!;
+  ok((tc2.status & 0xff) === 2 && (tc2.status >> 16) === 6,
+     "re-connect after deletion → ERRSRV/ERRinvnetname");
+
+  // Directory comes back (e.g. user re-creates it) → next connect works again
+  fs.mkdirSync(vanishRoot);
+  fs.writeFileSync(path.join(vanishRoot, "back.txt"), "hi");
+  const tc3 = parseSmb(s.handle(smbReq(CMD_TREE_CONNECT_ANDX, tcWords, tcBytes, 0, 1))!)!;
+  ok(tc3.status === 0, "connect after directory restored → OK");
+  const list3 = parseSmb(s.handle(findFirstReq(tc3.tid, "\\*"))!)!;
+  ok(list3.status === 0 &&
+     String.fromCharCode(...list3.bytes).includes("back.txt"),
+     "listing works again after restore");
+
+  s.destroy();
+  fs.rmSync(vanishRoot, { recursive: true });
+}
+
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 session.destroy();
 fs.rmSync(tmpRoot, { recursive: true });
