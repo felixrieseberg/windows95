@@ -58,3 +58,26 @@ To update an already-installed agent: end the running `W95tools` task
 (Ctrl+Alt+Del → End Task) or reboot Windows, copy the new
 `\\HOST\TOOLS\agent\W95TOOLS.EXE` over `C:\WINDOWS\W95TOOLS.EXE`, and
 start it again (the StartUp shortcut also picks it up at next login).
+
+### Baking into the disk image
+
+Fresh boots run whatever is baked into `images/windows95.img` — the
+agent is installed there twice: at `C:\WINDOWS\W95TOOLS.EXE` and as a
+copy in `C:\WINDOWS\Start Menu\Programs\StartUp`. You can bake a new
+build directly from the host with mtools (`brew install mtools`), no
+QEMU boot needed. The FAT32 partition starts at sector 63 (byte offset
+32256):
+
+```sh
+make -C guest-tools/agent
+IMG="images/windows95.img@@32256"
+mcopy -o -i "$IMG" guest-tools/agent/W95TOOLS.EXE '::/WINDOWS/W95TOOLS.EXE'
+mcopy -o -i "$IMG" guest-tools/agent/W95TOOLS.EXE \
+  '::/WINDOWS/STARTM~1/PROGRAMS/STARTUP/W95TOOLS.EXE'
+```
+
+Do this while the app is not running. Note that an existing saved
+state (`state-v4.bin`+) keeps its own dirty-block overlay over the
+image *and* the old agent stays loaded in the resumed session's RAM —
+so resumed sessions only pick up a new agent after a guest reboot or
+an End Task + relaunch.
