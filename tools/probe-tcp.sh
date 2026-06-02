@@ -13,7 +13,7 @@ TIMEOUT=${TIMEOUT:-90}
 
 pkill -9 -f "windows95.*electron" 2>/dev/null || true
 sleep 1
-rm -f "$HOME/Library/Application Support/windows95/state-v4.bin"
+rm -f "$HOME/Library/Application Support/windows95/"state-v*.bin
 rm -f "$STATUS" /tmp/win95-probe.done /tmp/win95-screen.png "$TRACE" "$RELAY"
 
 rm -rf dist

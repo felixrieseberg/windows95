@@ -14,6 +14,17 @@ up — three pieces:
 | `src/renderer/smb/index.ts` | Wraps `console.log` so `[smb]` and `[nbns]` lines tee to `$TMPDIR/windows95-smb.log` (outside Electron, readable by any polling script — no CDP needed). |
 | `tools/probe-boot.sh` | One-shot: kill leftovers → parcel build → launch Electron → poll `/tmp/win95-probe.done` → report → kill. |
 
+## Running from a git worktree
+
+`images/` is gitignored, so a fresh worktree has no disk image or default
+state and every probe will fail at boot. Clone them from the main checkout
+first (APFS clonefile — instant, no extra disk space):
+
+```sh
+mkdir -p images
+cp -c "$(git rev-parse --git-common-dir)/.."/images/*.{img,bin} images/
+```
+
 ## One-shot boot test
 
 ```sh
@@ -26,7 +37,7 @@ Prints SUCCESS or a FAIL verdict. ~40s on a clean run.
 
 ```sh
 pkill -9 -f "windows95.*electron"; sleep 2
-rm -f "$HOME/Library/Application Support/windows95/state-v4.bin"
+rm -f "$HOME/Library/Application Support/windows95/"state-v*.bin
 rm -f /tmp/win95-probe.json /tmp/win95-probe.done \
       "$TMPDIR/windows95-smb.log"
 
@@ -76,9 +87,10 @@ Enter.
 
 - **Sporadic bluescreens are normal** on all v86 versions. One FAIL_VXDLINK
   or FAIL_HUNG doesn't prove anything — retry up to 3×.
-- **Always clean state** (`state-v4.bin`) before a probe. `pkill` on a
-  wedged Electron triggers `onbeforeunload`, saving the *corrupted* state.
-  Deleting it forces fallback to `images/default-state.bin`.
+- **Always clean state** (`state-v*.bin` — the suffix tracks `STATE_VERSION`
+  in `src/constants.ts`, so never hardcode a version) before a probe. `pkill`
+  on a wedged Electron triggers `onbeforeunload`, saving the *corrupted*
+  state. Deleting it forces fallback to `images/default-state.bin`.
 - **Don't trust the text buffer in graphics mode.** After desktop (≥640×480)
   the stale BIOS text lingers in the buffer. The harness's `phase` field
   accounts for this; don't re-read `textScreen` in a `desktop` phase and
