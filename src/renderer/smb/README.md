@@ -35,6 +35,14 @@ mounted folder (sanitized, ≤12 chars). `TOOLS` is purely synthetic — `_MAPZ.
 share name to a TID; every path-resolving handler branches on TID so the TOOLS
 tree never touches the host fs.
 
+The user share's backing directory is re-validated on every TREE_CONNECT and
+NetShareEnum (it can be deleted — or restored — at any time after the path was
+saved in settings). While it's missing, connects to that share return
+ERRSRV/ERRinvnetname ("network name cannot be found"), the share is hidden from
+enumeration, and TOOLS/IPC$ keep working. `SmbSession` accepts a null root for
+the "no folder configured" case and must never throw from its constructor — see
+the bus-listener note below.
+
 ### SEARCH (0x81): single-file probes vs wildcard listings
 `SEARCH "\FOO.TXT"` is a stat probe — Win95 wants exactly one entry back. If you
 prepend `.` and `..` like you would for `\*`, Win95 reads the first entry (`.`,
@@ -85,8 +93,21 @@ Clean API. The new code keeps both paths; the bus event is a no-op on old builds
 
 ### Exception in a bus listener kills the emulator
 `bus.send` doesn't catch listener exceptions. They bubble through ne2k →
-`port_write8` → wasm. Win95 freezes. The corrupted state then gets saved by
-`onbeforeunload`. Wrap everything that runs in a callback.
+`port_write8` → wasm and unwind `do_tick()` before it can schedule
+`next_tick()` — the whole VM freezes (instruction counter stops, CPU not
+halted), not just SMB. The corrupted state then gets saved by
+`onbeforeunload`. Wrap everything that runs in a callback:
+
+- the `tcp-connection` bus handler and the old-API `on_tcp_connection` hook
+  (`index.ts`) are wrapped in try/catch — any failure declines the connection,
+- the per-connection data handler (`index.ts`) drops the frame instead,
+- the NBNS `net0-send` handler (`nbns.ts`) drops the frame instead,
+- `SmbSession`'s constructor never throws (a stale share root degrades to
+  per-tree SMB errors; see "Shares" above).
+
+This was a real bug: a share path deleted after being saved made
+`new SmbSession` throw ENOENT inside the tick on the guest's first port-139
+SYN, freezing the entire VM seconds after every boot.
 
 ## Security
 - Read-only.
@@ -94,10 +115,13 @@ Clean API. The new code keeps both paths; the bus event is a no-op on old builds
   the deepest existing ancestor, re-append the unresolved tail, confirm under
   root. Symlinks pointing inside the share still work; symlinks pointing out
   return ERR_BADFILE.
-- Share path validated in main-process IPC (`realpathSync` + `isDirectory()`).
+- Share path validated in main-process IPC (`realpathSync` + `isDirectory()`),
+  re-checked at emulator startup (`emulator.tsx`), and re-resolved on every
+  TREE_CONNECT — a directory deleted after being saved degrades to SMB errors
+  instead of crashing.
 
 ## Tests
-`test-standalone.ts` — 55 protocol tests, full round-trips with real file I/O.
+`test-standalone.ts` — 76 protocol tests, full round-trips with real file I/O.
 Run: `npx ts-node --skip-project --transpile-only --compiler-options
 '{"module":"commonjs","moduleResolution":"bundler","ignoreDeprecations":"6.0"}'
 src/renderer/smb/test-standalone.ts`

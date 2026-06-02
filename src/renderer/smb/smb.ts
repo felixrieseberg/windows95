@@ -47,6 +47,10 @@ export const ERR_NOACCESS = 0x0005;
 export const ERR_BADFID = 0x0006;
 export const ERR_NOFILES = 0x0012; // no more files
 export const ERR_BADFUNC = 0x0001; // unsupported
+// ERRSRV-class code: share name doesn't exist on this server. Win95 reports
+// it as "The network name cannot be found" — what we want when the user
+// share's backing directory has been deleted out from under us.
+export const ERR_INVNETNAME = 0x0006;
 
 // Flags
 const FLAGS_REPLY = 0x80;

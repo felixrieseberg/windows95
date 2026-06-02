@@ -495,8 +495,27 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     // probe harness can point at a fixture dir without touching settings.
     // The hook is installed unconditionally so the Machine ▸ Change Shared
     // Folder menu can point it at a directory later without a restart.
-    const smbRoot =
+    //
+    // The saved path is validated when it's set (SET_SMB_SHARE_PATH in
+    // src/main/ipc.ts), but the directory can be deleted afterwards. The SMB
+    // server degrades gracefully either way; checking here too means a stale
+    // path boots as "no folder shared" (\\HOST\TOOLS still works) and the
+    // warning below tells the user why their share is missing.
+    const savedSmbRoot =
       process.env.WIN95_SMB_SHARE || this.state.smbSharePath || null;
+    let smbRoot = savedSmbRoot;
+    if (smbRoot) {
+      try {
+        if (!fs.statSync(smbRoot).isDirectory()) smbRoot = null;
+      } catch {
+        smbRoot = null;
+      }
+      if (!smbRoot) {
+        console.warn(
+          `🗂 Shared folder no longer exists, starting without it: ${savedSmbRoot}`,
+        );
+      }
+    }
     this.smbShare = setupSmbShare(
       window["emulator"],
       smbRoot,

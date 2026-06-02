@@ -12,6 +12,7 @@ import {
   CMD_QUERY_INFORMATION, CMD_FIND_CLOSE2, CMD_CHECK_DIRECTORY, CMD_SEARCH,
   TRANS2_FIND_FIRST2, TRANS2_FIND_NEXT2, TRANS2_QUERY_FS_INFO, TRANS2_QUERY_PATH_INFO,
   ERRDOS, ERRSRV, ERR_BADFILE, ERR_BADPATH, ERR_BADFID, ERR_NOFILES, ERR_BADFUNC,
+  ERR_INVNETNAME,
 } from "./smb";
 
 const log = (...a: unknown[]) => console.log("[smb]", ...a);
@@ -109,7 +110,14 @@ export class SmbSession {
   // 8.3 → real name, per host directory. SEARCH builds this; OPEN/QUERY
   // consult it so clicking "15UNDE~2.PDF" finds the right long-named file.
   private sfnMaps = new Map<string, Map<string, string>>();
-  private readonly realRoot: string;
+  // The user share's configured path (may be null: no folder picked) and its
+  // resolved realpath (null while the directory doesn't exist). The realpath
+  // is re-derived on every TREE_CONNECT — the directory can be deleted (or
+  // reappear) at any time after the path was saved, and a stale path must
+  // degrade to SMB errors on this share, never an exception: this code runs
+  // inside v86's tick, where an uncaught throw freezes the whole VM.
+  private readonly rootPath: string | null;
+  private realRoot: string | null;
   private readonly toolsRoot?: string;
   public readonly shareName: string;
   public capture = !!process.env.WIN95_SMB_CAPTURE;
@@ -121,9 +129,14 @@ export class SmbSession {
   // makes the mapping survive reboots.
   private readonly virtuals: Map<string, Uint8Array>;
 
-  constructor(rootPath: string, toolsRoot?: string) {
-    this.realRoot = fs.realpathSync(rootPath);
-    this.shareName = shareNameFor(this.realRoot);
+  constructor(rootPath: string | null, toolsRoot?: string) {
+    // Never throws: a saved share path can point at a directory that was
+    // deleted after it was saved. realRoot just stays null and the user
+    // share answers with SMB errors while TOOLS keeps working.
+    this.rootPath = rootPath;
+    this.realRoot = rootPath ? safeRealpathDir(rootPath) : null;
+    this.shareName = shareNameFor(this.realRoot ?? rootPath ?? "");
+    const userShareLabel = this.realRoot ?? rootPath ?? "(no folder shared)";
     const enc = (s: string) => new TextEncoder().encode(s);
     this.virtuals = new Map([
       ["README.TXT", enc(
@@ -131,7 +144,7 @@ export class SmbSession {
         "----------------\r\n" +
         "These files are served by the windows95 app from\r\n" +
         `  ${toolsRoot ?? "(in-memory)"}\r\n\r\n` +
-        `  \\\\HOST\\${this.shareName.padEnd(12)} your shared folder (${this.realRoot})\r\n` +
+        `  \\\\HOST\\${this.shareName.padEnd(12)} your shared folder (${userShareLabel})\r\n` +
         `  \\\\HOST\\${TOOLS_SHARE.padEnd(12)} this folder\r\n\r\n` +
         "_MAPZ.BAT   maps your shared folder to drive Z:. Copy it to\r\n" +
         "            C:\\WINDOWS\\Start Menu\\Programs\\StartUp to reconnect\r\n" +
@@ -146,9 +159,17 @@ export class SmbSession {
         "PAUSE\r\n"
       )],
     ]);
-    this.toolsRoot = toolsRoot && fs.existsSync(toolsRoot)
-      ? fs.realpathSync(toolsRoot)
-      : undefined;
+    this.toolsRoot = toolsRoot ? (safeRealpathDir(toolsRoot) ?? undefined) : undefined;
+  }
+
+  /**
+   * Re-resolve the user share's backing directory and cache the result.
+   * Called on every TREE_CONNECT and share enumeration so a directory that
+   * vanishes (or comes back) is picked up without restarting the session.
+   */
+  private refreshUserRoot(): string | null {
+    this.realRoot = this.rootPath ? safeRealpathDir(this.rootPath) : null;
+    return this.realRoot;
   }
 
   private getVirtual(tid: number, smbPath: string): Uint8Array | undefined {
@@ -381,7 +402,19 @@ export class SmbSession {
     // so W95TOOLS.EXE can hard-code \\HOST\HOST when it auto-maps Z:.
     const share = reqPath.split(/[\\\/]/).pop()?.toUpperCase() ?? "";
     const isIpc = share === "IPC$";
-    this.tid = isIpc ? TID_IPC : share === TOOLS_SHARE ? TID_TOOLS : TID_SHARE;
+    const tid = isIpc ? TID_IPC : share === TOOLS_SHARE ? TID_TOOLS : TID_SHARE;
+
+    // The user share's backing directory is re-validated on every connect —
+    // it may have been deleted (or restored) since the session started. A
+    // missing root refuses just this tree with "network name not found";
+    // TOOLS and IPC$ stay connectable so W95TOOLS' automatic
+    // `NET USE Z: \\HOST\HOST` fails cleanly instead of wedging the server.
+    if (tid === TID_SHARE && !this.refreshUserRoot()) {
+      log(`tree connect: share root unavailable (${this.rootPath ?? "none configured"})`);
+      return buildSmb(req, CMD_TREE_CONNECT_ANDX, dosError(ERRSRV, ERR_INVNETNAME),
+                      new Uint8Array(0), new Uint8Array(0));
+    }
+    this.tid = tid;
 
     const words = new Writer()
       .bytes(andxNone())
@@ -1167,7 +1200,9 @@ export class SmbSession {
       //   W   = 2-byte type (0=disk, 3=IPC)
       //   z   = 4-byte string pointer (we send 0 = no remark)
       const shares = [
-        { name: this.shareName, type: 0 },
+        // Hide the user share while its backing directory is missing —
+        // listing a share that refuses every connect just confuses Explorer.
+        ...(this.refreshUserRoot() ? [{ name: this.shareName, type: 0 }] : []),
         { name: TOOLS_SHARE, type: 0 },
         { name: "IPC$", type: 3 },
       ];
@@ -1269,6 +1304,20 @@ export class SmbSession {
 }
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * realpath a directory without ever throwing. Returns null when the path
+ * doesn't exist, isn't a directory, or can't be resolved — callers treat
+ * that as "this share has no backing directory right now".
+ */
+export function safeRealpathDir(p: string): string | null {
+  try {
+    const real = fs.realpathSync(p);
+    return fs.statSync(real).isDirectory() ? real : null;
+  } catch {
+    return null;
+  }
+}
 
 // DOS device names. Win95 maps these regardless of extension or directory,
 // so a host file called "con.txt" or "AUX" opens the device and hangs the

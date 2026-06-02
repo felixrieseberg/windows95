@@ -111,24 +111,27 @@ export function setupSmbShare(emulator: V86, hostPath: string | null, toolsRoot?
 
   const wireConn = (conn: TCPConnection) => {
     log(`← TCP SYN ${conn.tuple}`);
-    if (!hostPath) {
-      // No folder picked yet — caller declines the SYN so the guest sees a
-      // clean RST instead of a half-open NetBIOS session.
-      log("no share configured → RST");
-      return false;
-    }
+    // hostPath may be null (no folder picked yet) or stale (directory deleted
+    // since it was saved). SmbSession handles both: \\HOST\TOOLS keeps
+    // working, the user share answers with "network name not found".
     const framer = new NetBIOSFramer();
     const session = new SmbSession(hostPath, toolsRoot);
 
     const handler = (data: Uint8Array) => {
-      for (const msg of framer.push(data)) {
-        if (msg.type === 0x81) {
-          log("← NB session request → +response");
-          conn.write(nbPositiveResponse());
-        } else if (msg.type === 0x00) {
-          const reply = session.handle(msg.payload);
-          if (reply) conn.write(nbWrap(reply));
+      // Runs inside v86's do_tick() (guest TX → ne2k → fake_network) — an
+      // exception escaping here would kill the tick chain and freeze the VM.
+      try {
+        for (const msg of framer.push(data)) {
+          if (msg.type === 0x81) {
+            log("← NB session request → +response");
+            conn.write(nbPositiveResponse());
+          } else if (msg.type === 0x00) {
+            const reply = session.handle(msg.payload);
+            if (reply) conn.write(nbWrap(reply));
+          }
         }
+      } catch (e) {
+        log("⚠ data handler threw — dropping frame:", e);
       }
     };
 
@@ -170,9 +173,18 @@ export function setupSmbShare(emulator: V86, hostPath: string | null, toolsRoot?
 
   // New API: bus event (no-op on old v86 — event never fires)
   emulator.bus.register("tcp-connection", (c: unknown) => {
-    const conn = c as TCPConnection;
-    if (conn.sport !== 139) return;
-    if (wireConn(conn)) conn.accept();
+    // Backstop: this callback runs synchronously inside v86's do_tick()
+    // (guest SYN → ne2k transmit → fake_network → bus.send), and bus.send
+    // doesn't catch listener exceptions. Anything escaping here unwinds
+    // do_tick() before it can schedule next_tick() — the whole VM freezes,
+    // not just SMB. Drop the connection instead.
+    try {
+      const conn = c as TCPConnection;
+      if (conn.sport !== 139) return;
+      if (wireConn(conn)) conn.accept();
+    } catch (e) {
+      log("⚠ tcp-connection hook threw — connection dropped:", e);
+    }
   });
 
   // Old API: monkey-patch adapter.on_tcp_connection. The adapter is created
@@ -191,43 +203,51 @@ export function setupSmbShare(emulator: V86, hostPath: string | null, toolsRoot?
     const orig = adapter.on_tcp_connection.bind(adapter);
     adapter.on_tcp_connection = function (packet: any, tuple: string): boolean {
       if (packet.tcp.dport !== 139) return orig(packet, tuple);
-      // New v86 fires the tcp-connection bus event BEFORE this callback;
-      // if our bus handler already accepted the conn, it's in tcp_conn —
-      // claim it so the original (which would otherwise RST) doesn't run.
-      if (adapter.tcp_conn[tuple]) return true;
-
-      const adapterAny = adapter as any;
-      adapterAny.receive = () => {};
-      let conn: TCPConnection | undefined;
+      // Backstop: like the tcp-connection bus event above, this is called
+      // from inside v86's do_tick(). An uncaught exception here freezes the
+      // whole VM, so any failure becomes "decline the SYN" (guest sees RST).
       try {
-        const fakeTuple = "__nbt__";
-        orig({ ...packet, tcp: { ...packet.tcp, dport: 80 } }, fakeTuple);
-        conn = adapter.tcp_conn[fakeTuple];
-        delete adapter.tcp_conn[fakeTuple];
-      } finally {
-        delete adapterAny.receive;
-      }
+        // New v86 fires the tcp-connection bus event BEFORE this callback;
+        // if our bus handler already accepted the conn, it's in tcp_conn —
+        // claim it so the original (which would otherwise RST) doesn't run.
+        if (adapter.tcp_conn[tuple]) return true;
 
-      if (!conn) {
-        log("⚠ probe didn't yield a connection; RST");
-        return false;
-      }
+        const adapterAny = adapter as any;
+        adapterAny.receive = () => {};
+        let conn: TCPConnection | undefined;
+        try {
+          const fakeTuple = "__nbt__";
+          orig({ ...packet, tcp: { ...packet.tcp, dport: 80 } }, fakeTuple);
+          conn = adapter.tcp_conn[fakeTuple];
+          delete adapter.tcp_conn[fakeTuple];
+        } finally {
+          delete adapterAny.receive;
+        }
 
-      // Re-aim it at port 139. accept() overwrites sport/dport/hsrc/psrc/seq/ack
-      // from the packet; .on("data") replaces the HTTP handler (assignment, not
-      // push). Only state needs explicit reset — the probe accept set it to
-      // "established" and we want a fresh handshake.
-      conn.tuple = tuple;
-      conn.state = "syn-received";
-      if (!wireConn(conn)) return false;
-      try {
-        conn.accept(packet);
+        if (!conn) {
+          log("⚠ probe didn't yield a connection; RST");
+          return false;
+        }
+
+        // Re-aim it at port 139. accept() overwrites sport/dport/hsrc/psrc/seq/ack
+        // from the packet; .on("data") replaces the HTTP handler (assignment, not
+        // push). Only state needs explicit reset — the probe accept set it to
+        // "established" and we want a fresh handshake.
+        conn.tuple = tuple;
+        conn.state = "syn-received";
+        if (!wireConn(conn)) return false;
+        try {
+          conn.accept(packet);
+        } catch (e) {
+          log("accept threw:", e instanceof Error ? e.message : String(e));
+          return false;
+        }
+        adapter.tcp_conn[tuple] = conn;
+        return true;
       } catch (e) {
-        log("accept threw:", e instanceof Error ? e.message : String(e));
+        log("⚠ on_tcp_connection hook threw — RST:", e);
         return false;
       }
-      adapter.tcp_conn[tuple] = conn;
-      return true;
     };
     log("hooked adapter.on_tcp_connection (old API, conn-recycling)");
     return true;
