@@ -26,6 +26,10 @@ import { startProbe } from "./debug-harness";
 import { SyncFileBuffer } from "./sync-file-buffer";
 
 const PROBE = process.env.WIN95_PROBE === "1";
+// WIN95_PROBE_RESTORE=1 makes the probe restore state (user state, falling
+// back to images/default-state.bin) instead of cold-booting — for verifying
+// that a freshly generated default-state.bin actually resumes to the desktop.
+const PROBE_RESTORE = process.env.WIN95_PROBE_RESTORE === "1";
 const PROBE_OPTS: Record<string, unknown> = (() => {
   try {
     return JSON.parse(process.env.WIN95_PROBE_OPTS || "{}");
@@ -73,7 +77,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.bootFromScratch = this.bootFromScratch.bind(this);
 
     this.state = {
-      isBootingFresh: PROBE,
+      isBootingFresh: PROBE && !PROBE_RESTORE,
       isCursorCaptured: false,
       hasAbsoluteMouse: false,
       isRunning: false,
@@ -101,9 +105,13 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     getLegacyStatePath().then((p) => this.setState({ legacyStatePath: p }));
 
     if (PROBE) {
-      // Skip the start card; boot fresh immediately. The 100ms delay
-      // lets React mount the #emulator div first.
-      setTimeout(() => this.bootFromScratch(), 100);
+      // Skip the start card. Cold boot by default; with WIN95_PROBE_RESTORE=1
+      // start normally so the saved/default state gets restored. The 100ms
+      // delay lets React mount the #emulator div first.
+      setTimeout(
+        () => (PROBE_RESTORE ? this.startEmulator() : this.bootFromScratch()),
+        100,
+      );
     }
   }
 
