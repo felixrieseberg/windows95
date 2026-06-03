@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+# Slim down the Windows 95 disk image by deleting content that has no
+# function in this app (online-service installers, MSN setup cabinets,
+# uninstall backups, NetMeeting, browser caches) and then zeroing
+# free space so the image compresses dramatically better.
+#
+# *** STATUS: NOT CURRENTLY RECOMMENDED ***
+# Offline modification worsens v86 cold-boot reliability due to the open
+# bug in docs/v86-cold-boot-bug.md. Until that is fixed, do this cleanup
+# inside Windows instead (Explorer delete + ScanDisk + clean shutdown) and
+# ship the image untouched — see "Slimming the image" in docs/qemu.md.
+#
+# This does NOT shrink the raw 1 GB image file — it shrinks the packed
+# images zip (tools/pack-disk.sh / DISK_URL artifact) and therefore every
+# app installer and download built from it.
+#
+# REQUIREMENTS
+#   - mtools (brew install mtools)
+#   - The image must NOT be open in Electron or QEMU (checked below).
+#
+# AFTER RUNNING THIS
+#   1. images/default-state.bin MUST be regenerated: the old saved state
+#      has the deleted files' FAT cached in guest RAM — resuming it on the
+#      slimmed disk will corrupt the filesystem. Boot fresh, reach the
+#      desktop, save a new state, copy it over default-state.bin.
+#   2. Run tools/pack-disk.sh to produce the new images zip.
+#   3. Bump STATE_VERSION in src/constants.ts (existing user states predate
+#      the disk change).
+#
+# Usage: tools/slim-disk.sh [image]            (default: images/windows95.img)
+#        tools/slim-disk.sh --dry-run [image]  (list what would be deleted)
+set -euo pipefail
+
+DRY_RUN=0
+ZEROFILL=1
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --dry-run) DRY_RUN=1; shift ;;
+    --no-zerofill) ZEROFILL=0; shift ;;
+    *) break ;;
+  esac
+done
+IMG="${1:-images/windows95.img}"
+# FAT32 partition starts at sector 63
+SPEC="$IMG@@32256"
+
+m() {
+  local cmd="$1"
+  shift
+  "$cmd" -i "$SPEC" "$@"
+}
+
+if ! command -v mdeltree > /dev/null; then
+  echo "mtools not found — brew install mtools" >&2; exit 1
+fi
+if [ ! -f "$IMG" ]; then
+  echo "$IMG not found" >&2; exit 1
+fi
+if lsof "$IMG" > /dev/null 2>&1; then
+  if [ "$DRY_RUN" = "1" ]; then
+    echo "WARNING: $IMG is open in another process — dry run only reads, continuing." >&2
+  else
+    echo "ERROR: $IMG is open in another process (Electron or QEMU?):" >&2
+    lsof "$IMG" >&2
+    exit 1
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Tier 1 — pure junk: 1996/97 online-service installers, MSN setup cabinets,
+# setup/uninstall leftovers, logs, caches. Nothing here is reachable
+# functionality; most of it is literally installers for services that no
+# longer exist.
+# ---------------------------------------------------------------------------
+TIER1_DIRS=(
+  '::/Program Files/Online Services'
+  '::/WINDOWS/OPTIONS'
+  '::/Program Files/The Microsoft Network'
+  '::/Program Files/Uninstall Information'
+  '::/WINDOWS/SYSBCKUP'
+  '::/Program Files/PLUS!/Setup'
+  '::/Program Files/Internet Explorer/Setup'
+  '::/Program Files/Internet Explorer/Uninstall Information'
+  '::/Program Files/Internet Explorer/Connection Wizard'
+  '::/Program Files/Internet Explorer/SIGNUP'
+  '::/Program Files/Internet Explorer/W2K'
+  '::/WINDOWS/SYSTEM/mui'
+  '::/WINDOWS/Temporary Internet Files'
+  '::/WINDOWS/Cookies'
+  '::/WINDOWS/History'
+  '::/WINDOWS/Recent'
+  '::/WINDOWS/DESKTOP/Online Services'
+  '::/WINDOWS/Start Menu/Programs/Online Services'
+)
+TIER1_FILES=(
+  '::/Program Files/Internet Explorer/ie5bak.DAT'
+  '::/BOOTLOG.TXT'
+  '::/BOOTLOG.PRV'
+  '::/DETLOG.TXT'
+  '::/DETLOG.OLD'
+  '::/SETUPLOG.TXT'
+  '::/SCANDISK.LOG'
+  '::/AUTOEXEC.000'
+  '::/CONFIG.000'
+  '::/WINDOWS/SYSTEM.DA0'
+  '::/WINDOWS/USER.DA0'
+  '::/WINDOWS/ShellIconCache'
+  '::/WINDOWS/WINSOCK.OLD'
+  '::/WINDOWS/setup.old'
+  '::/WINDOWS/brndlog.bak'
+  '::/WINDOWS/WININIT.BAK'
+  '::/WINDOWS/Active Setup Log.BAK'
+  '::/WINDOWS/INF/mplayer2.bak'
+  '::/WINDOWS/DESKTOP/Try The Microsoft Network.lnk'
+  '::/WINDOWS/Start Menu/Programs/Accessories/Communications/Internet Connection Wizard.lnk'
+  '::/WINDOWS/Start Menu/Programs/Accessories/Online Registration.lnk'
+)
+
+# ---------------------------------------------------------------------------
+# NOT deleted: help files (WINDOWS\HELP, Office/FrontPage .hlp/.cnt/.aw).
+# They are dead weight too (~6.5 MB), but Felix decided to keep them —
+# pressing F1 and getting period-correct 1995 help text is part of the charm.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Tier 3 — apps that cannot work in this environment: NetMeeting needs ILS
+# servers that have been gone since 2003. Its Start Menu entry goes too.
+#
+# Deliberately KEPT despite also being useless: Windows Messaging and
+# Internet Mail and News (~0.4 MB). The desktop "Inbox" icon is a
+# CLSID-based shell icon registered in the binary registry — it can't be
+# removed offline, so deleting its program files would leave a desktop icon
+# that errors when clicked.
+# ---------------------------------------------------------------------------
+TIER3_DIRS=(
+  '::/Program Files/NetMeeting'
+)
+TIER3_FILES=(
+  '::/WINDOWS/Start Menu/Programs/Microsoft NetMeeting.lnk'
+)
+
+# Deleted system folders that Windows expects to exist — recreate empty.
+RECREATE_DIRS=(
+  '::/WINDOWS/Recent'
+  '::/WINDOWS/Cookies'
+  '::/WINDOWS/History'
+  '::/WINDOWS/Temporary Internet Files'
+)
+
+free_bytes() {
+  m mdir :: 2> /dev/null | grep 'bytes free' | tr -dc '0-9'
+}
+
+# mdir without -a misses hidden/system files (BOOTLOG.TXT, SYSTEM.DA0, ...)
+exists() {
+  m mdir -a "$1" > /dev/null 2>&1
+}
+
+del_file() {
+  if exists "$1"; then
+    if [ "$DRY_RUN" = "1" ]; then echo "would delete file: $1"; return; fi
+    m mattrib -r -s -h "$1" 2> /dev/null || true
+    m mdel "$1" && echo "deleted file: $1"
+  else
+    echo "skip (not present): $1"
+  fi
+}
+
+del_dir() {
+  if exists "$1"; then
+    if [ "$DRY_RUN" = "1" ]; then echo "would delete dir:  $1"; return; fi
+    m mattrib -/ -r -s -h "$1" 2> /dev/null || true
+    m mdeltree "$1" > /dev/null && echo "deleted dir:  $1"
+  else
+    echo "skip (not present): $1"
+  fi
+}
+
+BEFORE=$(free_bytes)
+echo "Free space before: $BEFORE bytes"
+echo
+
+# Files first (some live inside dirs that get removed later — order avoids
+# double-handling), then whole directories.
+for f in "${TIER1_FILES[@]}" "${TIER3_FILES[@]}"; do del_file "$f"; done
+for d in "${TIER1_DIRS[@]}" "${TIER3_DIRS[@]}"; do del_dir "$d"; done
+
+if [ "$DRY_RUN" = "1" ]; then
+  echo; echo "Dry run — nothing modified."; exit 0
+fi
+
+for d in "${RECREATE_DIRS[@]}"; do
+  m mmd "$d" 2> /dev/null && echo "recreated empty dir: $d" || true
+done
+
+AFTER_DELETE=$(free_bytes)
+echo
+echo "Free space after deletions: $AFTER_DELETE bytes (freed $(((AFTER_DELETE - BEFORE) / 1024 / 1024)) MB)"
+
+# ---------------------------------------------------------------------------
+# Zero free space. Deleted-file remnants in free clusters are what actually
+# bloats the compressed image — FAT delete only marks clusters free, it
+# doesn't erase them.
+#
+# This MUST go through tools/zero-free-clusters.py (direct cluster writes,
+# FAT untouched). Do NOT replace it with the classic "mcopy a giant zero
+# file, then delete it" trick: that approach leaves the image in a state
+# that deterministically fails Win95 cold boot in v86 ("Invalid VxD dynamic
+# link call") even though it boots fine in QEMU and fsck reports it clean.
+# ---------------------------------------------------------------------------
+if [ "$ZEROFILL" = "0" ]; then
+  echo
+  echo "Skipping zero-fill (--no-zerofill)."
+  exit 0
+fi
+echo
+echo "Zeroing dirty free clusters — this takes a minute or two..."
+python3 "$(dirname "$0")/zero-free-clusters.py" "$IMG"
+
+echo
+echo "Final state:"
+m mdir :: | tail -2
+echo
+echo "Next steps:"
+echo "  1. Verify IN THE APP:  tools/probe-boot.sh   (v86 cold boot — QEMU alone is not enough)"
+echo "  2. Optional 2nd check: yarn run qemu"
+echo "  3. Repack:             tools/pack-disk.sh"
+echo "  4. Regenerate images/default-state.bin (REQUIRED — old state caches the old FAT)"
+echo "  5. Bump STATE_VERSION in src/constants.ts"
