@@ -46,3 +46,27 @@ qemu-system-i386 \
     -netdev user,id=mynet0 \
     -device ne2k_isa,netdev=mynet0,irq=10
 ```
+
+## Mouse: keep `vmport=off`
+
+The image has VBADOS (`VBMOUSE.EXE` + `VBMOUSE.DRV`) installed for seamless
+host-cursor tracking in the app. Don't enable QEMU's VMware backdoor
+(`-M pc,vmport=on`) expecting the same thing — the cursor becomes unusably
+laggy. The `yarn run qemu` script therefore passes `vmport=off`, which makes
+VBMOUSE fall back to a plain relative PS/2 mouse (click the window to grab,
+Ctrl+Alt+G to release).
+
+Why it breaks with `vmport=on`: QEMU's `vmmouse` queues **every** host
+pointer event (4 words each, up to 256 events) and notifies the guest by
+injecting a fake PS/2 packet per event. VBMOUSE reads exactly **one**
+4-word packet per PS/2 interrupt (`mousetsr.c, handle_ps2_packet` — an
+`if`, not a `while`). Whenever a single notification is dropped (PS/2
+disabled during driver init, PS/2 output queue full, boot), the queue gains
+a permanent backlog: from then on the guest only ever reads stale events
+and the cursor trails minutes behind. v86 doesn't have this problem because
+our `vmware-abspointer` patch coalesces motion packets in place — the guest
+is never more than one move behind by design.
+
+Fixing it for real would mean either teaching QEMU's `hw/i386/vmmouse.c` to
+coalesce motion events, or patching VBADOS to drain the whole queue per
+interrupt and baking the rebuilt driver into the image.
