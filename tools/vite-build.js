@@ -57,7 +57,7 @@ function mainConfig(watch) {
       emptyOutDir: false,
       minify: false,
       sourcemap: false,
-      target: 'node22',
+      target: 'node24',
       lib: { entry: 'src/main/main.ts', formats: ['cjs'], fileName: () => 'main.js' },
       rollupOptions: {
         external: [...nodeExternals, 'electron-squirrel-startup', 'update-electron-app'],
@@ -86,7 +86,7 @@ function rendererConfig(watch) {
       rollupOptions: {
         external: nodeExternals,
         output: {
-          inlineDynamicImports: true,
+          codeSplitting: false,
           assetFileNames: '[name][extname]',
           // Electron renderer <script> with nodeIntegration has module/require
           // but not a bare `exports` global; alias it so Rollup's CJS prelude works.
