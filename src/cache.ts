@@ -26,6 +26,5 @@ export async function clearStorageData() {
       "websql",
       "serviceworkers",
     ],
-    quotas: ["temporary"],
   });
 }

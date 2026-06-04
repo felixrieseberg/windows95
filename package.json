@@ -1,7 +1,7 @@
 {
   "name": "windows95",
   "productName": "windows95",
-  "version": "5.0.1",
+  "version": "6.0.0",
   "description": "Windows 95, in an app. I'm sorry.",
   "main": "./dist/src/main/main.js",
   "scripts": {
@@ -24,26 +24,26 @@
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "update-electron-app": "^3.1.2"
   },
   "devDependencies": {
-    "@electron-forge/cli": "7.11.1",
-    "@electron-forge/maker-deb": "7.11.1",
+    "@electron-forge/cli": "7.11.2",
+    "@electron-forge/maker-deb": "7.8.3",
     "@electron-forge/maker-flatpak": "7.11.1",
-    "@electron-forge/maker-rpm": "7.11.1",
-    "@electron-forge/maker-squirrel": "7.11.1",
-    "@electron-forge/maker-zip": "7.11.1",
+    "@electron-forge/maker-rpm": "7.8.3",
+    "@electron-forge/maker-squirrel": "7.11.2",
+    "@electron-forge/maker-zip": "7.11.2",
     "@electron-forge/publisher-github": "7.11.1",
-    "@types/node": "^22.19.17",
-    "@types/react": "^19.2.14",
+    "@types/node": "^24.9.0",
+    "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
-    "dotenv": "^17.3.1",
-    "electron": "41.2.0",
+    "dotenv": "^17.4.2",
+    "electron": "42.3.3",
     "patch-package": "^8.0.1",
-    "prettier": "^3.8.1",
-    "typescript": "^6.0.2",
-    "vite": "^7.3.1"
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13"
   }
 }
