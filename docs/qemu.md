@@ -97,6 +97,40 @@ yarn run qemu                  # optional second opinion
 tools/pack-disk.sh             # build the new images zip
 ```
 
+### Uploading the packed image
+
+CI does not use `images/` from this repo. On tag builds it downloads the
+zip from a GitHub release on a separate private repo and unzips it into
+`images/` (see `tools/download-disk.sh` / `.ps1` and the "Download disk
+image" steps in `.github/workflows/build.yml`). The wiring lives on
+*this* repo:
+
+- `vars.DISK_REPO` — the private images repo
+  (currently `felixrieseberg/windows95-images`)
+- `vars.DISK_TAG` — the release tag CI pulls (currently `v5`)
+- `secrets.IMAGES_REPO_TOKEN` — token with read access to `DISK_REPO`
+
+To ship a new image:
+
+```sh
+tools/pack-disk.sh images_v6.zip                   # pack from images/
+gh release create v6 -R felixrieseberg/windows95-images \
+  --title "v6 disk image" images_v6.zip            # upload
+gh variable set DISK_TAG --body v6                 # point CI at it
+```
+
+Constraints imposed by the download script:
+
+- **Exactly one `.zip` asset per release** — it downloads with
+  `-p '*.zip' -O images.zip` and errors if several assets match.
+- **The zip must be flat**: `windows95.img` and `default-state.bin` at
+  the archive root, no containing directory (`pack-disk.sh` gets this
+  right; zipping the `images/` folder in Finder does not).
+
+Existing releases/tags on the images repo are immutable history — make a
+new tag for a new image rather than replacing assets on an old one, so a
+re-run of an old build still gets the bytes it shipped with.
+
 **Verify in the app, not just QEMU, and expect flakes.** Cold boot in v86
 currently fails sporadically on any image, and certain disk states fail
 deterministically. For how to interpret probe verdicts (when to retry,
