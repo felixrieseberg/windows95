@@ -132,3 +132,33 @@ of the normal app.
 | No SMB traffic at all | `$TMPDIR/windows95-smb.log` should have `hooked adapter` line. If absent, v86 API changed — see `src/renderer/smb/README.md` |
 | SMB hooks fire, no connection | Win95's "NetBIOS over TCP/IP" checkbox — bake into default-state.bin |
 | Boot hangs on `2996c087` or older v86 | You probably have a ABI-mismatched wasm/JS pair. Prod wasm is the ground truth; rebuild JS against it. |
+
+## VXDLINK: flake vs. real bug
+
+Two different things produce FAIL_VXDLINK:
+
+1. **Sporadic flake** (~1 in 2–3 runs even on known-good images): passes on
+   retry. This is why the retry-3× rule exists.
+2. **Deterministic failure** (same address every run, e.g.
+   `VMM(01)+000036E5 → device "C000" service E3E4`): the image's disk
+   layout triggers a real v86 disk-path bug. Known triggers: zeroing free
+   space via the "mcopy a giant zero file, then delete it" trick, and
+   offline (mtools) mass-deletion of recently-written file trees. The same
+   image boots fine in QEMU and passes fsck. Retrying never helps; the
+   image content must change.
+
+This is the canonical verdict-interpretation policy (other docs link here):
+
+- **One SUCCESS** = the image can boot. Good — same rule as bisecting.
+- **Three identical failures** (same VxD address) = the image is in a bad
+  state. Stop retrying; the content must change.
+- Anything in between = keep retrying, you are looking at flakes.
+
+Never conclude anything from a single FAIL.
+
+## Probing the state-restore path
+
+`WIN95_PROBE_RESTORE=1 tools/probe-boot.sh` makes the probe restore state
+(user state → `images/default-state.bin` fallback) instead of cold
+booting. Use it to verify a freshly generated default-state.bin actually
+resumes to the desktop — required after every image change.

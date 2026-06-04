@@ -70,3 +70,51 @@ is never more than one move behind by design.
 Fixing it for real would mean either teaching QEMU's `hw/i386/vmmouse.c` to
 coalesce motion events, or patching VBADOS to drain the whole queue per
 interrupt and baking the rebuilt driver into the image.
+
+## Slimming the image before a release
+
+After working in the image (installing things, building, browsing), two
+kinds of dead weight accumulate:
+
+1. **Deleted-file remnants.** FAT deletion only marks clusters free — the
+   old bytes stay on disk and bloat the compressed zip badly (at one point
+   ~200 MB of the packed zip was deleted-file garbage).
+2. **Content that has no function in this app**: 1996/97 online-service
+   installers (AOL, CompuServe, MSN), setup cabinets, uninstall backups,
+   NetMeeting, browser caches. (Help files are dead weight too, but they
+   stay — F1 showing period-correct 1995 help is part of the charm.)
+
+**The recommended workflow is to do all of this inside Windows** (in a
+QEMU session): delete the dead content in Explorer, empty the Recycle Bin,
+run ScanDisk, shut down cleanly. Win95's own filesystem operations keep
+the disk in a state that v86 cold-boots. Then:
+
+```sh
+tools/probe-boot.sh            # cold-boot in the APP (v86) — required
+yarn run qemu                  # optional second opinion
+# regenerate images/default-state.bin from a successful cold boot
+# bump STATE_VERSION in src/constants.ts
+tools/pack-disk.sh             # build the new images zip
+```
+
+**Verify in the app, not just QEMU, and expect flakes.** Cold boot in v86
+currently fails sporadically on any image, and certain disk states fail
+deterministically. For how to interpret probe verdicts (when to retry,
+when to ship, when to declare the image broken), follow the policy in
+`.claude/skills/probe-win95/SKILL.md` ("VXDLINK: flake vs. real bug").
+
+### Offline modification (currently not recommended)
+
+The image can also be modified offline with mtools (see the inspect-disk
+skill), and `tools/zero-free-clusters.py` can zero free clusters without
+touching the FAT. The results pass fsck and boot in QEMU — but offline
+modification measurably worsens v86 cold-boot reliability on images that
+have been through recent QEMU sessions, again due to the bug above. Until
+that bug is fixed in the v86 fork, prefer the in-Windows workflow and ship
+the image untouched. (Never zero free space with the classic "`mcopy` a
+giant zero file, then delete it" trick — that one breaks v86 cold boot
+deterministically.)
+
+After any image content change you MUST regenerate
+`images/default-state.bin` (the old saved state has the old FAT cached in
+guest RAM) and bump `STATE_VERSION` in `src/constants.ts`.

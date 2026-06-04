@@ -19,3 +19,6 @@ guest-tools/**/*.EXE
 guest-tools/**/*.exe
 /.claude/scheduled_tasks.lock
 /.claude/worktrees/
+
+# Packed release images (uploaded to the private images release, never committed)
+/images_*.zip

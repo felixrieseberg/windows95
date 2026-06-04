@@ -26,6 +26,10 @@ import { startProbe } from "./debug-harness";
 import { SyncFileBuffer } from "./sync-file-buffer";
 
 const PROBE = process.env.WIN95_PROBE === "1";
+// WIN95_PROBE_RESTORE=1 makes the probe restore state (user state, falling
+// back to images/default-state.bin) instead of cold-booting — for verifying
+// that a freshly generated default-state.bin actually resumes to the desktop.
+const PROBE_RESTORE = process.env.WIN95_PROBE_RESTORE === "1";
 const PROBE_OPTS: Record<string, unknown> = (() => {
   try {
     return JSON.parse(process.env.WIN95_PROBE_OPTS || "{}");
@@ -73,7 +77,7 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.bootFromScratch = this.bootFromScratch.bind(this);
 
     this.state = {
-      isBootingFresh: PROBE,
+      isBootingFresh: false,
       isCursorCaptured: false,
       hasAbsoluteMouse: false,
       isRunning: false,
@@ -101,9 +105,26 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     getLegacyStatePath().then((p) => this.setState({ legacyStatePath: p }));
 
     if (PROBE) {
-      // Skip the start card; boot fresh immediately. The 100ms delay
-      // lets React mount the #emulator div first.
-      setTimeout(() => this.bootFromScratch(), 100);
+      // Skip the start card. Cold boot by default; with WIN95_PROBE_RESTORE=1
+      // start normally so the saved/default state gets restored. The 100ms
+      // delay lets React mount the #emulator div first.
+      setTimeout(async () => {
+        if (!PROBE_RESTORE) {
+          this.bootFromScratch();
+          return;
+        }
+
+        // Restore mode exists to verify a state file. Refuse to fall back
+        // to a cold boot — that also reaches the desktop, and would turn a
+        // missing state into a false SUCCESS verdict.
+        if (await this.getStateFilePath()) {
+          this.startEmulator();
+        } else {
+          console.error(
+            "WIN95_PROBE_RESTORE=1 but there is no state to restore — not booting",
+          );
+        }
+      }, 100);
     }
   }
 
@@ -661,22 +682,31 @@ export class Emulator extends React.Component<{}, EmulatorState> {
   }
 
   /**
-   * Returns the current machine's state - either what
-   * we have saved or alternatively the default state.
+   * Path of the state file that would be restored: the user's saved state
+   * if present, falling back to the bundled default state. Null if neither
+   * exists.
    */
-  private async getState(): Promise<ArrayBuffer | null> {
+  private async getStateFilePath(): Promise<string | null> {
     const expectedStatePath = await getStatePath();
     const statePath = fs.existsSync(expectedStatePath)
       ? expectedStatePath
       : CONSTANTS.DEFAULT_STATE_PATH;
 
     if (fs.existsSync(statePath)) {
-      return fs.readFileSync(statePath).buffer;
-    } else {
-      console.log(`getState: No state file found at ${statePath}`);
+      return statePath;
     }
 
+    console.log(`getStateFilePath: No state file found at ${statePath}`);
     return null;
+  }
+
+  /**
+   * Returns the current machine's state - either what
+   * we have saved or alternatively the default state.
+   */
+  private async getState(): Promise<ArrayBuffer | null> {
+    const statePath = await this.getStateFilePath();
+    return statePath ? fs.readFileSync(statePath).buffer : null;
   }
 
   private unlockMouse() {
