@@ -63,10 +63,9 @@ hdiutil detach "$DEV"
 | Clear R/S/H attributes | `mattrib -i images/windows95.img@@32256 -r -s -h ::/FILE` (`-/` for recursive) |
 
 `mdel`/`mdeltree` fail on read-only/hidden/system files — run `mattrib`
-first. For bulk cleanup there is `tools/slim-disk.sh` (safety checks,
-curated deletion list, zero step) — but note it is currently shelved:
-offline modification worsens v86 cold-boot reliability. Prefer doing
-cleanup inside Windows; see "Slimming the image" in `docs/qemu.md`.
+first. Note that bulk offline cleanup is currently discouraged: offline
+modification worsens v86 cold-boot reliability. Prefer doing cleanup
+inside Windows; see "Slimming the image" in `docs/qemu.md`.
 
 ### Warning 1: never write while a VM holds the image
 

@@ -103,17 +103,17 @@ deterministically. For how to interpret probe verdicts (when to retry,
 when to ship, when to declare the image broken), follow the policy in
 `.claude/skills/probe-win95/SKILL.md` ("VXDLINK: flake vs. real bug").
 
-### Offline tools (currently not recommended)
+### Offline modification (currently not recommended)
 
-`tools/slim-disk.sh` (curated deletions) and `tools/zero-free-clusters.py`
-(zero free clusters without touching the FAT) can do the cleanup offline
-via mtools. They work, and the resulting images pass fsck and boot in
-QEMU — but offline modification measurably worsens v86 cold-boot
-reliability on images that have been through recent QEMU sessions, again
-due to the bug above. Until that bug is fixed in the v86 fork, prefer the
-in-Windows workflow and ship the image untouched. (Never zero free space
-with the classic "`mcopy` a giant zero file, then delete it" trick — that
-one breaks v86 cold boot deterministically.)
+The image can also be modified offline with mtools (see the inspect-disk
+skill), and `tools/zero-free-clusters.py` can zero free clusters without
+touching the FAT. The results pass fsck and boot in QEMU — but offline
+modification measurably worsens v86 cold-boot reliability on images that
+have been through recent QEMU sessions, again due to the bug above. Until
+that bug is fixed in the v86 fork, prefer the in-Windows workflow and ship
+the image untouched. (Never zero free space with the classic "`mcopy` a
+giant zero file, then delete it" trick — that one breaks v86 cold boot
+deterministically.)
 
 After any image content change you MUST regenerate
 `images/default-state.bin` (the old saved state has the old FAT cached in

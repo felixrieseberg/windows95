@@ -77,8 +77,6 @@ export class Emulator extends React.Component<{}, EmulatorState> {
     this.bootFromScratch = this.bootFromScratch.bind(this);
 
     this.state = {
-      // bootFromScratch() sets this to true before starting the emulator;
-      // every other start path restores state.
       isBootingFresh: false,
       isCursorCaptured: false,
       hasAbsoluteMouse: false,
