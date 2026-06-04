@@ -4,12 +4,13 @@ const IMAGES_PATH = path.join(__dirname, "../../images");
 
 // Bump when a release ships a v86/hardware/disk-image change that can't load
 // older state-vN.bin snapshots. The app will detect an orphaned older state
-// and offer to export the user's old C:\ as a mountable .img.
+// and offer to recover the user's files from it (extracted to a host folder,
+// see recover-legacy-disk.ts).
 //
-// That export splices the state's dirty-block overlay onto the *current*
-// windows95.img — which only works while the partition table and FAT geometry
-// stay constant across releases. If you ever resize the disk or reformat with
-// different cluster params, the recovered .img won't mount.
+// That recovery walks the old state's dirty-block overlay on top of the
+// *current* windows95.img — which only works while the partition table and
+// FAT geometry stay constant across releases. If you ever resize the disk or
+// reformat with different cluster params, recovery of older states breaks.
 export const STATE_VERSION = 6;
 
 export const CONSTANTS = {

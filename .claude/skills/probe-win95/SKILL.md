@@ -137,17 +137,21 @@ of the normal app.
 
 Two different things produce FAIL_VXDLINK:
 
-1. **Sporadic flake** (~1 in 3 runs even on known-good images): passes on
+1. **Sporadic flake** (~1 in 2–3 runs even on known-good images): passes on
    retry. This is why the retry-3× rule exists.
 2. **Deterministic failure** (same address every run, e.g.
    `VMM(01)+000036E5 → device "C000" service E3E4`): the image's disk
    layout triggers a real v86 bug — see `docs/v86-cold-boot-bug.md`.
    Retrying never helps; the image content must change.
 
-Because of (1): never conclude an image is broken from a single FAIL, and
-never conclude a change is safe from a single SUCCESS. For ship decisions
-require 2 successes; for "this image is broken" claims require 3 identical
-failures.
+This is the canonical verdict-interpretation policy (other docs link here):
+
+- **One SUCCESS** = the image can boot. Good — same rule as bisecting.
+- **Three identical failures** (same VxD address) = the image is in a bad
+  state. Stop retrying; the content must change.
+- Anything in between = keep retrying, you are looking at flakes.
+
+Never conclude anything from a single FAIL.
 
 ## Probing the state-restore path
 

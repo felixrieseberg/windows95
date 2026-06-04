@@ -88,7 +88,8 @@ Suspects, in order:
   bug is fixed.
 - `tools/probe-boot.sh` (in-app cold boot) is the required verification
   for ANY image change — QEMU success means nothing for this bug. Expect
-  flakes; require 3 identical failures before declaring an image bad.
+  flakes; interpret verdicts per the policy in
+  `.claude/skills/probe-win95/SKILL.md` ("VXDLINK: flake vs. real bug").
 - End users see this as "Boot from scratch sometimes shows a Windows
   protection error" — retrying works. Resuming the saved state (the normal
   path) is unaffected.

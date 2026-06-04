@@ -63,25 +63,11 @@ hdiutil detach "$DEV"
 | Clear R/S/H attributes | `mattrib -i images/windows95.img@@32256 -r -s -h ::/FILE` (`-/` for recursive) |
 
 `mdel`/`mdeltree` fail on read-only/hidden/system files — run `mattrib`
-first. For bulk cleanup (deleting dead weight + zeroing free space so
-the packed zip shrinks), use `tools/slim-disk.sh` instead of doing it by
-hand — it has the safety checks, the curated deletion list, and the
-zero step built in.
-
-### Warning 3: never zero free space via mcopy of a giant zero file
-
-The classic trick (`mcopy` a huge zero file in, `mdel` it) leaves the image
-in a state that **deterministically fails Win95 cold boot in v86** with
-"Invalid VxD dynamic link call" — while booting fine in QEMU and passing
-fsck. Use `tools/zero-free-clusters.py` instead (writes zeros directly
-into free clusters, FAT untouched — verified to boot in the app).
-
-### Warning 4: QEMU boot success ≠ app boot success
-
-QEMU and v86 exercise different boot paths (different hardware → different
-driver init). Any image modification must be verified with the in-app
-probe (`tools/probe-boot.sh`, see the probe-win95 skill), not just
-`yarn run qemu`.
+first. For bulk cleanup there is `tools/slim-disk.sh` (safety checks,
+curated deletion list, zero step) — but note it is currently shelved:
+offline modification worsens v86 cold-boot reliability
+(`docs/v86-cold-boot-bug.md`). Prefer doing cleanup inside Windows; see
+"Slimming the image" in `docs/qemu.md`.
 
 ### Warning 1: never write while a VM holds the image
 
@@ -92,7 +78,17 @@ the guest's own writes and corrupt the FAT. Check first:
 pgrep -fl "windows95.*electron|qemu.*windows95"
 ```
 
-### Warning 2: saved states cache the old disk
+### Warning 2: any offline write must be verified with the in-app probe
+
+QEMU and v86 exercise different boot paths (different hardware → different
+driver init), and offline modification can break v86 cold boot while QEMU
+still boots fine — see `docs/v86-cold-boot-bug.md`. Verify with
+`tools/probe-boot.sh` (probe-win95 skill), not just `yarn run qemu`.
+In particular, **never zero free space via the mcopy-a-giant-zero-file
+trick** — that breaks v86 cold boot deterministically; use
+`tools/zero-free-clusters.py` if you must zero free space at all.
+
+### Warning 3: saved states cache the old disk
 
 `images/default-state.bin` and `~/Library/Application Support/windows95/state-v*.bin`
 contain Win95's RAM, including VCACHE/FAT caches that reference the disk
@@ -122,13 +118,9 @@ changes.
 
 ## Worktree note
 
-`images/` is gitignored. In a fresh worktree, clone the images from the
-main checkout first (APFS clonefile — instant):
-
-```sh
-mkdir -p images
-cp -c "$(git rev-parse --git-common-dir)/.."/images/*.{img,bin} images/
-```
+`images/` is gitignored — in a fresh worktree there is no image to inspect.
+See "Running from a git worktree" in the probe-win95 skill for the
+clone-from-main-checkout snippet.
 
 ## Why not QEMU/v86?
 
