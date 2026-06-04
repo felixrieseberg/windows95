@@ -5,10 +5,11 @@
 # free space so the image compresses dramatically better.
 #
 # *** STATUS: NOT CURRENTLY RECOMMENDED ***
-# Offline modification worsens v86 cold-boot reliability due to the open
-# bug in docs/v86-cold-boot-bug.md. Until that is fixed, do this cleanup
-# inside Windows instead (Explorer delete + ScanDisk + clean shutdown) and
-# ship the image untouched — see "Slimming the image" in docs/qemu.md.
+# Offline modification worsens v86 cold-boot reliability (Win95 can hit
+# "Invalid VxD dynamic link call" on cold boot in v86 while the same image
+# boots fine in QEMU). Until that v86 bug is fixed, do this cleanup inside
+# Windows instead (Explorer delete + ScanDisk + clean shutdown) and ship
+# the image untouched — see "Slimming the image" in docs/qemu.md.
 #
 # This does NOT shrink the raw 1 GB image file — it shrinks the packed
 # images zip (tools/pack-disk.sh / DISK_URL artifact) and therefore every

@@ -99,10 +99,9 @@ tools/pack-disk.sh             # build the new images zip
 
 **Verify in the app, not just QEMU, and expect flakes.** Cold boot in v86
 currently fails sporadically on any image, and certain disk states fail
-deterministically — see `docs/v86-cold-boot-bug.md`. For how to interpret
-probe verdicts (when to retry, when to ship, when to declare the image
-broken), follow the policy in `.claude/skills/probe-win95/SKILL.md`
-("VXDLINK: flake vs. real bug").
+deterministically. For how to interpret probe verdicts (when to retry,
+when to ship, when to declare the image broken), follow the policy in
+`.claude/skills/probe-win95/SKILL.md` ("VXDLINK: flake vs. real bug").
 
 ### Offline tools (currently not recommended)
 

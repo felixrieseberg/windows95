@@ -65,9 +65,8 @@ hdiutil detach "$DEV"
 `mdel`/`mdeltree` fail on read-only/hidden/system files — run `mattrib`
 first. For bulk cleanup there is `tools/slim-disk.sh` (safety checks,
 curated deletion list, zero step) — but note it is currently shelved:
-offline modification worsens v86 cold-boot reliability
-(`docs/v86-cold-boot-bug.md`). Prefer doing cleanup inside Windows; see
-"Slimming the image" in `docs/qemu.md`.
+offline modification worsens v86 cold-boot reliability. Prefer doing
+cleanup inside Windows; see "Slimming the image" in `docs/qemu.md`.
 
 ### Warning 1: never write while a VM holds the image
 
@@ -82,11 +81,12 @@ pgrep -fl "windows95.*electron|qemu.*windows95"
 
 QEMU and v86 exercise different boot paths (different hardware → different
 driver init), and offline modification can break v86 cold boot while QEMU
-still boots fine — see `docs/v86-cold-boot-bug.md`. Verify with
-`tools/probe-boot.sh` (probe-win95 skill), not just `yarn run qemu`.
-In particular, **never zero free space via the mcopy-a-giant-zero-file
-trick** — that breaks v86 cold boot deterministically; use
-`tools/zero-free-clusters.py` if you must zero free space at all.
+still boots fine ("Invalid VxD dynamic link call" — see "VXDLINK: flake
+vs. real bug" in the probe-win95 skill). Verify with `tools/probe-boot.sh`,
+not just `yarn run qemu`. In particular, **never zero free space via the
+mcopy-a-giant-zero-file trick** — that breaks v86 cold boot
+deterministically; use `tools/zero-free-clusters.py` if you must zero free
+space at all.
 
 ### Warning 3: saved states cache the old disk
 

@@ -141,8 +141,11 @@ Two different things produce FAIL_VXDLINK:
    retry. This is why the retry-3× rule exists.
 2. **Deterministic failure** (same address every run, e.g.
    `VMM(01)+000036E5 → device "C000" service E3E4`): the image's disk
-   layout triggers a real v86 bug — see `docs/v86-cold-boot-bug.md`.
-   Retrying never helps; the image content must change.
+   layout triggers a real v86 disk-path bug. Known triggers: zeroing free
+   space via the "mcopy a giant zero file, then delete it" trick, and
+   offline (mtools) mass-deletion of recently-written file trees. The same
+   image boots fine in QEMU and passes fsck. Retrying never helps; the
+   image content must change.
 
 This is the canonical verdict-interpretation policy (other docs link here):
 
